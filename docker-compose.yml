@@ -8,12 +8,12 @@ services:
       - "8081:8081"
     env_file:
       - .env
-    command: npx expo start --lan
+    command: npx expo start
     tty: true
     stdin_open: true
 
     environment:
-      - REACT_NATIVE_PACKAGER_HOSTNAME=192.168.34.94 # TUTAJ MUSICIE SWOJE IP WRZUCIĆ CHYBA, ŻE CHCECIE OGLĄDAĆ
+      - REACT_NATIVE_PACKAGER_HOSTNAME=${REACT_NATIVE_PACKAGER_HOSTNAME}
 
     develop:
       watch:
