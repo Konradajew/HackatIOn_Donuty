@@ -9,6 +9,8 @@ services:
     env_file:
       - .env
     command: npx expo start --lan
+    tty: true
+    stdin_open: true
 
     environment:
       - REACT_NATIVE_PACKAGER_HOSTNAME=192.168.34.94 # TUTAJ MUSICIE SWOJE IP WRZUCIĆ CHYBA, ŻE CHCECIE OGLĄDAĆ
