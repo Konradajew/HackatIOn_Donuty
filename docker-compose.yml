@@ -13,6 +13,7 @@ services:
     stdin_open: true
 
     environment:
+      - CHOKIDAR_USEPOLLING=true
       - REACT_NATIVE_PACKAGER_HOSTNAME=${REACT_NATIVE_PACKAGER_HOSTNAME}
 
     develop:
