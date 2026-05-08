@@ -1,0 +1,31 @@
+services:
+  expo-app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: donuty-dev-app
+    ports:
+      - "8081:8081"
+    env_file:
+      - .env
+    command: npx expo start --lan
+
+    environment:
+      - REACT_NATIVE_PACKAGER_HOSTNAME=192.168.34.94 # TUTAJ MUSICIE SWOJE IP WRZUCIĆ CHYBA, ŻE CHCECIE OGLĄDAĆ
+
+    develop:
+      watch:
+        - action: sync
+          path: ./
+          target: /app/
+          ignore:
+            - node_modules/
+            - .expo/
+            - dist/
+            - .git/
+
+        - action: rebuild
+          path: ./package.json
+
+        - action: rebuild
+          path: ./package-lock.json
