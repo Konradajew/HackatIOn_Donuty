@@ -1,5 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { Session } from '@supabase/supabase-js';
+import * as Linking from 'expo-linking';
+import * as WebBrowser from 'expo-web-browser';
 import { supabase } from './supabase';
 
 type AuthContextType = {
@@ -25,7 +27,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession(session);
     });
 
-    return () => subscription.unsubscribe();
+    const handleUrl = async (url: string | null) => {
+      if (!url) return;
+      const { queryParams } = Linking.parse(url);
+      const code = queryParams?.code as string | undefined;
+      const errorDesc = queryParams?.error_description as string | undefined;
+      if (errorDesc) {
+        console.warn('[auth] OAuth error:', errorDesc);
+        return;
+      }
+      if (!code) return;
+      const { data: { session: existing } } = await supabase.auth.getSession();
+      if (existing) return;
+      const { error } = await supabase.auth.exchangeCodeForSession(code);
+      if (!error) {
+        try { await WebBrowser.dismissAuthSession(); } catch {}
+      }
+    };
+
+    Linking.getInitialURL().then(handleUrl);
+    const linkingSub = Linking.addEventListener('url', (e) => handleUrl(e.url));
+
+    return () => {
+      subscription.unsubscribe();
+      linkingSub.remove();
+    };
   }, []);
 
   return <AuthContext.Provider value={{ session, loading }}>{children}</AuthContext.Provider>;

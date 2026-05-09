@@ -1,0 +1,174 @@
+{
+  "D:\\AGH\\HackatIOn_Donuty\\babel.config.js": {
+    "mtime": 1778260153.2063055,
+    "hash": "25bca21059e8f8a7735fe0cef0e45ef9"
+  },
+  "D:\\AGH\\HackatIOn_Donuty\\dev.ps1": {
+    "mtime": 1778273540.0534313,
+    "hash": "2b0149131e665a371f60ca44f3d9c5d8"
+  },
+  "D:\\AGH\\HackatIOn_Donuty\\eslint.config.js": {
+    "mtime": 499162500.0,
+    "hash": "560a864580ad8107fbbf8d6d452c82fe"
+  },
+  "D:\\AGH\\HackatIOn_Donuty\\expo-env.d.ts": {
+    "mtime": 1778271285.898116,
+    "hash": "0dd9dccdb4b08595bc83df70d6a154d3"
+  },
+  "D:\\AGH\\HackatIOn_Donuty\\metro.config.js": {
+    "mtime": 1778260154.125703,
+    "hash": "dcb5d6305afce631e9df229a6693f679"
+  },
+  "D:\\AGH\\HackatIOn_Donuty\\nativewind-env.d.ts": {
+    "mtime": 1778260156.908835,
+    "hash": "b02bcf4fde15f746f6e5248537d0b156"
+  },
+  "D:\\AGH\\HackatIOn_Donuty\\tailwind.config.js": {
+    "mtime": 1778260155.4876342,
+    "hash": "f2ba15bb3fce4f4620569edae0d1bf14"
+  },
+  "D:\\AGH\\HackatIOn_Donuty\\app\\_layout.tsx": {
+    "mtime": 1778260168.8513274,
+    "hash": "2a6d85455fe88c906ee3b5c34c0ec477"
+  },
+  "D:\\AGH\\HackatIOn_Donuty\\app\\(app)\\index.tsx": {
+    "mtime": 1778273719.9828455,
+    "hash": "155ec085b4f5ff1ca970ea6a643ade0f"
+  },
+  "D:\\AGH\\HackatIOn_Donuty\\app\\(app)\\_layout.tsx": {
+    "mtime": 1778260185.2458143,
+    "hash": "6f5249294aa5d9eae587fa4dc854178d"
+  },
+  "D:\\AGH\\HackatIOn_Donuty\\app\\(auth)\\sign-in.tsx": {
+    "mtime": 1778273645.2668834,
+    "hash": "c6c50f5228837f6abea30844941a1c31"
+  },
+  "D:\\AGH\\HackatIOn_Donuty\\app\\(auth)\\sign-up.tsx": {
+    "mtime": 1778268434.8056097,
+    "hash": "9b75dc5bb2d1c24482ba3f32efbbd2af"
+  },
+  "D:\\AGH\\HackatIOn_Donuty\\app\\(auth)\\_layout.tsx": {
+    "mtime": 1778260171.0537488,
+    "hash": "4a8d4b401da63b573f7e055141d763e8"
+  },
+  "D:\\AGH\\HackatIOn_Donuty\\components\\external-link.tsx": {
+    "mtime": 499162500.0,
+    "hash": "a71bdc8e0bd55812a1e97662ade442d1"
+  },
+  "D:\\AGH\\HackatIOn_Donuty\\components\\haptic-tab.tsx": {
+    "mtime": 499162500.0,
+    "hash": "3865d2fa7a067a97b4a0bbc8f7dcb2db"
+  },
+  "D:\\AGH\\HackatIOn_Donuty\\components\\hello-wave.tsx": {
+    "mtime": 499162500.0,
+    "hash": "bc241776c5bccac6964c694706e89e0a"
+  },
+  "D:\\AGH\\HackatIOn_Donuty\\components\\parallax-scroll-view.tsx": {
+    "mtime": 499162500.0,
+    "hash": "c2c998330722001de6d4a098fa914328"
+  },
+  "D:\\AGH\\HackatIOn_Donuty\\components\\themed-text.tsx": {
+    "mtime": 499162500.0,
+    "hash": "c1f1947c3b24be35a7097cc46f71073a"
+  },
+  "D:\\AGH\\HackatIOn_Donuty\\components\\themed-view.tsx": {
+    "mtime": 499162500.0,
+    "hash": "ffcbffb4831735916a920f2d0305f126"
+  },
+  "D:\\AGH\\HackatIOn_Donuty\\components\\ui\\collapsible.tsx": {
+    "mtime": 499162500.0,
+    "hash": "10ba95b344ca9a9846405b242153979a"
+  },
+  "D:\\AGH\\HackatIOn_Donuty\\components\\ui\\icon-symbol.ios.tsx": {
+    "mtime": 499162500.0,
+    "hash": "0f318b392e23d311c7094bdbb94d9c58"
+  },
+  "D:\\AGH\\HackatIOn_Donuty\\components\\ui\\icon-symbol.tsx": {
+    "mtime": 499162500.0,
+    "hash": "dca9fc677c970dc8bbeddb9e580cf99a"
+  },
+  "D:\\AGH\\HackatIOn_Donuty\\constants\\theme.ts": {
+    "mtime": 499162500.0,
+    "hash": "86b35f6fc3c1a9cf036de923e0ec1b04"
+  },
+  "D:\\AGH\\HackatIOn_Donuty\\hooks\\use-color-scheme.ts": {
+    "mtime": 499162500.0,
+    "hash": "6f3444fcb9c7013a839a7832be518831"
+  },
+  "D:\\AGH\\HackatIOn_Donuty\\hooks\\use-color-scheme.web.ts": {
+    "mtime": 499162500.0,
+    "hash": "071fbb9a1a05ffb8af4b7d3b1ffa72d6"
+  },
+  "D:\\AGH\\HackatIOn_Donuty\\hooks\\use-theme-color.ts": {
+    "mtime": 499162500.0,
+    "hash": "e9ac2719e4d914a6913252bb57b368d9"
+  },
+  "D:\\AGH\\HackatIOn_Donuty\\lib\\auth-context.tsx": {
+    "mtime": 1778260164.4632363,
+    "hash": "aa6858ac014d901c0b2aa3bd52230de8"
+  },
+  "D:\\AGH\\HackatIOn_Donuty\\lib\\google-oauth.ts": {
+    "mtime": 1778269546.2783093,
+    "hash": "309bd013c18f11534aa65c47ddf57aa0"
+  },
+  "D:\\AGH\\HackatIOn_Donuty\\lib\\supabase.ts": {
+    "mtime": 1778268406.885093,
+    "hash": "7a6d0d3e8182fe1e38164016139c151f"
+  },
+  "D:\\AGH\\HackatIOn_Donuty\\scripts\\reset-project.js": {
+    "mtime": 499162500.0,
+    "hash": "55e9a46ae7c35eb0340e956473beaed2"
+  },
+  "D:\\AGH\\HackatIOn_Donuty\\scripts\\start-docker.mjs": {
+    "mtime": 1778273532.1550252,
+    "hash": "78de752f7a7952ffe3aa264e974594bf"
+  },
+  "D:\\AGH\\HackatIOn_Donuty\\docker-compose.yml": {
+    "mtime": 1778273540.053936,
+    "hash": "9183bf17cbb5e31dcabb950c5834559d"
+  },
+  "D:\\AGH\\HackatIOn_Donuty\\README.md": {
+    "mtime": 499162500.0,
+    "hash": "e22acbc85bc1f0b21dd2d4fbb55488b7"
+  },
+  "D:\\AGH\\HackatIOn_Donuty\\assets\\images\\android-icon-background.png": {
+    "mtime": 499162500.0,
+    "hash": "2d65569cc0e2afdcea0af9f9902d4173"
+  },
+  "D:\\AGH\\HackatIOn_Donuty\\assets\\images\\android-icon-foreground.png": {
+    "mtime": 499162500.0,
+    "hash": "72e71a9c846c6aa4ae32476641a00e18"
+  },
+  "D:\\AGH\\HackatIOn_Donuty\\assets\\images\\android-icon-monochrome.png": {
+    "mtime": 499162500.0,
+    "hash": "1e097dab989759fc0b69440092ca22cd"
+  },
+  "D:\\AGH\\HackatIOn_Donuty\\assets\\images\\favicon.png": {
+    "mtime": 499162500.0,
+    "hash": "d9f444efbdfbe7931aa93beada07318a"
+  },
+  "D:\\AGH\\HackatIOn_Donuty\\assets\\images\\icon.png": {
+    "mtime": 499162500.0,
+    "hash": "cb975bba2216ce10a60e6c0ffe9941a2"
+  },
+  "D:\\AGH\\HackatIOn_Donuty\\assets\\images\\partial-react-logo.png": {
+    "mtime": 499162500.0,
+    "hash": "8f14e478886737f3323a2ac79c833749"
+  },
+  "D:\\AGH\\HackatIOn_Donuty\\assets\\images\\react-logo.png": {
+    "mtime": 499162500.0,
+    "hash": "695d5a1c6f29a689130f3aaa573aec6e"
+  },
+  "D:\\AGH\\HackatIOn_Donuty\\assets\\images\\react-logo@2x.png": {
+    "mtime": 499162500.0,
+    "hash": "b507e7f2c91ebc8fe24dee79ccb3b600"
+  },
+  "D:\\AGH\\HackatIOn_Donuty\\assets\\images\\react-logo@3x.png": {
+    "mtime": 499162500.0,
+    "hash": "8a4d0e5b845044e56e3b2df627d01cfd"
+  },
+  "D:\\AGH\\HackatIOn_Donuty\\assets\\images\\splash-icon.png": {
+    "mtime": 499162500.0,
+    "hash": "97dae5a0e62ad8551d8a31897b425e63"
+  }
+}
