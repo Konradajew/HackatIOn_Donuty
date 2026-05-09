@@ -25,12 +25,12 @@ const CYAN     = '#19F0DC';
 
 // Kolor per typ — dostosuj gdy zmienią się typy w bazie
 const TYPE_COLOR: Record<string, string> = {
-    DMG:      '#FF1F8F',
-    HEAL:     '#C8FF1A',
-    DOT:      '#ff7a00',
-    SABOTAGE: '#a07aff',
+    damage:   '#FF1F8F',
+    heal:     '#C8FF1A',
+    poison:   '#a100ff',
+    sabotage: '#fff87a',
     "50/50":  '#19F0DC',
-    TIME:     '#FFD700',
+    time:     '#009dff',
 };
 const tc = (type?: string | null) => (type && TYPE_COLOR[type]) || BORDER;
 
@@ -57,12 +57,12 @@ type CardType = {
 
 // ── Mock (aktywny gdy baza pusta) ───────────────────────────────────────────
 const MOCK: CardType[] = [
-    { card_id: 1, type: 'DMG',      categories: ['MATH', 'TRAVEL', 'ENGLISH'] },
-    { card_id: 2, type: 'HEAL',     categories: ['MEDICINE', 'NATURE', 'MOVIES'] },
-    { card_id: 3, type: 'DOT',      categories: ['CHEMISTRY', 'BOOKS', 'SPACE'] },
-    { card_id: 4, type: 'SABOTAGE', categories: ['RELIGION', 'MUSIC', 'CULINARY'] },
+    { card_id: 1, type: 'damage',   categories: ['MATH', 'TRAVEL', 'ENGLISH'] },
+    { card_id: 2, type: 'heal',     categories: ['MEDICINE', 'NATURE', 'MOVIES'] },
+    { card_id: 3, type: 'poison',   categories: ['CHEMISTRY', 'BOOKS', 'SPACE'] },
+    { card_id: 4, type: 'sabotage', categories: ['RELIGION', 'MUSIC', 'CULINARY'] },
     { card_id: 5, type: '50/50',    categories: ['GAMES', 'HISTORY', 'FLAGS'] },
-    { card_id: 6, type: 'TIME',     categories: ['COUNTRIES', 'IT', 'TRIVIA'] },
+    { card_id: 6, type: 'time',     categories: ['COUNTRIES', 'IT', 'TRIVIA'] },
 ];
 
 // ── Główny ekran ────────────────────────────────────────────────────────────
