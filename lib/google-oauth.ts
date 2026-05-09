@@ -20,8 +20,13 @@ export async function signInWithGoogle(): Promise<{ error?: string }> {
     const { queryParams } = Linking.parse(res.url);
     const code = queryParams?.code as string | undefined;
     if (code) {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) return {};
+      let existingSession = null;
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        // If stale refresh token error — fall through to redeem the fresh code
+        if (!error) existingSession = session;
+      } catch { /* fall through */ }
+      if (existingSession) return {};
       const { error: ex } = await supabase.auth.exchangeCodeForSession(code);
       if (ex) return { error: ex.message };
     }
