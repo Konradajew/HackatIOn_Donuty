@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Warstwa_1" data-name="Warstwa 1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 480 480">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #19f0dc;
+      }
+
+      .cls-2 {
+        filter: url(#outer-glow-2);
+      }
+    </style>
+    <filter id="outer-glow-2" x="-18" y="-18" width="516" height="516" filterUnits="userSpaceOnUse">
+      <feOffset dx="0" dy="0"/>
+      <feGaussianBlur result="blur" stdDeviation="9"/>
+      <feFlood flood-color="#40b4e2" flood-opacity=".75"/>
+      <feComposite in2="blur" operator="in"/>
+      <feComposite in="SourceGraphic"/>
+    </filter>
+  </defs>
+  <g class="cls-2">
+    <path class="cls-1" d="M451,29.09v421.82H29V29.09h422M471,9.09H9v461.83h462V9.09h0Z"/>
+    <path class="cls-1" d="M390.26,205.06h-115.31v-115.31c0-6.48-5.26-11.74-11.74-11.74h-46.4c-6.48,0-11.74,5.26-11.74,11.74v115.31h-115.31c-6.48,0-11.74,5.26-11.74,11.74v46.4c0,6.48,5.26,11.74,11.74,11.74h115.31v115.31c0,6.48,5.26,11.74,11.74,11.74h46.4c6.48,0,11.74-5.26,11.74-11.74v-115.31h115.31c6.48,0,11.74-5.26,11.74-11.74v-46.4c0-6.48-5.26-11.74-11.74-11.74Z"/>
+  </g>
+</svg>

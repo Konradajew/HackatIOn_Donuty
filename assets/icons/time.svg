@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Warstwa_1" data-name="Warstwa 1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 480 480">
+  <defs>
+    <style>
+      .cls-1 {
+        filter: url(#outer-glow-9);
+      }
+
+      .cls-2 {
+        fill: #fff;
+      }
+
+      .cls-3 {
+        fill: #ff9d00;
+      }
+
+      .cls-4 {
+        filter: url(#outer-glow-11);
+      }
+
+      .cls-5 {
+        filter: url(#outer-glow-13);
+      }
+
+      .cls-6 {
+        filter: url(#outer-glow-12);
+      }
+
+      .cls-7 {
+        filter: url(#outer-glow-10);
+      }
+
+      .cls-8 {
+        filter: url(#outer-glow-15);
+      }
+
+      .cls-9 {
+        filter: url(#outer-glow-14);
+      }
+    </style>
+    <filter id="outer-glow-9" x="122" y="377" width="236" height="80" filterUnits="userSpaceOnUse">
+      <feOffset dx="0" dy="0"/>
+      <feGaussianBlur result="blur" stdDeviation="9"/>
+      <feFlood flood-color="#ff9d00" flood-opacity=".75"/>
+      <feComposite in2="blur" operator="in"/>
+      <feComposite in="SourceGraphic"/>
+    </filter>
+    <filter id="outer-glow-10" x="147" y="345" width="186" height="73" filterUnits="userSpaceOnUse">
+      <feOffset dx="0" dy="0"/>
+      <feGaussianBlur result="blur-2" stdDeviation="9"/>
+      <feFlood flood-color="#ff9d00" flood-opacity=".75"/>
+      <feComposite in2="blur-2" operator="in"/>
+      <feComposite in="SourceGraphic"/>
+    </filter>
+    <filter id="outer-glow-11" x="169" y="316" width="142" height="69" filterUnits="userSpaceOnUse">
+      <feOffset dx="0" dy="0"/>
+      <feGaussianBlur result="blur-3" stdDeviation="9"/>
+      <feFlood flood-color="#ff9d00" flood-opacity=".75"/>
+      <feComposite in2="blur-3" operator="in"/>
+      <feComposite in="SourceGraphic"/>
+    </filter>
+    <filter id="outer-glow-12" x="186" y="290" width="108" height="66" filterUnits="userSpaceOnUse">
+      <feOffset dx="0" dy="0"/>
+      <feGaussianBlur result="blur-4" stdDeviation="9"/>
+      <feFlood flood-color="#ff9d00" flood-opacity=".75"/>
+      <feComposite in2="blur-4" operator="in"/>
+      <feComposite in="SourceGraphic"/>
+    </filter>
+    <filter id="outer-glow-13" x="189" y="94" width="101" height="71" filterUnits="userSpaceOnUse">
+      <feOffset dx="0" dy="0"/>
+      <feGaussianBlur result="blur-5" stdDeviation="9"/>
+      <feFlood flood-color="#ff9d00" flood-opacity=".75"/>
+      <feComposite in2="blur-5" operator="in"/>
+      <feComposite in="SourceGraphic"/>
+    </filter>
+    <filter id="outer-glow-14" x="169" y="62" width="142" height="72" filterUnits="userSpaceOnUse">
+      <feOffset dx="0" dy="0"/>
+      <feGaussianBlur result="blur-6" stdDeviation="9"/>
+      <feFlood flood-color="#ff9d00" flood-opacity=".75"/>
+      <feComposite in2="blur-6" operator="in"/>
+      <feComposite in="SourceGraphic"/>
+    </filter>
+    <filter id="outer-glow-15" x="149" y="27" width="181" height="72" filterUnits="userSpaceOnUse">
+      <feOffset dx="0" dy="0"/>
+      <feGaussianBlur result="blur-7" stdDeviation="9"/>
+      <feFlood flood-color="#ff9d00" flood-opacity=".75"/>
+      <feComposite in2="blur-7" operator="in"/>
+      <feComposite in="SourceGraphic"/>
+    </filter>
+  </defs>
+  <polygon class="cls-2" points="395.88 19.05 83.89 19.05 77.76 9.09 402.09 9.09 395.88 19.05"/>
+  <path d="M355.06,386.8l-103.17-152.31-.61,21,71.95,101.52-37.27-43.54-42.26-48.07.47-43.45.43-24.18,64.48-76.3c9.47-11.2,17.95-22.58,27.94-33.43-28.37,42.71-58.29,83.44-88.48,124.45l.18,19.6,21.37-28.91c40.35-57.17,79.61-114.46,118.82-173.12l-297.81.03,32.19,47.61,81.73,118.59c8.34,12.1,16.48,23.5,25.54,35.26v-19.41l-43.56-60.67-44.68-64.72,33.32,40.35,59.35,70.42.79,38.57.5,29.04-34.92,39.77-41.67,48.32,68.76-97.96-.43-21.21-13.54,19.32-92.53,137.96-39.88,60.05,314.34.02c.91-.23,1.21-.43,1.2-.87l-42.55-63.73ZM176.41,54.21h126.44v17.18h-126.44v-17.18ZM196.14,89.28h87.32v17.31h-87.31v-17.31ZM216.5,137.95v-15.97h46.28v15.97h-46.28ZM213.43,317.33l52.6.07v10.63s-52.61-.07-52.61-.07v-10.63ZM196.15,343.42h87.38v14.29h-87.38v-14.29ZM174.62,372.27h130.75v18.72h-130.75v-18.72ZM330.13,429.68l-180.88-.15.02-24.66,180.88.14-.02,24.67Z"/>
+  <g class="cls-1">
+    <polygon class="cls-3" points="330.15 405.01 330.13 429.68 149.25 429.53 149.27 404.87 330.15 405.01"/>
+  </g>
+  <g class="cls-7">
+    <rect class="cls-3" x="174.62" y="372.27" width="130.75" height="18.72"/>
+  </g>
+  <g class="cls-4">
+    <rect class="cls-3" x="196.15" y="343.42" width="87.38" height="14.29"/>
+  </g>
+  <g class="cls-6">
+    <rect class="cls-3" x="213.42" y="317.37" width="52.6" height="10.63"/>
+  </g>
+  <g class="cls-5">
+    <rect class="cls-3" x="216.5" y="121.98" width="46.28" height="15.97"/>
+  </g>
+  <g class="cls-9">
+    <polygon class="cls-3" points="283.46 89.28 283.46 106.59 196.15 106.59 196.14 89.28 283.46 89.28"/>
+  </g>
+  <g class="cls-8">
+    <rect class="cls-3" x="176.41" y="54.21" width="126.44" height="17.18"/>
+  </g>
+  <polygon class="cls-2" points="409 470.91 71 470.91 77.25 460.33 402.76 460.33 409 470.91"/>
+</svg>
