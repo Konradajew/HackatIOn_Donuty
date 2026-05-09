@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { arc, arcFont } from '@/lib/arcade-theme';
+import { arc } from '@/lib/arcade-theme';
 import { useQuestions, avgDifficulty, type AnswerKey } from '@/lib/forum-store';
 
 const ANSWER_ROWS: AnswerKey[][] = [['A', 'B'], ['C', 'D']];
@@ -51,14 +51,14 @@ export default function QuestionDetail() {
     <View style={s.root}>
       <StatusBar style="light" />
       <LinearGradient
-        colors={['rgba(255,31,143,0.08)', 'transparent']}
+        colors={['rgba(255,72,152,0.08)', 'transparent']}
         style={s.glowTop}
         start={{ x: 0.5, y: 0 }}
         end={{ x: 0.5, y: 1 }}
         pointerEvents="none"
       />
       <LinearGradient
-        colors={['rgba(25,240,220,0.06)', 'transparent']}
+        colors={['rgba(0,235,215,0.06)', 'transparent']}
         style={s.glowBottom}
         start={{ x: 1, y: 1 }}
         end={{ x: 0, y: 0 }}
@@ -96,10 +96,10 @@ export default function QuestionDetail() {
                 {row.map(label => {
                   const isCorrect = q.correct === label;
                   return (
-                    <View key={label} style={[s.answerCard, { borderColor: isCorrect ? arc.lime : arc.surface2 }]}>
+                    <View key={label} style={[s.answerCard, { borderColor: isCorrect ? arc.tertiary : arc.surfaceHigh }]}>
                       <View style={s.answerHeaderRow}>
-                        <View style={[s.answerBadge, { backgroundColor: isCorrect ? arc.lime : arc.surface2 }]}>
-                          <Text style={[s.answerBadgeText, { color: isCorrect ? arc.bg : arc.dim }]}>{label}</Text>
+                        <View style={[s.answerBadge, { backgroundColor: isCorrect ? arc.tertiary : arc.surfaceHigh }]}>
+                          <Text style={[s.answerBadgeText, { color: isCorrect ? arc.bg : arc.outline }]}>{label}</Text>
                         </View>
                         {isCorrect && <Text style={s.correctLabel}>✓ correct</Text>}
                       </View>
@@ -114,18 +114,18 @@ export default function QuestionDetail() {
           {/* Stats row */}
           <View style={s.statsRow}>
             <View style={s.statBox}>
-              <Text style={[s.statIcon, { color: arc.lime }]}>▲</Text>
-              <Text style={[s.statValue, { color: arc.lime }]}>{q.up}</Text>
+              <Text style={[s.statIcon, { color: arc.tertiary }]}>▲</Text>
+              <Text style={[s.statValue, { color: arc.tertiary }]}>{q.up}</Text>
               <Text style={s.statLabel}>YES</Text>
             </View>
             <View style={s.statBox}>
-              <Text style={[s.statIcon, { color: arc.red }]}>▼</Text>
-              <Text style={[s.statValue, { color: arc.red }]}>{q.down}</Text>
+              <Text style={[s.statIcon, { color: arc.errorContainer }]}>▼</Text>
+              <Text style={[s.statValue, { color: arc.errorContainer }]}>{q.down}</Text>
               <Text style={s.statLabel}>NO</Text>
             </View>
             <View style={s.statBox}>
-              <Text style={[s.statIcon, { color: arc.cyan }]}>◆</Text>
-              <Text style={[s.statValue, { color: arc.cyan }]}>{avg > 0 ? `${avg}/5` : '?/5'}</Text>
+              <Text style={[s.statIcon, { color: arc.secondaryContainer }]}>◆</Text>
+              <Text style={[s.statValue, { color: arc.secondaryContainer }]}>{avg > 0 ? `${avg}/5` : '?/5'}</Text>
               <Text style={s.statLabel}>DIFF</Text>
             </View>
           </View>
@@ -151,7 +151,7 @@ export default function QuestionDetail() {
                 >
                   <View style={[
                     s.diffDot,
-                    { backgroundColor: d <= pendingDiff ? arc.pink : arc.surface2 },
+                    { backgroundColor: d <= pendingDiff ? arc.primaryContainer : arc.surfaceHigh },
                     alreadyVoted && { opacity: 0.5 },
                   ]} />
                 </Pressable>
@@ -165,25 +165,25 @@ export default function QuestionDetail() {
             <View style={s.voteRow}>
               <Pressable
                 style={[s.voteBtn, {
-                  backgroundColor: pendingVerdict === 'up' ? arc.lime : arc.surface2,
-                  borderColor: arc.lime,
+                  backgroundColor: pendingVerdict === 'up' ? arc.tertiary : arc.surfaceHigh,
+                  borderColor: arc.tertiary,
                   opacity: alreadyVoted ? 0.4 : 1,
                 }]}
                 onPress={() => !alreadyVoted && setPendingVerdict('up')}
                 disabled={alreadyVoted}
               >
-                <Text style={[s.voteBtnText, { color: pendingVerdict === 'up' ? arc.bg : arc.lime }]}>✓ YES</Text>
+                <Text style={[s.voteBtnText, { color: pendingVerdict === 'up' ? arc.bg : arc.tertiary }]}>✓ YES</Text>
               </Pressable>
               <Pressable
                 style={[s.voteBtn, {
-                  backgroundColor: pendingVerdict === 'down' ? arc.red : arc.surface2,
-                  borderColor: arc.red,
+                  backgroundColor: pendingVerdict === 'down' ? arc.errorContainer : arc.surfaceHigh,
+                  borderColor: arc.errorContainer,
                   opacity: alreadyVoted ? 0.4 : 1,
                 }]}
                 onPress={() => !alreadyVoted && setPendingVerdict('down')}
                 disabled={alreadyVoted}
               >
-                <Text style={[s.voteBtnText, { color: pendingVerdict === 'down' ? arc.ink : arc.red }]}>✗ NO</Text>
+                <Text style={[s.voteBtnText, { color: pendingVerdict === 'down' ? arc.ink : arc.errorContainer }]}>✗ NO</Text>
               </Pressable>
             </View>
           </View>
@@ -191,14 +191,14 @@ export default function QuestionDetail() {
           {/* Submit vote */}
           <Pressable
             style={[s.submitVoteBtn, {
-              backgroundColor: canSubmit ? arc.cyan : arc.surface2,
+              backgroundColor: canSubmit ? arc.secondaryContainer : arc.surfaceHigh,
               // @ts-ignore - boxShadow supported in RN 0.81 new arch
-              boxShadow: canSubmit ? '0 0 14px rgba(25,240,220,0.4)' : undefined,
+              boxShadow: canSubmit ? '0 0 14px rgba(0,235,215,0.4)' : undefined,
             }]}
             onPress={handleSubmit}
             disabled={!canSubmit}
           >
-            <Text style={[s.submitVoteText, { color: canSubmit ? arc.bg : arc.dim }]}>
+            <Text style={[s.submitVoteText, { color: canSubmit ? arc.bg : arc.outline }]}>
               {alreadyVoted ? '✓ VOTE SUBMITTED' : 'SUBMIT VOTE'}
             </Text>
           </Pressable>
@@ -230,30 +230,30 @@ const s = StyleSheet.create({
     height: 32,
     backgroundColor: arc.surface,
     borderWidth: 1,
-    borderColor: arc.surface2,
+    borderColor: arc.surfaceHigh,
     alignItems: 'center',
     justifyContent: 'center',
   },
   backArrow: {
-    fontFamily: arcFont.display,
+    fontFamily: 'SpaceGrotesk_700Bold',
     fontSize: 18,
     color: arc.ink,
   },
   catBadge: {
     paddingVertical: 4,
     paddingHorizontal: 8,
-    backgroundColor: 'rgba(25,240,220,0.13)',
+    backgroundColor: 'rgba(0,235,215,0.13)',
     borderWidth: 1,
-    borderColor: 'rgba(25,240,220,0.33)',
+    borderColor: 'rgba(0,235,215,0.33)',
   },
   catText: {
-    fontFamily: arcFont.monoBold,
+    fontFamily: 'JetBrainsMono_500Medium',
     fontSize: 11,
-    color: arc.cyan,
+    color: arc.secondaryContainer,
     letterSpacing: 1,
   },
   headerTitle: {
-    fontFamily: arcFont.display,
+    fontFamily: 'SpaceGrotesk_700Bold',
     fontSize: 20,
     color: arc.ink,
     letterSpacing: 2,
@@ -266,20 +266,20 @@ const s = StyleSheet.create({
   questionCard: {
     backgroundColor: arc.surface,
     borderWidth: 1,
-    borderColor: arc.surface2,
+    borderColor: arc.surfaceHigh,
     padding: 16,
     gap: 10,
   },
   questionText: {
-    fontFamily: arcFont.display,
+    fontFamily: 'SpaceGrotesk_700Bold',
     fontSize: 22,
     color: arc.ink,
     lineHeight: 30,
   },
   authorText: {
-    fontFamily: arcFont.mono,
+    fontFamily: 'JetBrainsMono_500Medium',
     fontSize: 12,
-    color: arc.dim,
+    color: arc.outline,
   },
 
   answersGrid: { gap: 8 },
@@ -299,18 +299,18 @@ const s = StyleSheet.create({
     justifyContent: 'center',
   },
   answerBadgeText: {
-    fontFamily: arcFont.monoBold,
+    fontFamily: 'JetBrainsMono_500Medium',
     fontSize: 12,
     letterSpacing: 1,
   },
   correctLabel: {
-    fontFamily: arcFont.mono,
+    fontFamily: 'JetBrainsMono_500Medium',
     fontSize: 11,
-    color: arc.lime,
+    color: arc.tertiary,
     letterSpacing: 0.5,
   },
   answerText: {
-    fontFamily: arcFont.displayMd,
+    fontFamily: 'SpaceGrotesk_600SemiBold',
     fontSize: 14,
     color: arc.ink,
     lineHeight: 20,
@@ -324,42 +324,42 @@ const s = StyleSheet.create({
     flex: 1,
     backgroundColor: arc.surface,
     borderWidth: 1,
-    borderColor: arc.surface2,
+    borderColor: arc.surfaceHigh,
     padding: 12,
     alignItems: 'center',
     gap: 4,
   },
   statIcon: {
-    fontFamily: arcFont.mono,
+    fontFamily: 'JetBrainsMono_500Medium',
     fontSize: 16,
   },
   statValue: {
-    fontFamily: arcFont.display,
+    fontFamily: 'SpaceGrotesk_700Bold',
     fontSize: 20,
     letterSpacing: 1,
   },
   statLabel: {
-    fontFamily: arcFont.mono,
+    fontFamily: 'JetBrainsMono_500Medium',
     fontSize: 10,
-    color: arc.dim,
+    color: arc.outline,
     letterSpacing: 1,
   },
 
   sectionCard: {
     backgroundColor: arc.surface,
     borderWidth: 1,
-    borderColor: arc.surface2,
+    borderColor: arc.surfaceHigh,
     padding: 16,
     gap: 12,
   },
   sectionLabel: {
-    fontFamily: arcFont.mono,
+    fontFamily: 'JetBrainsMono_500Medium',
     fontSize: 11,
-    color: arc.dim,
+    color: arc.outline,
     letterSpacing: 1,
   },
   explanationText: {
-    fontFamily: arcFont.displayMd,
+    fontFamily: 'SpaceGrotesk_600SemiBold',
     fontSize: 15,
     color: arc.ink,
     lineHeight: 22,
@@ -390,7 +390,7 @@ const s = StyleSheet.create({
     borderWidth: 1,
   },
   voteBtnText: {
-    fontFamily: arcFont.monoBold,
+    fontFamily: 'JetBrainsMono_500Medium',
     fontSize: 16,
     letterSpacing: 2,
   },
@@ -401,24 +401,24 @@ const s = StyleSheet.create({
     justifyContent: 'center',
   },
   submitVoteText: {
-    fontFamily: arcFont.monoBold,
+    fontFamily: 'JetBrainsMono_500Medium',
     fontSize: 15,
     letterSpacing: 2,
   },
 
   hintText: {
-    fontFamily: arcFont.mono,
+    fontFamily: 'JetBrainsMono_500Medium',
     fontSize: 11,
-    color: arc.dim,
+    color: arc.outline,
     letterSpacing: 0.5,
     textAlign: 'center',
     marginTop: -4,
   },
 
   notFound: {
-    fontFamily: arcFont.mono,
+    fontFamily: 'JetBrainsMono_500Medium',
     fontSize: 14,
-    color: arc.dim,
+    color: arc.outline,
     textAlign: 'center',
     marginTop: 60,
     letterSpacing: 2,

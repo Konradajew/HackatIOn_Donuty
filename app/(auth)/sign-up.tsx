@@ -1,80 +1,335 @@
 import { useState } from 'react';
-import { Alert, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import {
+  Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View,
+} from 'react-native';
 import { Link } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import { supabase } from '@/lib/supabase';
 import { signInWithGoogle } from '@/lib/google-oauth';
+import { arc, arcSpace, arcType } from '@/lib/arcade-theme';
+import { Chamfer, GoogleG } from '@/lib/arcade-shapes';
+
+function Chip({ label, color }: { label: string; color: string }) {
+  return (
+    <View style={[styles.chip, { borderColor: color + '55' }]}>
+      <Text style={[arcType.labelSm, { color, textTransform: 'uppercase', letterSpacing: 1 }]}>{label}</Text>
+    </View>
+  );
+}
+
+function InputField({
+  label,
+  value,
+  onChangeText,
+  accent,
+  secure,
+  keyboardType,
+  autoComplete,
+  right,
+  hint,
+}: {
+  label: string;
+  value: string;
+  onChangeText: (t: string) => void;
+  accent: string;
+  secure?: boolean;
+  keyboardType?: any;
+  autoComplete?: any;
+  right?: React.ReactNode;
+  hint?: string;
+}) {
+  return (
+    <View style={[styles.inputCard, { borderColor: accent + '66' }]}>
+      <View style={styles.inputHeader}>
+        <Text style={[arcType.labelSm, { color: accent, textTransform: 'uppercase', letterSpacing: 2 }]}>{label}</Text>
+        {right}
+      </View>
+      <TextInput
+        style={[arcType.labelLg, styles.inputText]}
+        value={value}
+        onChangeText={onChangeText}
+        secureTextEntry={secure}
+        keyboardType={keyboardType}
+        autoComplete={autoComplete}
+        autoCapitalize="none"
+        placeholderTextColor={arc.outline}
+        selectionColor={accent}
+        cursorColor={accent}
+      />
+      {hint && (
+        <Text style={[arcType.labelSm, { color: arc.outline, marginTop: arcSpace.xs, letterSpacing: 0.5 }]}>{hint}</Text>
+      )}
+    </View>
+  );
+}
 
 export default function SignUp() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
 
   async function signUp() {
     setLoading(true);
     const { error } = await supabase.auth.signUp({ email, password });
-    if (error) Alert.alert('Błąd rejestracji', error.message);
-    else Alert.alert('Sukces!', 'Sprawdź email, aby potwierdzić konto.');
+    if (error) Alert.alert('REGISTER FAILED', error.message);
+    else Alert.alert('CHECK YOUR EMAIL', 'Confirm your account to continue.');
     setLoading(false);
   }
 
   async function handleGoogle() {
     setLoading(true);
     const { error } = await signInWithGoogle();
-    if (error) Alert.alert('Błąd rejestracji Google', error);
+    if (error) Alert.alert('GOOGLE AUTH FAILED', error);
     setLoading(false);
   }
 
   return (
-    <View className="flex-1 justify-center px-6 bg-white">
-      <Text className="text-3xl font-bold mb-8 text-center text-gray-900">Rejestracja</Text>
-
-      <TextInput
-        className="border border-gray-300 rounded-xl p-4 mb-4 text-base text-gray-900"
-        placeholder="Email"
-        placeholderTextColor="#9ca3af"
-        value={email}
-        onChangeText={setEmail}
-        autoCapitalize="none"
-        keyboardType="email-address"
-        autoComplete="email"
+    <View style={styles.root}>
+      <LinearGradient
+        colors={['rgba(167,215,0,0.06)', 'transparent', 'rgba(255,72,152,0.06)']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFillObject}
+        pointerEvents="none"
       />
 
-      <TextInput
-        className="border border-gray-300 rounded-xl p-4 mb-6 text-base text-gray-900"
-        placeholder="Hasło (min. 6 znaków)"
-        placeholderTextColor="#9ca3af"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
-
-      <TouchableOpacity
-        className="bg-blue-600 rounded-xl p-4 items-center mb-4 disabled:opacity-50"
-        onPress={signUp}
-        disabled={loading}
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={styles.scroll}
+        keyboardShouldPersistTaps="handled"
       >
-        <Text className="text-white font-semibold text-base">
-          {loading ? 'Rejestrowanie…' : 'Zarejestruj się'}
-        </Text>
-      </TouchableOpacity>
+        <View style={styles.topRow}>
+          <Chip label="v0.9.2" color={arc.tertiary} />
+          <Chip label="NEW PLAYER" color={arc.primaryContainer} />
+        </View>
 
-      <View className="flex-row items-center my-2">
-        <View className="flex-1 h-px bg-gray-300" />
-        <Text className="mx-3 text-gray-500 text-sm">lub</Text>
-        <View className="flex-1 h-px bg-gray-300" />
-      </View>
+        {/* Logo */}
+        <View style={styles.logoBlock}>
+          <Text style={[styles.logoText, { color: arc.secondaryContainer, position: 'absolute', left: 6, top: 6 }]} aria-hidden>
+            TRICARD
+          </Text>
+          <Text style={[styles.logoText, { color: arc.primaryContainer, position: 'absolute', left: 3, top: 3 }]} aria-hidden>
+            TRICARD
+          </Text>
+          <Text style={[styles.logoText, { color: arc.ink }]}>TRICARD</Text>
+          <View style={styles.logoDiamond} />
+        </View>
+        <Text style={[arcType.labelSm, styles.logoSub]}>NEW · PLAYER · INIT</Text>
 
-      <TouchableOpacity
-        className="bg-white border border-gray-300 rounded-xl p-4 items-center mb-4 disabled:opacity-50"
-        onPress={handleGoogle}
-        disabled={loading}
-      >
-        <Text className="text-gray-900 font-semibold text-base">Kontynuuj z Google</Text>
-      </TouchableOpacity>
+        <View style={styles.form}>
+          <InputField
+            label="EMAIL"
+            value={email}
+            onChangeText={setEmail}
+            accent={arc.secondaryContainer}
+            keyboardType="email-address"
+            autoComplete="email"
+          />
+          <InputField
+            label="PASSWORD"
+            value={password}
+            onChangeText={setPassword}
+            accent={arc.primaryContainer}
+            secure={!showPass}
+            hint="min. 6 characters"
+            right={
+              <Pressable onPress={() => setShowPass(v => !v)}>
+                <Text style={[arcType.labelSm, styles.showPill]}>{showPass ? 'HIDE' : 'SHOW'}</Text>
+              </Pressable>
+            }
+          />
 
-      <Link href="/sign-in" className="text-center text-blue-600 text-sm">
-        Masz już konto? Zaloguj się
-      </Link>
+          <Pressable
+            onPress={signUp}
+            disabled={loading}
+            style={({ pressed }) => pressed ? { opacity: 0.85 } : undefined}
+          >
+            <Chamfer
+              fill={arc.primaryContainer}
+              stroke={arc.primaryContainer}
+              strokeWidth={1.5}
+              glow={arc.primaryContainer}
+              glowRadius={16}
+              chamfer={[0, 8, 0, 8]}
+              style={styles.primaryBtn}
+            >
+              <View style={styles.ctaInner}>
+                <View>
+                  <Text style={[styles.ctaTitle, { color: arc.bg }]}>
+                    {loading ? 'REGISTERING...' : 'REGISTER'}
+                  </Text>
+                  <Text style={[arcType.labelSm, { color: arc.bg, opacity: 0.7, letterSpacing: 1, marginTop: 2 }]}>
+                    create your profile
+                  </Text>
+                </View>
+                <Text style={[styles.ctaGlyph, { color: arc.bg }]}>▶</Text>
+              </View>
+            </Chamfer>
+          </Pressable>
+        </View>
+
+        <View style={styles.dividerRow}>
+          <View style={styles.dividerLine} />
+          <Text style={[arcType.labelSm, { color: arc.outline, letterSpacing: 3, marginHorizontal: arcSpace.sm }]}>// OR</Text>
+          <View style={styles.dividerLine} />
+        </View>
+
+        <Pressable
+          onPress={handleGoogle}
+          disabled={loading}
+          style={({ pressed }) => pressed ? { opacity: 0.85 } : undefined}
+        >
+          <Chamfer
+            fill={arc.surface}
+            stroke={arc.secondaryContainer}
+            strokeWidth={1.5}
+            chamfer={[0, 8, 0, 8]}
+          >
+            <View style={styles.googleInner}>
+              <View style={styles.googleLeft}>
+                <GoogleG size={20} />
+                <View style={{ marginLeft: arcSpace.sm }}>
+                  <Text style={[styles.ctaTitle, { color: arc.ink }]}>GOOGLE</Text>
+                  <Text style={[arcType.labelSm, { color: arc.outline, letterSpacing: 1, marginTop: 2 }]}>one-tap auth</Text>
+                </View>
+              </View>
+              <Text style={[styles.ctaGlyph, { color: arc.secondaryContainer }]}>▶</Text>
+            </View>
+          </Chamfer>
+        </Pressable>
+
+        <View style={styles.footer}>
+          <Text style={[arcType.labelSm, { color: arc.outline, letterSpacing: 1 }]}>ALREADY PLAYING? </Text>
+          <Link href="/sign-in" asChild>
+            <Pressable>
+              <Text style={[arcType.labelSm, { color: arc.secondaryContainer, letterSpacing: 1 }]}>◂ SIGN IN</Text>
+            </Pressable>
+          </Link>
+        </View>
+      </ScrollView>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+    backgroundColor: arc.bg,
+  },
+  scroll: {
+    paddingHorizontal: arcSpace.md,
+    paddingTop: 64,
+    paddingBottom: arcSpace.xl,
+  },
+  topRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: arcSpace.lg,
+  },
+  chip: {
+    paddingHorizontal: arcSpace.sm + 2,
+    paddingVertical: arcSpace.xs + 1,
+    backgroundColor: arc.surface,
+    borderWidth: 1,
+  },
+  logoBlock: {
+    alignSelf: 'center',
+    marginBottom: arcSpace.xs,
+  },
+  logoText: {
+    fontFamily: 'SpaceGrotesk_700Bold',
+    fontSize: 52,
+    letterSpacing: 6,
+    lineHeight: 58,
+  },
+  logoDiamond: {
+    position: 'absolute',
+    top: -8,
+    right: -12,
+    width: 14,
+    height: 14,
+    backgroundColor: arc.tertiary,
+    transform: [{ rotate: '45deg' }],
+  },
+  logoSub: {
+    color: arc.outline,
+    textAlign: 'center',
+    letterSpacing: 4,
+    textTransform: 'uppercase',
+    marginBottom: arcSpace.xl,
+  },
+  form: {
+    gap: arcSpace.sm,
+  },
+  inputCard: {
+    backgroundColor: arc.surface,
+    borderWidth: 1,
+    padding: arcSpace.sm + 2,
+  },
+  inputHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: arcSpace.xs + 2,
+  },
+  inputText: {
+    color: arc.ink,
+    paddingVertical: 0,
+  },
+  showPill: {
+    color: arc.outline,
+    letterSpacing: 1,
+    borderWidth: 1,
+    borderColor: arc.surfaceHigh,
+    paddingHorizontal: arcSpace.xs + 2,
+    paddingVertical: 2,
+  },
+  primaryBtn: {
+    marginTop: arcSpace.xs,
+  },
+  ctaInner: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: arcSpace.md + 2,
+    paddingVertical: arcSpace.md + 2,
+  },
+  ctaTitle: {
+    fontFamily: 'SpaceGrotesk_700Bold',
+    fontSize: 16,
+    letterSpacing: 2,
+    lineHeight: 19,
+  },
+  ctaGlyph: {
+    fontFamily: 'SpaceGrotesk_700Bold',
+    fontSize: 18,
+    lineHeight: 19,
+  },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: arcSpace.md,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: arc.surfaceHigh,
+  },
+  googleInner: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: arcSpace.md,
+    paddingVertical: arcSpace.md + 2,
+  },
+  googleLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: arcSpace.xl,
+  },
+});

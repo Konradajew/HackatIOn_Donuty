@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { arc, arcFont } from '@/lib/arcade-theme';
+import { arc } from '@/lib/arcade-theme';
 import { useQuestions, avgDifficulty, type Question } from '@/lib/forum-store';
 
 const CHIPS: { l: string; cat: string | null }[] = [
@@ -20,10 +20,10 @@ function QuestionCard({ q, onPress }: { q: Question; onPress: () => void }) {
   return (
     <Pressable style={s.card} onPress={onPress}>
       <View style={s.voteCol}>
-        <Text style={[s.mono, { color: arc.lime, fontSize: 14 }]}>▲</Text>
-        <Text style={[s.mono, { color: arc.ink, fontSize: 14, fontFamily: arcFont.monoBold }]}>{q.up}</Text>
-        <Text style={[s.mono, { color: arc.dim, fontSize: 12 }]}>{q.down}</Text>
-        <Text style={[s.mono, { color: arc.red, fontSize: 14 }]}>▼</Text>
+        <Text style={[s.mono, { color: arc.tertiary, fontSize: 14 }]}>▲</Text>
+        <Text style={[s.mono, { color: arc.ink, fontSize: 14, fontFamily: 'JetBrainsMono_500Medium' }]}>{q.up}</Text>
+        <Text style={[s.mono, { color: arc.outline, fontSize: 12 }]}>{q.down}</Text>
+        <Text style={[s.mono, { color: arc.errorContainer, fontSize: 14 }]}>▼</Text>
       </View>
       <View style={s.cardBody}>
         <View style={s.metaRow}>
@@ -32,7 +32,7 @@ function QuestionCard({ q, onPress }: { q: Question; onPress: () => void }) {
           </View>
           <View style={s.diffRow}>
             {[1,2,3,4,5].map(d => (
-              <View key={d} style={[s.diffDot, { backgroundColor: d <= avg ? arc.pink : arc.surface2 }]} />
+              <View key={d} style={[s.diffDot, { backgroundColor: d <= avg ? arc.primaryContainer : arc.surfaceHigh }]} />
             ))}
           </View>
         </View>
@@ -68,14 +68,14 @@ export default function ForumScreen() {
     <View style={s.root}>
       <StatusBar style="light" />
       <LinearGradient
-        colors={['rgba(255,31,143,0.08)', 'transparent']}
+        colors={['rgba(255,72,152,0.08)', 'transparent']}
         style={s.glowTop}
         start={{ x: 0.5, y: 0 }}
         end={{ x: 0.5, y: 1 }}
         pointerEvents="none"
       />
       <LinearGradient
-        colors={['rgba(25,240,220,0.06)', 'transparent']}
+        colors={['rgba(0,235,215,0.06)', 'transparent']}
         style={s.glowBottom}
         start={{ x: 1, y: 1 }}
         end={{ x: 0, y: 0 }}
@@ -84,23 +84,23 @@ export default function ForumScreen() {
 
       <SafeAreaView style={s.safe}>
         <View style={s.header}>
-          <Text style={s.title}>FORUM<Text style={{ color: arc.pink }}>.</Text></Text>
+          <Text style={s.title}>FORUM<Text style={{ color: arc.primaryContainer }}>.</Text></Text>
         </View>
 
         <View style={s.searchRow}>
           <View style={s.searchInput}>
-            <Text style={{ color: arc.dim, fontSize: 15 }}>⊕</Text>
+            <Text style={{ color: arc.outline, fontSize: 15 }}>⊕</Text>
             <TextInput
               value={search}
               onChangeText={setSearch}
               placeholder="search 4,219 questions..."
-              placeholderTextColor={arc.dim}
+              placeholderTextColor={arc.outline}
               style={s.searchField}
               returnKeyType="search"
             />
           </View>
           <Pressable style={s.sortBtn} onPress={toggleSort}>
-            <Text style={[s.mono, { color: arc.cyan, fontSize: 11, fontFamily: arcFont.monoBold, letterSpacing: 1 }]}>
+            <Text style={[s.mono, { color: arc.secondaryContainer, fontSize: 11, fontFamily: 'JetBrainsMono_500Medium', letterSpacing: 1 }]}>
               {sortMode}
             </Text>
           </Pressable>
@@ -119,11 +119,11 @@ export default function ForumScreen() {
               style={[
                 s.chip,
                 c.l === selectedChip
-                  ? { backgroundColor: arc.cyan, borderColor: arc.cyan }
-                  : { backgroundColor: arc.surface, borderColor: arc.surface2 },
+                  ? { backgroundColor: arc.secondaryContainer, borderColor: arc.secondaryContainer }
+                  : { backgroundColor: arc.surface, borderColor: arc.surfaceHigh },
               ]}
             >
-              <Text style={[s.chipText, { color: c.l === selectedChip ? arc.bg : arc.dim }]}>{c.l}</Text>
+              <Text style={[s.chipText, { color: c.l === selectedChip ? arc.bg : arc.outline }]}>{c.l}</Text>
             </Pressable>
           ))}
         </ScrollView>
@@ -182,7 +182,7 @@ const s = StyleSheet.create({
     marginBottom: 12,
   },
   title: {
-    fontFamily: arcFont.display,
+    fontFamily: 'SpaceGrotesk_700Bold',
     fontSize: 28,
     color: arc.ink,
     letterSpacing: 2,
@@ -201,11 +201,11 @@ const s = StyleSheet.create({
     paddingHorizontal: 12,
     backgroundColor: arc.surface,
     borderWidth: 1,
-    borderColor: arc.surface2,
+    borderColor: arc.surfaceHigh,
   },
   searchField: {
     flex: 1,
-    fontFamily: arcFont.mono,
+    fontFamily: 'JetBrainsMono_500Medium',
     fontSize: 15,
     color: arc.ink,
     padding: 0,
@@ -215,7 +215,7 @@ const s = StyleSheet.create({
     height: 44,
     backgroundColor: arc.surface,
     borderWidth: 1,
-    borderColor: arc.surface2,
+    borderColor: arc.surfaceHigh,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -233,7 +233,7 @@ const s = StyleSheet.create({
     borderWidth: 1,
   },
   chipText: {
-    fontFamily: arcFont.monoBold,
+    fontFamily: 'JetBrainsMono_500Medium',
     fontSize: 11,
     letterSpacing: 1,
   },
@@ -241,9 +241,9 @@ const s = StyleSheet.create({
     flex: 1,
   },
   emptyText: {
-    fontFamily: arcFont.mono,
+    fontFamily: 'JetBrainsMono_500Medium',
     fontSize: 12,
-    color: arc.dim,
+    color: arc.outline,
     textAlign: 'center',
     paddingTop: 40,
     letterSpacing: 2,
@@ -251,7 +251,7 @@ const s = StyleSheet.create({
   card: {
     backgroundColor: arc.surface,
     borderWidth: 1,
-    borderColor: arc.surface2,
+    borderColor: arc.surfaceHigh,
     padding: 14,
     flexDirection: 'row',
     gap: 10,
@@ -278,9 +278,9 @@ const s = StyleSheet.create({
     borderColor: 'rgba(25,240,220,0.33)',
   },
   catText: {
-    fontFamily: arcFont.monoBold,
+    fontFamily: 'JetBrainsMono_500Medium',
     fontSize: 11,
-    color: arc.cyan,
+    color: arc.secondaryContainer,
     letterSpacing: 1,
   },
   diffRow: {
@@ -293,16 +293,16 @@ const s = StyleSheet.create({
     height: 6,
   },
   qText: {
-    fontFamily: arcFont.displayMd,
+    fontFamily: 'SpaceGrotesk_600SemiBold',
     fontSize: 15,
     color: arc.ink,
     lineHeight: 20,
     marginBottom: 4,
   },
   userText: {
-    fontFamily: arcFont.mono,
+    fontFamily: 'JetBrainsMono_500Medium',
     fontSize: 12,
-    color: arc.dim,
+    color: arc.outline,
   },
   fab: {
     position: 'absolute',
@@ -310,19 +310,19 @@ const s = StyleSheet.create({
     right: 20,
     width: 56,
     height: 56,
-    backgroundColor: arc.pink,
+    backgroundColor: arc.primaryContainer,
     alignItems: 'center',
     justifyContent: 'center',
     // @ts-ignore - boxShadow supported in RN 0.81 new arch
-    boxShadow: '0 0 20px rgba(255,31,143,0.53)',
+    boxShadow: '0 0 20px rgba(255,72,152,0.53)',
   },
   fabIcon: {
-    fontFamily: arcFont.display,
+    fontFamily: 'SpaceGrotesk_700Bold',
     fontSize: 32,
     color: arc.bg,
     lineHeight: 36,
   },
   mono: {
-    fontFamily: arcFont.mono,
+    fontFamily: 'JetBrainsMono_500Medium',
   },
 });
