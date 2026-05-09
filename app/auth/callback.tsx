@@ -1,23 +1,20 @@
-import { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { Redirect } from 'expo-router';
 import { useAuth } from '@/lib/auth-context';
+import { arc } from '@/lib/arcade-theme';
 
 export default function AuthCallback() {
-  const { session } = useAuth();
-  const [timedOut, setTimedOut] = useState(false);
+  const { session, loading, profileLoading, nicknameReady } = useAuth();
 
-  useEffect(() => {
-    const t = setTimeout(() => setTimedOut(true), 5000);
-    return () => clearTimeout(t);
-  }, []);
-
-  if (session) return <Redirect href="/" />;
-  if (timedOut) return <Redirect href="/sign-in" />;
+  if (!loading && !profileLoading) {
+    if (session && nicknameReady) return <Redirect href="/" />;
+    if (session && !nicknameReady) return <Redirect href="/pick-nickname" />;
+    return <Redirect href="/sign-in" />;
+  }
 
   return (
-    <View className="flex-1 items-center justify-center bg-white">
-      <ActivityIndicator size="large" />
+    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: arc.bg }}>
+      <ActivityIndicator size="large" color={arc.secondaryContainer} />
     </View>
   );
 }
