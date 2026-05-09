@@ -7,8 +7,15 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { supabase } from '@/lib/supabase';
 import { isNicknameTaken, upsertNickname } from '@/lib/profile';
 import { useAuth } from '@/lib/auth-context';
-import { arc, arcSpace, arcType } from '@/lib/arcade-theme';
+import { ArcadeColors as C, ArcadeSpacing as S, ArcadeFonts as F } from "@/constants/theme";
 
+const SUGGESTIONS = [
+  { n: 'CRITHIT', c: C.primaryBright },
+  { n: 'V01D_KING', c: C.secondaryBright },
+  { n: 'SYN7AX', c: C.tertiaryDim },
+  { n: 'GG_WP', c: C.secondaryBright },
+  { n: 'ACE_4', c: C.primaryBright },
+];
 const NICK_RE = /^[A-Z0-9_]*$/;
 
 type RuleState = 'pass' | 'fail' | 'pending' | 'idle';
@@ -16,18 +23,18 @@ type RuleState = 'pass' | 'fail' | 'pending' | 'idle';
 function RuleRow({ label, state }: { label: string; state: RuleState }) {
   const pass = state === 'pass';
   const checking = state === 'pending';
-  const color = pass ? arc.tertiary : state === 'idle' ? arc.outline : arc.error;
+  const color = pass ? C.tertiaryDim : state === 'idle' ? C.outline : C.error;
   return (
     <View style={styles.ruleRow}>
       <View style={[styles.ruleCheck, { borderColor: color }]}>
         {checking
-          ? <ActivityIndicator size={8} color={arc.secondaryContainer} />
+          ? <ActivityIndicator size={8} color={C.secondaryBright} />
           : pass
-            ? <Text style={{ color: arc.bg, fontSize: 9 }}>✓</Text>
+            ? <Text style={{ color: C.background, fontSize: 9 }}>✓</Text>
             : null
         }
       </View>
-      <Text style={[arcType.labelSm, { color, letterSpacing: 1 }]}>{label}</Text>
+      <Text style={[F.labelSm, { color, letterSpacing: 1 }]}>{label}</Text>
     </View>
   );
 }
@@ -85,6 +92,12 @@ export default function PickNickname() {
     checkAvailability(upper);
   }
 
+  function fillSuggestion(name: string) {
+    const upper = name.toUpperCase();
+    setNick(upper);
+    checkAvailability(upper);
+  }
+
   async function handleSubmit() {
     if (!allValid || submitting) return;
     setSubmitting(true);
@@ -138,18 +151,18 @@ export default function PickNickname() {
             onPress={handleBack}
             disabled={backPending}
           >
-            <Text style={[arcType.labelMd, { color: arc.ink }]}>←</Text>
+            <Text style={[F.labelMd, { color: C.onSurface }]}>←</Text>
           </Pressable>
-          <View style={{ flex: 1, marginLeft: arcSpace.sm }}>
-            <Text style={[arcType.headlineMd, { color: arc.ink, letterSpacing: 2, textTransform: 'uppercase' }]}>
+          <View style={{ flex: 1, marginLeft: S.sm }}>
+            <Text style={[F.headlineMd, { color: C.onSurface, letterSpacing: 2, textTransform: 'uppercase' }]}>
               Pick Handle
             </Text>
-            <Text style={[arcType.labelSm, { color: arc.outline, letterSpacing: 1, marginTop: 2 }]}>
+            <Text style={[F.labelSm, { color: C.outline, letterSpacing: 1, marginTop: 2 }]}>
               STEP 02 / 03 · NEW PLAYER
             </Text>
           </View>
-          <View style={[styles.xpBadge, { borderColor: arc.tertiary + '55', backgroundColor: arc.tertiary + '11' }]}>
-            <Text style={[arcType.labelSm, { color: arc.tertiary, letterSpacing: 1 }]}>+15 XP</Text>
+          <View style={[styles.xpBadge, { borderColor: C.tertiaryDim + '55', backgroundColor: C.tertiaryDim + '11' }]}>
+            <Text style={[F.labelSm, { color: C.tertiaryDim, letterSpacing: 1 }]}>+15 XP</Text>
           </View>
         </View>
 
@@ -157,7 +170,7 @@ export default function PickNickname() {
         <View style={styles.progressTrack}>
           <View style={styles.progressFill}>
             <LinearGradient
-              colors={[arc.secondaryContainer, arc.secondaryContainer + 'cc']}
+              colors={[C.secondaryBright, C.secondaryBright + 'cc']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={StyleSheet.absoluteFillObject}
@@ -170,56 +183,56 @@ export default function PickNickname() {
         {/* Avatar preview */}
         <View style={styles.avatarCard}>
           <LinearGradient
-            colors={[arc.primaryContainer, arc.secondaryContainer]}
+            colors={[C.primaryBright, C.secondaryBright]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.avatarBox}
           >
-            <Text style={[arcType.headlineMd, { color: arc.bg }]}>{initial}</Text>
+            <Text style={[F.headlineMd, { color: C.background }]}>{initial}</Text>
           </LinearGradient>
           <View style={{ flex: 1 }}>
             <Text
               style={[
-                arcType.headlineMd,
-                { color: upperNick.length > 0 ? arc.ink : arc.outline, letterSpacing: 1 },
+                F.headlineMd,
+                { color: upperNick.length > 0 ? C.onSurface : C.outline, letterSpacing: 1 },
               ]}
               numberOfLines={1}
             >
               {upperNick.length > 0 ? upperNick : 'PICK ONE'}
             </Text>
-            <Text style={[arcType.labelSm, { color: arc.outline, letterSpacing: 1, marginTop: 2 }]}>
+            <Text style={[F.labelSm, { color: C.outline, letterSpacing: 1, marginTop: 2 }]}>
               LV.01 · 0 XP · ROOKIE
             </Text>
           </View>
-          <View style={[styles.freePill, { borderColor: arc.tertiary + '55', backgroundColor: arc.tertiary + '11' }]}>
-            <Text style={[arcType.labelSm, { color: arc.tertiary, letterSpacing: 1 }]}>◉ FREE</Text>
+          <View style={[styles.freePill, { borderColor: C.tertiaryDim + '55', backgroundColor: C.tertiaryDim + '11' }]}>
+            <Text style={[F.labelSm, { color: C.tertiaryDim, letterSpacing: 1 }]}>◉ FREE</Text>
           </View>
         </View>
 
         {/* Profile-fetch error retry */}
         {profileError && (
           <Pressable style={styles.retryPill} onPress={refreshProfile}>
-            <Text style={[arcType.labelSm, { color: arc.error, letterSpacing: 1 }]}>⚠ FETCH ERROR — TAP TO RETRY</Text>
+            <Text style={[F.labelSm, { color: C.error, letterSpacing: 1 }]}>⚠ FETCH ERROR — TAP TO RETRY</Text>
           </Pressable>
         )}
 
         {/* Big input */}
         <View style={styles.inputBox}>
           <View style={styles.inputTopRow}>
-            <Text style={[arcType.labelSm, { color: arc.tertiary, letterSpacing: 2 }]}>YOUR HANDLE</Text>
-            <Text style={[arcType.labelSm, { color: arc.outline, letterSpacing: 1 }]}>{upperNick.length} / 16</Text>
+            <Text style={[F.labelSm, { color: C.tertiaryDim, letterSpacing: 2 }]}>YOUR HANDLE</Text>
+            <Text style={[F.labelSm, { color: C.outline, letterSpacing: 1 }]}>{upperNick.length} / 16</Text>
           </View>
           <TextInput
-            style={[arcType.headlineLgMb, styles.inputText]}
+            style={[F.headlineLgMb, styles.inputText]}
             value={upperNick}
             onChangeText={handleChange}
             autoCapitalize="characters"
             autoCorrect={false}
             maxLength={16}
-            placeholderTextColor={arc.outline}
+            placeholderTextColor={C.outline}
             placeholder="TYPE HERE"
-            selectionColor={arc.tertiary}
-            cursorColor={arc.tertiary}
+            selectionColor={C.tertiaryDim}
+            cursorColor={C.tertiaryDim}
           />
         </View>
 
@@ -230,6 +243,24 @@ export default function PickNickname() {
           <RuleRow label="HANDLE NOT TAKEN" state={ruleAvail} />
         </View>
 
+        {/* Suggestions */}
+        <View style={styles.suggestionsSection}>
+          <Text style={[F.labelSm, { color: C.outline, letterSpacing: 2, marginBottom: S.sm }]}>
+            // SUGGESTED HANDLES
+          </Text>
+          <View style={styles.suggestionsRow}>
+            {SUGGESTIONS.map(s => (
+              <Pressable
+                key={s.n}
+                style={[styles.suggestionChip, { borderColor: s.c + '55' }]}
+                onPress={() => fillSuggestion(s.n)}
+              >
+                <Text style={[F.labelMd, { color: s.c, letterSpacing: 1 }]}>{s.n}</Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+
         {/* Bottom CTAs */}
         <View style={styles.bottomRow}>
           <Pressable
@@ -237,7 +268,7 @@ export default function PickNickname() {
             onPress={handleBack}
             disabled={backPending}
           >
-            <Text style={[arcType.labelMd, { color: arc.ink, letterSpacing: 2 }]}>
+            <Text style={[F.labelMd, { color: C.onSurface, letterSpacing: 2 }]}>
               {backPending ? '...' : '← BACK'}
             </Text>
           </Pressable>
@@ -250,10 +281,10 @@ export default function PickNickname() {
             disabled={!allValid || submitting}
           >
             {submitting
-              ? <ActivityIndicator color={arc.onTertiary} size="small" />
+              ? <ActivityIndicator color={C.onTertiary} size="small" />
               : (
                 <>
-                  <Text style={[arcType.labelMd, { color: arc.onTertiary, letterSpacing: 2, marginLeft: arcSpace.xs }]}>
+                  <Text style={[F.labelMd, { color: C.onTertiary, letterSpacing: 2, marginLeft: S.xs }]}>
                     ENTER GAME
                   </Text>
                 </>
@@ -269,36 +300,36 @@ export default function PickNickname() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: arc.bg,
+    backgroundColor: C.background,
   },
   scroll: {
-    paddingHorizontal: arcSpace.md,
+    paddingHorizontal: S.md,
     paddingTop: 64,
-    paddingBottom: arcSpace.xl,
+    paddingBottom: S.xl,
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: arcSpace.sm,
+    marginBottom: S.sm,
   },
   backBtn: {
     width: 32,
     height: 32,
-    backgroundColor: arc.surface,
+    backgroundColor: C.surface,
     borderWidth: 1,
-    borderColor: arc.surfaceHigh,
+    borderColor: C.surfaceContainerHigh,
     alignItems: 'center',
     justifyContent: 'center',
   },
   xpBadge: {
-    paddingHorizontal: arcSpace.sm,
-    paddingVertical: arcSpace.xs,
+    paddingHorizontal: S.sm,
+    paddingVertical: S.xs,
     borderWidth: 1,
   },
   progressTrack: {
     height: 10,
-    backgroundColor: arc.surfaceHigh,
-    marginBottom: arcSpace.md,
+    backgroundColor: C.surfaceContainerHigh,
+    marginBottom: S.md,
     overflow: 'hidden',
     position: 'relative',
   },
@@ -306,7 +337,7 @@ const styles = StyleSheet.create({
     width: '66%',
     height: '100%',
     overflow: 'hidden',
-    shadowColor: arc.secondaryContainer,
+    shadowColor: C.secondaryBright,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.6,
     shadowRadius: 6,
@@ -316,18 +347,18 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     width: 1,
-    backgroundColor: arc.bg,
+    backgroundColor: C.background,
     opacity: 0.6,
   },
   avatarCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: arc.surface,
+    backgroundColor: C.surface,
     borderWidth: 1,
-    borderColor: arc.surfaceHigh,
-    padding: arcSpace.sm + 4,
-    marginBottom: arcSpace.md,
-    gap: arcSpace.sm + 4,
+    borderColor: C.surfaceContainerHigh,
+    padding: S.sm + 4,
+    marginBottom: S.md,
+    gap: S.sm + 4,
   },
   avatarBox: {
     width: 56,
@@ -336,25 +367,25 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   freePill: {
-    paddingHorizontal: arcSpace.sm,
-    paddingVertical: arcSpace.xs,
+    paddingHorizontal: S.sm,
+    paddingVertical: S.xs,
     borderWidth: 1,
   },
   retryPill: {
-    backgroundColor: arc.errorContainer,
+    backgroundColor: C.errorContainer,
     borderWidth: 1,
-    borderColor: arc.error + '55',
-    padding: arcSpace.sm,
-    marginBottom: arcSpace.md,
+    borderColor: C.error + '55',
+    padding: S.sm,
+    marginBottom: S.md,
     alignItems: 'center',
   },
   inputBox: {
-    backgroundColor: arc.surface,
+    backgroundColor: C.surface,
     borderWidth: 1.5,
-    borderColor: arc.tertiary,
-    padding: arcSpace.sm + 4,
-    marginBottom: arcSpace.sm,
-    shadowColor: arc.tertiary,
+    borderColor: C.tertiaryDim,
+    padding: S.sm + 4,
+    marginBottom: S.sm,
+    shadowColor: C.tertiaryDim,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.35,
     shadowRadius: 10,
@@ -363,24 +394,24 @@ const styles = StyleSheet.create({
   inputTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: arcSpace.xs + 2,
+    marginBottom: S.xs + 2,
   },
   inputText: {
-    color: arc.ink,
+    color: C.onSurface,
     paddingVertical: 0,
   },
   rulesPanel: {
-    backgroundColor: arc.surface,
+    backgroundColor: C.surface,
     borderWidth: 1,
-    borderColor: arc.surfaceHigh,
-    padding: arcSpace.sm + 2,
-    gap: arcSpace.xs + 2,
-    marginBottom: arcSpace.xl,
+    borderColor: C.surfaceContainerHigh,
+    padding: S.sm + 2,
+    gap: S.xs + 2,
+    marginBottom: S.md,
   },
   ruleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: arcSpace.sm,
+    gap: S.sm,
   },
   ruleCheck: {
     width: 14,
@@ -390,27 +421,41 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: 'transparent',
   },
+  suggestionsSection: {
+    marginBottom: S.xl,
+  },
+  suggestionsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: S.xs + 2,
+  },
+  suggestionChip: {
+    paddingHorizontal: S.sm + 2,
+    paddingVertical: S.xs + 1,
+    backgroundColor: C.surface,
+    borderWidth: 1,
+  },
   bottomRow: {
     flexDirection: 'row',
-    gap: arcSpace.sm,
+    gap: S.sm,
   },
   backBtnBottom: {
     flex: 1,
-    paddingVertical: arcSpace.sm + 4,
+    paddingVertical: S.sm + 4,
     borderWidth: 1,
-    borderColor: arc.outline,
+    borderColor: C.outline,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'transparent',
   },
   submitBtn: {
     flex: 2,
-    paddingVertical: arcSpace.sm + 4,
-    backgroundColor: arc.tertiary,
+    paddingVertical: S.sm + 4,
+    backgroundColor: C.tertiaryDim,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: arc.tertiary,
+    shadowColor: C.tertiaryDim,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.5,
     shadowRadius: 12,
