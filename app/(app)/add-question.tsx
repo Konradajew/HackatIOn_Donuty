@@ -24,10 +24,14 @@ export default function AddQuestionScreen() {
   const [explanation, setExplanation] = useState('');
   const [showCatModal, setShowCatModal] = useState(false);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!question.trim()) return;
-    addQuestion({ cat: category, t: question.trim(), user: 'you', answers, correct, explanation: explanation.trim() });
-    router.back();
+    try {
+      await addQuestion({ cat: category, t: question.trim(), user: 'you', answers, correct, explanation: explanation.trim() });
+      router.back();
+    } catch {
+      // question didn't save — stay on screen so user can retry
+    }
   };
 
   const setAnswer = (label: AnswerLabel, value: string) =>

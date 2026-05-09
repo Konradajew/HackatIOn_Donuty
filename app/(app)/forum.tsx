@@ -45,7 +45,7 @@ function QuestionCard({ q, onPress }: { q: Question; onPress: () => void }) {
 
 export default function ForumScreen() {
   const router = useRouter();
-  const { questions } = useQuestions();
+  const { questions, loading, refresh } = useQuestions();
   const [selectedChip, setSelectedChip] = useState<string>('ALL');
   const [search, setSearch] = useState<string>('');
   const [sortMode, setSortMode] = useState<'TOP' | 'NEW'>('TOP');
@@ -132,8 +132,11 @@ export default function ForumScreen() {
           style={s.questionList}
           contentContainerStyle={{ gap: 10, paddingBottom: 20 }}
           showsVerticalScrollIndicator={false}
+          onScrollEndDrag={() => refresh()}
         >
-          {sorted.length === 0 ? (
+          {loading ? (
+            <Text style={s.emptyText}>LOADING...</Text>
+          ) : sorted.length === 0 ? (
             <Text style={s.emptyText}>NO QUESTIONS</Text>
           ) : (
             sorted.map(q => (

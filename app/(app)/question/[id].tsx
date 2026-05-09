@@ -5,19 +5,29 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { arc } from '@/lib/arcade-theme';
-import { useQuestions, avgDifficulty, type AnswerKey } from '@/lib/forum-store';
+import { useQuestions, type AnswerKey } from '@/lib/forum-store';
 
 const ANSWER_ROWS: AnswerKey[][] = [['A', 'B'], ['C', 'D']];
 
 export default function QuestionDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { questions, submitVote, hasVotedYesNo } = useQuestions();
+  const { questions, submitVote, hasVotedYesNo, loading } = useQuestions();
 
   const [pendingDiff, setPendingDiff] = useState<number>(0);
   const [pendingVerdict, setPendingVerdict] = useState<'up' | 'down' | null>(null);
 
   const q = questions.find(x => x.id === id);
+
+  if (!q && loading) {
+    return (
+      <View style={s.root}><StatusBar style="light" />
+        <SafeAreaView style={s.safe}>
+          <Text style={s.notFound}>LOADING...</Text>
+        </SafeAreaView>
+      </View>
+    );
+  }
 
   if (!q) {
     return (
@@ -35,11 +45,10 @@ export default function QuestionDetail() {
 
   const alreadyVoted = hasVotedYesNo(q.id);
   const canSubmit = !alreadyVoted && pendingDiff > 0 && pendingVerdict !== null;
-  const avg = avgDifficulty(q);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!canSubmit) return;
-    submitVote(q.id, { diff: pendingDiff, verdict: pendingVerdict! });
+    await submitVote(q.id, { diff: pendingDiff, verdict: pendingVerdict! });
   };
 
   const hint =
@@ -125,7 +134,7 @@ export default function QuestionDetail() {
             </View>
             <View style={s.statBox}>
               <Text style={[s.statIcon, { color: arc.secondaryContainer }]}>◆</Text>
-              <Text style={[s.statValue, { color: arc.secondaryContainer }]}>{avg > 0 ? `${avg}/5` : '?/5'}</Text>
+              <Text style={[s.statValue, { color: arc.secondaryContainer }]}>{q.diffAvg !== null ? `${q.diffAvg.toFixed(1)}/5` : '?/5'}</Text>
               <Text style={s.statLabel}>DIFF</Text>
             </View>
           </View>
