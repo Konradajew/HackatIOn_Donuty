@@ -92,6 +92,8 @@ function ExitButton({ onPress }: { onPress: () => void }) {
 function TricardLogo() {
   return (
     <View style={s.logoWrapper}>
+      <Text style={[s.logoBase, s.logoShadowBack]} aria-hidden>TRICARD</Text>
+      <Text style={[s.logoBase, s.logoShadowMid]} aria-hidden>TRICARD</Text>
       <Text style={[s.logoBase, s.logoMain]}>TRICARD</Text>
     </View>
   );
@@ -302,23 +304,31 @@ const s = StyleSheet.create({
   },
 
   logoWrapper: {
-    width: SW - GUTTER * 2,
-    height: 88,
+    alignSelf: "center",
     alignItems: "center",
     justifyContent: "center",
   },
   logoBase: {
     fontFamily: "SpaceGrotesk_700Bold",
-    fontSize: SW > 380 ? 68 : 56,
-    letterSpacing: -2,
+    fontSize: 52,
+    letterSpacing: 6,
+    lineHeight: 58,
     textTransform: "uppercase",
+  },
+  logoShadowBack: {
     position: "absolute",
+    color: C.secondaryBright,
+    left: 6,
+    top: 6,
+  },
+  logoShadowMid: {
+    position: "absolute",
+    color: C.primaryBright,
+    left: 3,
+    top: 3,
   },
   logoMain: {
-    color: "#ffffff",
-    textShadowColor: C.primaryDim,
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 24,
+    color: C.onSurface,
   },
   tagline: {
     fontFamily: "JetBrainsMono_400Regular",
