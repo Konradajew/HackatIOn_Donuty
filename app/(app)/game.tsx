@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { View, Text, Pressable, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, Pressable, ScrollView, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, useLocalSearchParams, Redirect } from 'expo-router';
@@ -10,6 +10,7 @@ import { QuestionSheet } from '@/components/arcade/QuestionSheet';
 import { VictoryOverlay } from '@/components/arcade/VictoryOverlay';
 import { DefeatOverlay } from '@/components/arcade/DefeatOverlay';
 import { MatchProvider, useMatch, QUESTION_TIMEOUT_SENTINEL } from '@/lib/match-store';
+import { concedeMatch } from '@/lib/match-api';
 import { useAuth } from '@/lib/auth-context';
 import type { CardType } from '@/lib/match-api';
 
@@ -62,6 +63,25 @@ function GameInner() {
   const handleAnswer = useCallback(async (idx: number) => {
     try { await answer(idx); } catch {}
   }, [answer]);
+
+  const handleConcede = () => {
+    if (!snapshot) { router.replace('/'); return; }
+    Alert.alert(
+      'Concede match?',
+      'Your opponent wins.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Concede',
+          style: 'destructive',
+          onPress: async () => {
+            try { await concedeMatch(snapshot.match_id); } catch {}
+            router.replace('/');
+          },
+        },
+      ]
+    );
+  };
 
   // Countdown timer — only active when a question is pending
   useEffect(() => {
@@ -140,9 +160,16 @@ function GameInner() {
         start={{ x: 1, y: 1 }} end={{ x: 0, y: 0 }} pointerEvents="none" />
 
       <SafeAreaView style={s.safe}>
+        {/* Error banner */}
+        {error ? (
+          <View style={s.errorBanner}>
+            <Text style={s.errorBannerText}>{error}</Text>
+          </View>
+        ) : null}
+
         {/* Top bar */}
         <View style={s.topBar}>
-          <Pressable style={s.iconBtn} onPress={() => router.back()}>
+          <Pressable style={s.iconBtn} onPress={handleConcede}>
             <Text style={s.iconBtnText}>×</Text>
           </Pressable>
           <View style={s.roundCenter}>
@@ -226,10 +253,11 @@ function GameInner() {
         {/* Card hand */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false}
           contentContainerStyle={s.handScroll} style={s.handScrollView}>
-          {hand.map((c) => {
+          {hand.map((c, i) => {
             const ct = cardTypes[c.id] ?? 'DMG';
+            const handKey = `${c.id}-${i}`;
             return (
-              <Pressable key={c.id} onPress={() => setSelectedCardId(c.id)}>
+              <Pressable key={handKey} onPress={() => setSelectedCardId(c.id)}>
                 <BattleCard
                   type={toDisplayType(ct)}
                   cat={c.cat}
@@ -335,6 +363,22 @@ const s = StyleSheet.create({
   glowTop:    { position: 'absolute', top: 0, left: 0, right: 0, height: 300 },
   glowBottom: { position: 'absolute', bottom: 0, right: 0, width: 260, height: 260 },
   safe: { flex: 1, paddingHorizontal: arcSpace.md },
+
+  errorBanner: {
+    backgroundColor: arc.primaryContainer + '22',
+    borderWidth: 1,
+    borderColor: arc.primaryContainer + '55',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginBottom: 4,
+  },
+  errorBannerText: {
+    fontFamily: 'JetBrainsMono_500Medium',
+    fontSize: 10,
+    color: arc.primaryContainer,
+    letterSpacing: 0.5,
+    textAlign: 'center',
+  },
 
   topBar: { height: 64, flexDirection: 'row', alignItems: 'center', gap: 12 },
   iconBtn: {

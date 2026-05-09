@@ -52,6 +52,12 @@ export async function getCardTypes(): Promise<Record<number, CardType>> {
 }
 
 export async function getDefaultDeck(userId: string): Promise<number | null> {
+  const { data: prof } = await supabase
+    .from('profiles')
+    .select('selected_deck_id')
+    .eq('id', userId)
+    .maybeSingle();
+  if (prof?.selected_deck_id) return prof.selected_deck_id;
   const { data } = await supabase
     .from('decks')
     .select('id')
@@ -60,6 +66,44 @@ export async function getDefaultDeck(userId: string): Promise<number | null> {
     .limit(1)
     .single();
   return data?.id ?? null;
+}
+
+export type DeckRow = {
+  id: number;
+  deck_number: number;
+  cards: number[];
+  is_selected: boolean;
+};
+
+export async function listMyDecks(): Promise<DeckRow[]> {
+  const { data, error } = await supabase.rpc('list_my_decks');
+  if (error) throw error;
+  return (data as DeckRow[]) ?? [];
+}
+
+export async function upsertDeck(deckNumber: number, cards: number[]): Promise<number> {
+  const { data, error } = await supabase.rpc('upsert_deck', {
+    p_deck_number: deckNumber,
+    p_cards: cards,
+  });
+  if (error) throw error;
+  return data as number;
+}
+
+export async function deleteDeck(deckId: number): Promise<void> {
+  const { error } = await supabase.rpc('delete_deck', { p_deck_id: deckId });
+  if (error) throw error;
+}
+
+export async function setActiveDeck(deckId: number): Promise<void> {
+  const { error } = await supabase.rpc('set_active_deck', { p_deck_id: deckId });
+  if (error) throw error;
+}
+
+export async function concedeMatch(matchId: number): Promise<Snapshot> {
+  const { data, error } = await supabase.rpc('concede_match', { p_match_id: matchId });
+  if (error) throw error;
+  return data as Snapshot;
 }
 
 export type MatchOrQueueResult =

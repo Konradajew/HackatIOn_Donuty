@@ -5,19 +5,19 @@ import {
     TouchableOpacity,
     ScrollView,
     Dimensions,
+    ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '@/lib/supabase';
 import * as Haptics from 'expo-haptics';
-import {router} from "expo-router";
+import { router } from "expo-router";
 
-import { ArcadeColors as C, ArcadeSpacing as S } from '@/constants/theme';
-
-import { styles as s} from './deck.styles';
+import { ArcadeColors as C } from '@/constants/theme';
+import { styles as s } from './deck.styles';
+import { listMyDecks, upsertDeck, setActiveDeck } from '@/lib/match-api';
 
 const { width: SW } = Dimensions.get('window');
 
-// Kolor per typ — dostosuj gdy zmienią się typy w bazie
 const TYPE_COLOR: Record<string, string> = {
     DMG:           '#FF1F8F',
     HEAL:          '#C8FF1A',
@@ -28,78 +28,86 @@ const TYPE_COLOR: Record<string, string> = {
 };
 const tc = (type?: string | null) => (type && TYPE_COLOR[type]) || C.outlineVariant;
 
-// ── Wymiary ─────────────────────────────────────────────────────────────────
 const TOTAL_DECKS = 5;
 const DECK_SIZE   = 10;
 const SLOT_COLS   = 5;
 const PAD         = 12;
 const SLOT_GAP    = 5;
 const SLOT_W = (SW - PAD * 2 - SLOT_GAP * (SLOT_COLS - 1)) / SLOT_COLS;
-const SLOT_H = SLOT_W * 1.4;
 
 const TYPE_COLS = 3;
 const TYPE_GAP  = 8;
 const TYPE_W    = (SW - PAD * 2 - TYPE_GAP * (TYPE_COLS - 1)) / TYPE_COLS;
-const TYPE_H    = TYPE_W * 0.85;
 
-// ── Typy — schema public.cards ──────────────────────────────────────────────
-type CardType = {
+type CardTypeRow = {
     card_id: number;
     type: string;
     categories: string[] | null;
 };
 
-// ── Mock (aktywny gdy baza pusta) ───────────────────────────────────────────
-const MOCK: CardType[] = [
-    { card_id: 1, type: 'damage',   categories: ['MATH', 'TRAVEL', 'ENGLISH'] },
-    { card_id: 2, type: 'heal',     categories: ['MEDICINE', 'NATURE', 'MOVIES'] },
-    { card_id: 3, type: 'poison',   categories: ['CHEMISTRY', 'BOOKS', 'SPACE'] },
-    { card_id: 4, type: 'sabotage', categories: ['RELIGION', 'MUSIC', 'CULINARY'] },
-    { card_id: 5, type: '50/50',    categories: ['GAMES', 'HISTORY', 'FLAGS'] },
-    { card_id: 6, type: 'time',     categories: ['COUNTRIES', 'IT', 'TRIVIA'] },
-];
-
-// ── Główny ekran ────────────────────────────────────────────────────────────
 export default function DeckScreen() {
-    const [activeDeck, setActiveDeck] = useState(0);
-    // Każdy deck to tablica card_id (max 10, mogą się powtarzać)
+    const [activeDeck, setActiveDeckTab] = useState(0);
     const [decks, setDecks] = useState<number[][]>(
         Array.from({ length: TOTAL_DECKS }, () => [])
     );
-    const [cardTypes, setCardTypes] = useState<CardType[]>([]);
+    const [deckIds, setDeckIds] = useState<(number | null)[]>(
+        Array.from({ length: TOTAL_DECKS }, () => null)
+    );
+    const [activeDeckDbId, setActiveDeckDbId] = useState<number | null>(null);
+    const [cardTypes, setCardTypes] = useState<CardTypeRow[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
 
-    useEffect(() => { loadCards(); }, []);
+    useEffect(() => {
+        Promise.all([loadCards(), loadMyDecks()]).finally(() => setLoading(false));
+    }, []);
 
     async function loadCards() {
         const { data, error } = await supabase
             .from('cards')
             .select('card_id, type, categories')
             .order('card_id');
-
-        setCardTypes(
-            (!error && data && data.length > 0) ? (data as CardType[]) : MOCK
-        );
+        if (!error && data && data.length > 0) {
+            setCardTypes(data as CardTypeRow[]);
+        }
     }
 
-    // ── Pochodne ──────────────────────────────────────────────────────────────
+    async function loadMyDecks() {
+        try {
+            const rows = await listMyDecks();
+            if (!rows?.length) return;
+            const newDecks = Array.from({ length: TOTAL_DECKS }, () => [] as number[]);
+            const newIds = Array.from({ length: TOTAL_DECKS }, () => null as number | null);
+            let newActiveId: number | null = null;
+            for (const row of rows) {
+                const i = row.deck_number - 1;
+                if (i >= 0 && i < TOTAL_DECKS) {
+                    newDecks[i] = row.cards;
+                    newIds[i] = row.id;
+                }
+                if (row.is_selected) newActiveId = row.id;
+            }
+            setDecks(newDecks);
+            setDeckIds(newIds);
+            setActiveDeckDbId(newActiveId);
+        } catch (e) {
+            console.warn('Failed to load decks:', e);
+        }
+    }
+
     const currentDeck = decks[activeDeck];
     const filled      = currentDeck.length;
     const isFull      = filled >= DECK_SIZE;
+    const canSave     = filled === DECK_SIZE && !saving;
 
-    // Szybki lookup card_id → CardType
     const byId = Object.fromEntries(cardTypes.map(c => [c.card_id, c]));
 
-    // Ile każdego typu jest w aktualnym decku
     const countById: Record<number, number> = {};
-    for (const id of currentDeck)
-        countById[id] = (countById[id] ?? 0) + 1;
+    for (const id of currentDeck) countById[id] = (countById[id] ?? 0) + 1;
 
-    // ── Akcje ─────────────────────────────────────────────────────────────────
     function addCard(card_id: number) {
         if (isFull) return;
-        setDecks(prev => prev.map((d, i) =>
-            i === activeDeck ? [...d, card_id] : d
-        ));
+        setDecks(prev => prev.map((d, i) => i === activeDeck ? [...d, card_id] : d));
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
 
@@ -115,7 +123,38 @@ export default function DeckScreen() {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
 
-    // ── Render ────────────────────────────────────────────────────────────────
+    async function saveDeck() {
+        if (!canSave) return;
+        setSaving(true);
+        try {
+            const id = await upsertDeck(activeDeck + 1, currentDeck);
+            setDeckIds(prev => prev.map((v, i) => i === activeDeck ? id : v));
+        } catch (e) {
+            console.warn('Failed to save deck:', e);
+        } finally {
+            setSaving(false);
+        }
+    }
+
+    async function useThisDeck() {
+        const id = deckIds[activeDeck];
+        if (!id) return;
+        try {
+            await setActiveDeck(id);
+            setActiveDeckDbId(id);
+        } catch (e) {
+            console.warn('Failed to set active deck:', e);
+        }
+    }
+
+    if (loading) {
+        return (
+            <SafeAreaView style={[s.container, { justifyContent: 'center', alignItems: 'center' }]} edges={['top']}>
+                <ActivityIndicator color={C.secondaryBright} />
+            </SafeAreaView>
+        );
+    }
+
     return (
         <SafeAreaView style={s.container} edges={['top']}>
 
@@ -128,7 +167,9 @@ export default function DeckScreen() {
                 </View>
                 <View>
                     <Text style={s.title}>DECK BUILDER</Text>
-                    <Text style={s.subtitle}>{filled} / {DECK_SIZE} CARDS</Text>
+                    <Text style={[s.subtitle, filled === DECK_SIZE && { color: C.tertiaryDim }]}>
+                        {filled} / {DECK_SIZE} CARDS
+                    </Text>
                 </View>
                 <View style={s.headerRight}>
                     {filled > 0 && (
@@ -136,8 +177,16 @@ export default function DeckScreen() {
                             <Text style={s.clearBtnText}>CLEAR</Text>
                         </TouchableOpacity>
                     )}
-                    <TouchableOpacity style={s.saveBtn} activeOpacity={0.8}>
-                        <Text style={s.saveBtnText}>SAVE</Text>
+                    <TouchableOpacity
+                        style={[s.saveBtn, !canSave && { opacity: 0.35 }]}
+                        activeOpacity={0.8}
+                        onPress={saveDeck}
+                        disabled={!canSave}
+                    >
+                        {saving
+                            ? <ActivityIndicator size="small" color="#000" />
+                            : <Text style={s.saveBtnText}>SAVE</Text>
+                        }
                     </TouchableOpacity>
                 </View>
             </View>
@@ -150,16 +199,23 @@ export default function DeckScreen() {
                 style={s.tabsWrap}
             >
                 {Array.from({ length: TOTAL_DECKS }, (_, i) => {
-                    const active = activeDeck === i;
+                    const active  = activeDeck === i;
+                    const isUsed  = deckIds[i] !== null && deckIds[i] === activeDeckDbId;
                     return (
                         <TouchableOpacity
                             key={i}
-                            onPress={() => setActiveDeck(i)}
-                            style={[s.tab, active && s.tabActive]}
+                            onPress={() => setActiveDeckTab(i)}
+                            style={[
+                                s.tab,
+                                active && s.tabActive,
+                                isUsed && { borderColor: C.tertiaryDim },
+                            ]}
                             activeOpacity={0.8}
                         >
-                            <Text style={[s.tabTitle, active && s.tabTitleActive]}>DECK {i + 1}</Text>
-                            <Text style={[s.tabSub,   active && s.tabSubActive]}>
+                            <Text style={[s.tabTitle, active && s.tabTitleActive, isUsed && { color: C.tertiaryDim }]}>
+                                {isUsed ? '★ ' : ''}DECK {i + 1}
+                            </Text>
+                            <Text style={[s.tabSub, active && s.tabSubActive]}>
                                 {decks[i].length} CARDS
                             </Text>
                         </TouchableOpacity>
@@ -168,6 +224,34 @@ export default function DeckScreen() {
             </ScrollView>
 
             <ScrollView showsVerticalScrollIndicator={false}>
+
+                {/* ── "Use this deck" action bar ── */}
+                {deckIds[activeDeck] !== null && (
+                    <View style={{ flexDirection: 'row', paddingHorizontal: PAD, paddingTop: 10, gap: 8 }}>
+                        <TouchableOpacity
+                            style={{
+                                flex: 1,
+                                paddingVertical: 10,
+                                borderWidth: 1,
+                                borderColor: deckIds[activeDeck] === activeDeckDbId ? C.tertiaryDim : C.outlineVariant,
+                                backgroundColor: deckIds[activeDeck] === activeDeckDbId ? C.tertiaryDim + '22' : 'transparent',
+                                alignItems: 'center',
+                            }}
+                            onPress={useThisDeck}
+                            disabled={deckIds[activeDeck] === activeDeckDbId}
+                            activeOpacity={0.7}
+                        >
+                            <Text style={{
+                                fontFamily: 'JetBrainsMono_500Medium',
+                                fontSize: 11,
+                                letterSpacing: 1.5,
+                                color: deckIds[activeDeck] === activeDeckDbId ? C.tertiaryDim : C.outline,
+                            }}>
+                                {deckIds[activeDeck] === activeDeckDbId ? '★ ACTIVE DECK' : 'USE THIS DECK'}
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+                )}
 
                 {/* ── Sloty decku ── */}
                 <View style={s.sectionRow}>
@@ -223,7 +307,7 @@ export default function DeckScreen() {
                 {/* ── Wybór typów ── */}
                 <View style={s.sectionRow}>
                     <Text style={s.sectionText}>
-                        {isFull ? 'DECK PEŁNY · USUŃ KARTĘ ABY DODAĆ' : 'CHOOSE TYPE · TAP TO ADD'}
+                        {isFull ? 'DECK FULL · TAP SLOT ABOVE TO REMOVE' : 'CHOOSE TYPE · TAP TO ADD'}
                     </Text>
                 </View>
 
@@ -243,17 +327,14 @@ export default function DeckScreen() {
                                 disabled={isFull}
                                 activeOpacity={0.7}
                             >
-                                {/* Licznik w rogu */}
                                 {count > 0 && (
                                     <View style={[s.badge, { backgroundColor: col }]}>
                                         <Text style={s.badgeText}>{count}</Text>
                                     </View>
                                 )}
-
                                 <Text style={[s.typeCardType, { color: isFull ? C.outline : col }]}>
                                     {card.type}
                                 </Text>
-
                                 <Text style={s.typeCardCats}>
                                     {card.categories?.join('\n') ?? '—'}
                                 </Text>
@@ -267,4 +348,3 @@ export default function DeckScreen() {
         </SafeAreaView>
     );
 }
-
