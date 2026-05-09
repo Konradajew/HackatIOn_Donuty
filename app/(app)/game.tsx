@@ -1,90 +1,135 @@
-import { useState, useCallback } from 'react';
-import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { View, Text, Pressable, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams, Redirect } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { arc, arcSpace } from '@/lib/arcade-theme';
 import { BattleCard } from '@/components/arcade/BattleCard';
 import { QuestionSheet } from '@/components/arcade/QuestionSheet';
 import { VictoryOverlay } from '@/components/arcade/VictoryOverlay';
 import { DefeatOverlay } from '@/components/arcade/DefeatOverlay';
-import { getGameQuestion, type GameQuestion } from '@/lib/forum-api';
-import { applyEffect } from '@/lib/difficulty';
+import { MatchProvider, useMatch, QUESTION_TIMEOUT_SENTINEL } from '@/lib/match-store';
+import { useAuth } from '@/lib/auth-context';
+import type { CardType } from '@/lib/match-api';
 
-type CardType = 'DMG' | 'HEAL' | 'DOT';
+// Map our 6 game types → the 3 display types BattleCard understands
+type DisplayType = 'DMG' | 'HEAL' | 'DOT';
+function toDisplayType(ct: CardType): DisplayType {
+  if (ct === 'HEAL' || ct === 'HEAL_REMOVE' || ct === 'TIME_BUFF') return 'HEAL';
+  if (ct === 'POISON') return 'DOT';
+  return 'DMG';
+}
 
-const HAND: { type: CardType; cat: string; val: number }[] = [
-  { type: 'DMG',  cat: 'math',     val: 6 },
-  { type: 'HEAL', cat: 'medicine', val: 4 },
-  { type: 'DMG',  cat: 'travel',   val: 5 },
-  { type: 'DOT',  cat: 'space',    val: 3 },
-  { type: 'HEAL', cat: 'movies',   val: 5 },
-];
+const CARD_DISPLAY_VAL: Record<CardType, number> = {
+  DMG: 15, HEAL: 12, POISON: 3, DMG_BLOCK: 5, HEAL_REMOVE: 4, TIME_BUFF: 5,
+};
 
-const TOTAL_ROUNDS = 10;
+const TYPE_LABEL: Record<CardType, string> = {
+  DMG: 'DMG · DAMAGE',
+  HEAL: 'HEAL · RESTORE',
+  POISON: 'POISON · DOT',
+  DMG_BLOCK: 'BLOCK · DEBUFF',
+  HEAL_REMOVE: 'CURE · RESTORE',
+  TIME_BUFF: 'TIME · BUFF',
+};
 
-export default function GameScreen() {
+function GameInner() {
   const router = useRouter();
-  const [selectedCard, setSelectedCard]   = useState(2);
-  const [questionOpen, setQuestionOpen]   = useState(false);
-  const [victoryOpen, setVictoryOpen]     = useState(false);
-  const [defeatOpen, setDefeatOpen]       = useState(false);
-  const [opponentHp, setOpponentHp]       = useState(62);
-  const [playerHp, setPlayerHp]           = useState(84);
-  const [round, setRound]                 = useState(4);
-  const [currentQuestion, setCurrentQuestion] = useState<GameQuestion | null>(null);
-  const [noQuestionCat, setNoQuestionCat]     = useState<string | null>(null);
-  const [lastPlay, setLastPlay] = useState<{
-    type: CardType; cat: string; val: number; correct: boolean; scaledVal: number;
-  } | null>({ type: 'DMG', cat: 'MATH', val: 6, correct: true, scaledVal: 6 });
+  const { session } = useAuth();
+  const uid = session?.user.id ?? '';
 
-  const card = HAND[selectedCard];
+  const { snapshot, cardTypes, loading, error, play, answer, questionDeadline } = useMatch();
 
+  const [selectedCardId, setSelectedCardId] = useState<number | null>(null);
+  const [timeLeft, setTimeLeft] = useState(15);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const autoSubmittedRef = useRef(false);
+
+  // Stable callbacks — must be declared before any early return (Rules of Hooks)
   const handlePlayCard = useCallback(async () => {
-    const q = await getGameQuestion(card.cat);
-    if (!q) {
-      setNoQuestionCat(card.cat);
-      setTimeout(() => setNoQuestionCat(null), 3000);
+    if (!snapshot) return;
+    const isMyTurn = snapshot.whose_turn === uid;
+    const isQuestionActive = snapshot.current_question.q_id != null;
+    const currentHand = snapshot.you.hand;
+    const cardId = currentHand.find(c => c.id === selectedCardId)
+      ? selectedCardId
+      : (currentHand[0]?.id ?? null);
+    if (!cardId || !isMyTurn || isQuestionActive) return;
+    try { await play(cardId); } catch {}
+  }, [snapshot, uid, selectedCardId, play]);
+
+  const handleAnswer = useCallback(async (idx: number) => {
+    try { await answer(idx); } catch {}
+  }, [answer]);
+
+  // Countdown timer — only active when a question is pending
+  useEffect(() => {
+    if (questionDeadline == null) {
+      if (timerRef.current) clearInterval(timerRef.current);
+      setTimeLeft(15);
+      autoSubmittedRef.current = false;
       return;
     }
-    setCurrentQuestion(q);
-    setQuestionOpen(true);
-  }, [card.cat]);
+    const tick = () => {
+      const remaining = Math.max(0, Math.ceil((questionDeadline - Date.now()) / 1000));
+      setTimeLeft(remaining);
+    };
+    tick();
+    timerRef.current = setInterval(tick, 200);
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, [questionDeadline]);
 
-  const handleAnswer = useCallback((answerIndex: number | null) => {
-    setQuestionOpen(false);
-    const difficulty = currentQuestion?.difficulty ?? 1;
-    const scaledVal  = applyEffect(card.val, card.type, difficulty);
-    const isCorrect  = answerIndex !== null && answerIndex === (currentQuestion?.correctIndex ?? -1);
-
-    setRound(r => Math.min(r + 1, TOTAL_ROUNDS));
-    setLastPlay({ ...card, correct: isCorrect, scaledVal });
-
-    if (isCorrect) {
-      setOpponentHp(prev => {
-        const next = Math.max(0, prev - scaledVal);
-        if (next <= 0) setTimeout(() => setVictoryOpen(true), 350);
-        return next;
-      });
-    } else {
-      setPlayerHp(prev => {
-        const next = Math.max(0, prev - 6);
-        if (next <= 0) setTimeout(() => setDefeatOpen(true), 350);
-        return next;
-      });
+  // Auto-submit on timeout
+  useEffect(() => {
+    if (timeLeft <= 0 && questionDeadline != null && !autoSubmittedRef.current) {
+      autoSubmittedRef.current = true;
+      answer(QUESTION_TIMEOUT_SENTINEL).catch(() => {});
     }
-  }, [card, currentQuestion]);
+  }, [timeLeft, questionDeadline]);
 
-  const TYPE_LABEL: Record<CardType, string> = { DMG: 'DMG · DAMAGE', HEAL: 'HEAL · RESTORE', DOT: 'DOT · POISON' };
-  const TYPE_COLOR: Record<CardType, string> = {
-    DMG:  arc.primaryContainer,
-    HEAL: arc.secondaryContainer,
-    DOT:  arc.tertiary,
+  if (loading) {
+    return (
+      <View style={{ flex: 1, backgroundColor: arc.bg, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator color={arc.secondaryContainer} />
+      </View>
+    );
+  }
+
+  if (!snapshot) {
+    return (
+      <View style={{ flex: 1, backgroundColor: arc.bg, justifyContent: 'center', alignItems: 'center' }}>
+        <Text style={{ color: arc.outline }}>Match not found</Text>
+        {error ? <Text style={{ color: arc.primaryContainer, marginTop: 8 }}>{error}</Text> : null}
+      </View>
+    );
+  }
+
+  const myHp   = snapshot.you.hp;
+  const oppHp  = snapshot.opponent.hp;
+  const myTurn = snapshot.whose_turn === uid;
+  const hand   = snapshot.you.hand;
+  const questionActive = snapshot.current_question.q_id != null;
+
+  // Derive overlay state
+  const isFinished  = !snapshot.is_currently_played || snapshot.finished_at != null;
+  const isWin  = isFinished && snapshot.winner_id === uid;
+  const isLoss = isFinished && snapshot.winner_id != null && snapshot.winner_id !== uid;
+  const isDraw = isFinished && snapshot.winner_id == null && snapshot.finished_at != null;
+
+  const navigateSummary = (result: 'win' | 'loss' | 'draw') => {
+    router.push({ pathname: '/game-summary', params: { matchId: String(snapshot.match_id), result } } as never);
   };
-  const accent      = TYPE_COLOR[card.type];
-  const difficulty  = currentQuestion?.difficulty ?? 1;
-  const previewVal  = applyEffect(card.val, card.type, difficulty);
+
+  // Ensure selectedCard is valid in current hand
+  const validSelected = hand.find(c => c.id === selectedCardId) ? selectedCardId : (hand[0]?.id ?? null);
+
+  const selectedEntry = hand.find(c => c.id === validSelected);
+  const selectedType: CardType = selectedEntry ? (cardTypes[selectedEntry.id] ?? 'DMG') : 'DMG';
+  const displayType = toDisplayType(selectedType);
+  const displayVal  = CARD_DISPLAY_VAL[selectedType];
+
+  const oppNick = snapshot.opponent.id === '00000000-0000-0000-0000-000000000b07' ? 'BOT' : 'Opponent';
 
   return (
     <View style={s.root}>
@@ -101,11 +146,15 @@ export default function GameScreen() {
             <Text style={s.iconBtnText}>×</Text>
           </Pressable>
           <View style={s.roundCenter}>
-            <Text style={s.roundLabel}>ROUND {round} / {TOTAL_ROUNDS}</Text>
-            <Text style={s.turnText}>Your Turn</Text>
+            <Text style={s.roundLabel}>
+              DISCARD {snapshot.you.discard_pile.length} · DECK {snapshot.you.remaining_cards.length}
+            </Text>
+            <Text style={s.turnText}>{myTurn ? 'Your Turn' : "Opponent's Turn"}</Text>
           </View>
-          <View style={s.timerBox}>
-            <Text style={s.timerText}>0:12</Text>
+          <View style={[s.timerBox, questionActive && { borderColor: arc.primaryContainer + '88' }]}>
+            <Text style={[s.timerText, questionActive && timeLeft <= 5 && { color: arc.primaryContainer }]}>
+              {questionActive ? `${timeLeft}s` : '—'}
+            </Text>
           </View>
         </View>
 
@@ -113,137 +162,171 @@ export default function GameScreen() {
         <View style={s.opponentPanel}>
           <View style={s.opponentInner}>
             <View style={s.opponentAvatar}>
-              <Text style={s.opponentAvatarText}>G</Text>
+              <Text style={s.opponentAvatarText}>{oppNick[0]}</Text>
             </View>
             <View style={s.opponentInfo}>
               <View style={s.opponentNameRow}>
-                <Text style={s.opponentName}>Glazer</Text>
-                <Text style={s.opponentHpLabel}>{opponentHp}/100</Text>
+                <Text style={s.opponentName}>{oppNick}</Text>
+                <Text style={s.opponentHpLabel}>{oppHp}/100</Text>
               </View>
               <View style={s.hpTrack}>
                 <LinearGradient
-                  colors={[arc.primaryContainer, arc.errorContainer]}
-                  style={[s.hpFill, { width: `${opponentHp}%` }]}
+                  colors={[arc.primaryContainer, arc.errorContainer ?? arc.primaryContainer]}
+                  style={[s.hpFill, { width: `${oppHp}%` }]}
                   start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
                 />
               </View>
               <View style={s.opponentChips}>
-                <View style={[s.statusChip, { backgroundColor: arc.tertiary + '22' }]}>
-                  <Text style={[s.statusChipText, { color: arc.tertiary }]}>POISON · 2T</Text>
-                </View>
-                <Text style={s.levelText}>LV.24 BOSS</Text>
+                {(snapshot.opponent.status_public.ps ?? 0) > 0 && (
+                  <View style={[s.statusChip, { backgroundColor: arc.tertiary + '22' }]}>
+                    <Text style={[s.statusChipText, { color: arc.tertiary }]}>
+                      POISON ×{snapshot.opponent.status_public.ps}
+                    </Text>
+                  </View>
+                )}
+                <Text style={s.levelText}>HAND {snapshot.opponent.hand_size}</Text>
               </View>
             </View>
           </View>
         </View>
 
-        {/* Battlefield — last play */}
+        {/* Battlefield */}
         <View style={s.battlefield}>
-          {noQuestionCat ? (
-            <>
-              <Text style={s.lastPlayLabel}>NO QUESTION AVAILABLE</Text>
-              <Text style={[s.noPlayText, { color: arc.outline, marginTop: 6 }]}>
-                {noQuestionCat} HAS NO APPROVED QUESTIONS YET
-              </Text>
-            </>
-          ) : lastPlay ? (
-            <>
-              <Text style={s.lastPlayLabel}>LAST PLAY</Text>
-              <View style={s.lastPlayRow}>
-                <BattleCard type={lastPlay.type} cat={lastPlay.cat} val={lastPlay.scaledVal} w={70} sel />
-                <View style={s.lastPlayMeta}>
-                  <Text style={[s.damageText, { color: lastPlay.correct ? arc.primaryContainer : arc.secondaryContainer }]}>
-                    {lastPlay.correct ? `−${lastPlay.scaledVal} HP` : '+6 DMG TO YOU'}
-                  </Text>
-                  <Text style={[s.answerResult, { color: arc.secondaryContainer }]}>
-                    {lastPlay.correct ? 'ANSWER ✓ CORRECT' : 'ANSWER ✗ WRONG'}
-                  </Text>
-                  {lastPlay.correct && <Text style={s.comboText}>+2 COMBO</Text>}
-                </View>
-              </View>
-            </>
-          ) : (
-            <Text style={s.noPlayText}>— PLAY A CARD —</Text>
-          )}
+          <Text style={s.noPlayText}>
+            {questionActive ? '— ANSWER THE QUESTION —' : myTurn ? '— PLAY A CARD —' : '— WAITING —'}
+          </Text>
         </View>
 
         {/* Player HP */}
         <View style={s.playerHpSection}>
           <View style={s.playerHpHeader}>
             <Text style={s.playerLabel}>You</Text>
-            <Text style={[s.opponentHpLabel, { color: arc.secondaryContainer }]}>{playerHp}/100</Text>
+            <Text style={[s.opponentHpLabel, { color: arc.secondaryContainer }]}>{myHp}/100</Text>
           </View>
           <View style={s.hpTrackPlayer}>
             <LinearGradient
               colors={[arc.secondaryContainer, arc.tertiary]}
-              style={[s.hpFill, { width: `${playerHp}%` }]}
+              style={[s.hpFill, { width: `${myHp}%` }]}
               start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
             />
           </View>
+          {(snapshot.you.status.ps ?? 0) > 0 && (
+            <Text style={{ fontFamily: 'JetBrainsMono_500Medium', fontSize: 9, color: arc.tertiary, marginTop: 3, letterSpacing: 0.5 }}>
+              POISON ×{snapshot.you.status.ps}
+            </Text>
+          )}
         </View>
 
         {/* Hand meta */}
         <View style={s.handMeta}>
-          <Text style={s.handMetaLeft}>YOUR HAND · {HAND.length}</Text>
-          <Text style={s.handMetaRight}>DECK 27 · DISCARD 13</Text>
+          <Text style={s.handMetaLeft}>HAND · {hand.length}</Text>
+          <Text style={s.handMetaRight}>DECK {snapshot.you.remaining_cards.length} · DISCARD {snapshot.you.discard_pile.length}</Text>
         </View>
 
         {/* Card hand */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false}
           contentContainerStyle={s.handScroll} style={s.handScrollView}>
-          {HAND.map((c, i) => (
-            <Pressable key={i} onPress={() => setSelectedCard(i)}>
-              <BattleCard {...c} w={62} sel={selectedCard === i} />
-            </Pressable>
-          ))}
+          {hand.map((c) => {
+            const ct = cardTypes[c.id] ?? 'DMG';
+            return (
+              <Pressable key={c.id} onPress={() => setSelectedCardId(c.id)}>
+                <BattleCard
+                  type={toDisplayType(ct)}
+                  cat={c.cat}
+                  val={CARD_DISPLAY_VAL[ct]}
+                  w={62}
+                  sel={c.id === validSelected}
+                />
+              </Pressable>
+            );
+          })}
         </ScrollView>
 
         {/* Selected card detail */}
-        <View style={[s.cardDetail, { borderColor: accent + '88' }]}>
+        <View style={[s.cardDetail, { borderColor: (arc.secondaryContainer) + '88' }]}>
           <View style={s.cardDetailMeta}>
-            <View style={[s.cardTypeChip, { backgroundColor: accent + '22' }]}>
-              <Text style={[s.cardTypeChipText, { color: accent }]}>{TYPE_LABEL[card.type]}</Text>
+            <View style={[s.cardTypeChip, { backgroundColor: arc.secondaryContainer + '22' }]}>
+              <Text style={[s.cardTypeChipText, { color: arc.secondaryContainer }]}>
+                {selectedEntry ? TYPE_LABEL[selectedType] : '—'}
+              </Text>
             </View>
-            <Text style={s.diffStars}>
-              {'★'.repeat(difficulty)}{'☆'.repeat(5 - difficulty)}
-            </Text>
             <View style={s.spacer} />
-            <Text style={[s.dmgLabel, { color: accent }]}>{previewVal} DMG</Text>
+            <Text style={[s.dmgLabel, { color: arc.secondaryContainer }]}>
+              {displayVal} {displayType === 'DMG' ? 'DMG' : displayType === 'HEAL' ? 'HP' : 'DOT'}
+            </Text>
           </View>
           <Pressable
-            style={[s.playBtn, { backgroundColor: accent, shadowColor: accent }]}
+            style={[
+              s.playBtn,
+              {
+                backgroundColor: myTurn && !questionActive && validSelected
+                  ? arc.secondaryContainer
+                  : arc.surfaceHigh,
+                shadowColor: arc.secondaryContainer,
+              },
+            ]}
             onPress={handlePlayCard}
+            disabled={!myTurn || questionActive || !validSelected}
           >
-            <Text style={s.playBtnText}>Play card ↗</Text>
+            <Text style={[s.playBtnText, { color: myTurn && !questionActive ? arc.bg : arc.outline }]}>
+              {myTurn && !questionActive ? 'Play card ↗' : questionActive ? 'Answering...' : 'Wait for your turn'}
+            </Text>
           </Pressable>
         </View>
       </SafeAreaView>
 
       <QuestionSheet
-        visible={questionOpen}
-        onClose={() => setQuestionOpen(false)}
+        visible={questionActive && myTurn}
+        onClose={() => {}}
         onSubmit={handleAnswer}
-        card={card}
-        question={currentQuestion?.title ?? ''}
-        answers={currentQuestion?.shuffledAnswers ?? []}
-        timerSec={8}
-        durationSec={8}
-        difficulty={difficulty}
+        card={{ type: displayType, cat: snapshot.current_question.category ?? '', val: displayVal }}
+        question={snapshot.current_question.title ?? ''}
+        answers={snapshot.current_question.options ?? []}
+        timerSec={timeLeft}
+        durationSec={15}
       />
+
       <VictoryOverlay
-        visible={victoryOpen}
-        onClose={() => router.push('/game-summary?result=win' as never)}
-        onContinue={() => router.push('/game-summary?result=win' as never)}
+        visible={isWin}
+        onClose={() => navigateSummary('win')}
+        onContinue={() => navigateSummary('win')}
         xp={148} coins={24}
-        stats={{ cards: '7/10', acc: '85%', time: '4:12' }}
+        stats={{
+          cards: `${snapshot.you.discard_pile.length}/${snapshot.you.discard_pile.length + hand.length + snapshot.you.remaining_cards.length}`,
+          acc: '—',
+          time: '—',
+        }}
       />
       <DefeatOverlay
-        visible={defeatOpen}
-        onClose={() => router.push('/game-summary?result=loss' as never)}
-        onContinue={() => router.push('/game-summary?result=loss' as never)}
-        stats={{ cards: '3/10', acc: '30%', time: '2:45' }}
+        visible={isLoss}
+        onClose={() => navigateSummary('loss')}
+        onContinue={() => navigateSummary('loss')}
+        stats={{
+          cards: `${snapshot.you.discard_pile.length}/${snapshot.you.discard_pile.length + hand.length + snapshot.you.remaining_cards.length}`,
+          acc: '—',
+          time: '—',
+        }}
+      />
+      {/* Draw: reuse VictoryOverlay with different text (no dedicated component) */}
+      <VictoryOverlay
+        visible={isDraw}
+        onClose={() => navigateSummary('draw')}
+        onContinue={() => navigateSummary('draw')}
+        xp={0} coins={0}
+        stats={{ cards: '—', acc: '—', time: 'DRAW' }}
       />
     </View>
+  );
+}
+
+export default function GameScreen() {
+  const { matchId: rawMatchId } = useLocalSearchParams<{ matchId?: string }>();
+  const id = Number(rawMatchId);
+  if (!id) return <Redirect href="/" />;
+  return (
+    <MatchProvider matchId={id}>
+      <GameInner />
+    </MatchProvider>
   );
 }
 
@@ -291,12 +374,6 @@ const s = StyleSheet.create({
   levelText:       { fontFamily: 'JetBrainsMono_500Medium', fontSize: 9, color: arc.outline, letterSpacing: 0.5 },
 
   battlefield:  { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: arcSpace.sm },
-  lastPlayLabel:{ fontFamily: 'JetBrainsMono_500Medium', fontSize: 10, color: arc.outline, letterSpacing: 3, marginBottom: 10 },
-  lastPlayRow:  { flexDirection: 'row', alignItems: 'center', gap: 16 },
-  lastPlayMeta: { gap: 4 },
-  damageText:   { fontFamily: 'SpaceGrotesk_700Bold', fontSize: 28, lineHeight: 32, letterSpacing: -0.5 },
-  answerResult: { fontFamily: 'JetBrainsMono_500Medium', fontSize: 11, letterSpacing: 1 },
-  comboText:    { fontFamily: 'JetBrainsMono_500Medium', fontSize: 11, color: arc.outline, letterSpacing: 1 },
   noPlayText:   { fontFamily: 'JetBrainsMono_500Medium', fontSize: 11, color: arc.outline, letterSpacing: 3 },
 
   playerHpSection: { marginBottom: arcSpace.sm },
@@ -315,12 +392,11 @@ const s = StyleSheet.create({
   cardDetailMeta: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   cardTypeChip:   { paddingHorizontal: 8, paddingVertical: 4 },
   cardTypeChipText: { fontFamily: 'JetBrainsMono_500Medium', fontSize: 9, letterSpacing: 1 },
-  diffStars: { fontFamily: 'SpaceGrotesk_400Regular', fontSize: 12, color: arc.outline },
   spacer:    { flex: 1 },
   dmgLabel:  { fontFamily: 'SpaceGrotesk_700Bold', fontSize: 16 },
   playBtn: {
     height: 56, alignItems: 'center', justifyContent: 'center',
     shadowOpacity: 0.5, shadowRadius: 12, shadowOffset: { width: 0, height: 0 }, elevation: 6,
   },
-  playBtnText: { fontFamily: 'SpaceGrotesk_700Bold', fontSize: 17, color: arc.bg, letterSpacing: 0.5 },
+  playBtnText: { fontFamily: 'SpaceGrotesk_700Bold', fontSize: 17, letterSpacing: 0.5 },
 });

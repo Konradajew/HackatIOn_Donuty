@@ -1,21 +1,20 @@
-import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
+import { useEffect, useState } from 'react';
+import { View, Text, ScrollView, Pressable, StyleSheet, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { arc, arcSpace } from '@/lib/arcade-theme';
+import { getMatchSnapshot, getCardTypes, type CardType, type Snapshot } from '@/lib/match-api';
 
-type CardType = 'DMG' | 'HEAL' | 'DOT';
+type DisplayType = 'DMG' | 'HEAL' | 'DOT';
+function toDisplay(ct: CardType): DisplayType {
+  if (ct === 'HEAL' || ct === 'HEAL_REMOVE' || ct === 'TIME_BUFF') return 'HEAL';
+  if (ct === 'POISON') return 'DOT';
+  return 'DMG';
+}
 
-const PLAYED_CARDS = [
-  { type: 'DMG' as CardType, cat: 'MATH', val: 6, ok: true, q: 'Smallest prime > 100?', t: '4.2s' },
-  { type: 'HEAL' as CardType, cat: 'MED', val: 4, ok: true, q: 'Largest organ in the body?', t: '5.8s' },
-  { type: 'DMG' as CardType, cat: 'TRVL', val: 5, ok: false, q: 'Capital of Mongolia?', t: '12s' },
-  { type: 'DOT' as CardType, cat: 'SPCE', val: 3, ok: true, q: 'Hottest planet in the solar system?', t: '3.1s' },
-  { type: 'HEAL' as CardType, cat: 'MOV', val: 5, ok: true, q: 'Who directed Inception?', t: '2.4s' },
-];
-
-const TYPE_COLORS: Record<CardType, string> = {
+const TYPE_COLORS: Record<DisplayType, string> = {
   DMG: arc.primaryContainer,
   HEAL: arc.secondaryContainer,
   DOT: arc.tertiary,
@@ -23,25 +22,38 @@ const TYPE_COLORS: Record<CardType, string> = {
 
 export default function GameSummaryScreen() {
   const router = useRouter();
-  const { result } = useLocalSearchParams<{ result?: string }>();
-  const isWin = result !== 'loss';
+  const { result, matchId } = useLocalSearchParams<{ result?: string; matchId?: string }>();
+  const isWin  = result === 'win';
+  const isDraw = result === 'draw';
 
-  const accentColor = isWin ? arc.tertiary : arc.primaryContainer;
+  const [snap, setSnap] = useState<Snapshot | null>(null);
+  const [cardTypes, setCardTypes] = useState<Record<number, CardType>>({});
+
+  useEffect(() => {
+    const id = Number(matchId);
+    if (!id) return;
+    Promise.all([getMatchSnapshot(id), getCardTypes()])
+      .then(([s, ct]) => { setSnap(s); setCardTypes(ct); })
+      .catch(() => {});
+  }, [matchId]);
+
+  const accentColor = isWin ? arc.tertiary : isDraw ? arc.secondaryContainer : arc.primaryContainer;
   const heroColors: [string, string] = isWin
     ? [arc.tertiary, arc.tertiaryContainer]
+    : isDraw
+    ? [arc.secondaryContainer, arc.surface]
     : [arc.primaryContainer, arc.onPrimary];
 
-  const STATS = isWin
-    ? [
-        { l: 'CORRECT', v: '7/10', sub: '70%', c: arc.secondaryContainer },
-        { l: 'AVG TIME', v: '6.4s', sub: 'fast', c: arc.tertiary },
-        { l: 'COMBO', v: '×4', sub: 'best', c: arc.primaryContainer },
-      ]
-    : [
-        { l: 'CORRECT', v: '3/10', sub: '30%', c: arc.primaryContainer },
-        { l: 'AVG TIME', v: '9.2s', sub: 'slow', c: arc.outline },
-        { l: 'COMBO', v: '×1', sub: 'best', c: arc.outline },
-      ];
+  const totalCards = snap
+    ? snap.you.discard_pile.length + snap.you.hand.length + snap.you.remaining_cards.length
+    : 0;
+  const playedCards = snap?.you.discard_pile.length ?? 0;
+
+  const STATS = [
+    { l: 'CARDS PLAYED', v: snap ? `${playedCards}/${totalCards}` : '—', sub: 'this match', c: arc.secondaryContainer },
+    { l: 'YOUR HP', v: snap ? `${snap.you.hp}` : '—', sub: 'final', c: isWin ? arc.tertiary : arc.primaryContainer },
+    { l: 'OPP HP', v: snap ? `${snap.opponent.hp}` : '—', sub: 'final', c: arc.outline },
+  ];
 
   return (
     <View style={s.root}>
@@ -64,18 +76,18 @@ export default function GameSummaryScreen() {
       <SafeAreaView style={s.safe}>
         {/* Header */}
         <View style={s.header}>
-          <Pressable style={s.backBtn} onPress={() => router.back()}>
+          <Pressable style={s.backBtn} onPress={() => router.push('/' as never)}>
             <Text style={s.backBtnText}>←</Text>
           </Pressable>
           <View style={s.headerTitle}>
             <Text style={s.titleText}>Match Recap</Text>
             <Text style={s.subtitleText}>
-              {isWin ? 'VICTORY' : 'DEFEAT'} · 4:12
+              {isWin ? 'VICTORY' : isDraw ? 'DRAW' : 'DEFEAT'}
             </Text>
           </View>
           <View style={[s.resultChip, { borderColor: accentColor }]}>
             <Text style={[s.resultChipText, { color: accentColor }]}>
-              {isWin ? 'WIN' : 'LOSS'}
+              {isWin ? 'WIN' : isDraw ? 'DRAW' : 'LOSS'}
             </Text>
           </View>
         </View>
@@ -90,11 +102,11 @@ export default function GameSummaryScreen() {
           <View style={[s.heroDecor, { borderColor: arc.bg + '22' }]} />
           <Text style={s.heroEarned}>YOU EARNED</Text>
           <Text style={s.heroXp}>
-            {isWin ? '+148' : '−12'}
+            {isWin ? '+148' : isDraw ? '±0' : '−12'}
             <Text style={s.heroXpUnit}>xp</Text>
           </Text>
           <Text style={s.heroSub}>
-            {isWin ? '+24◆ coins  ·  5-win streak' : '−5◆ coins  ·  streak reset'}
+            {isWin ? '+24◆ coins  ·  5-win streak' : isDraw ? 'Equal HP · no streak change' : '−5◆ coins  ·  streak reset'}
           </Text>
         </LinearGradient>
 
@@ -121,39 +133,34 @@ export default function GameSummaryScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ gap: 8 }}
         >
-          {PLAYED_CARDS.map((c, i) => {
-            const tc = TYPE_COLORS[c.type];
-            return (
-              <Pressable key={i} style={s.cardRow}>
-                <View
-                  style={[
-                    s.statusIcon,
-                    { backgroundColor: c.ok ? arc.tertiary + '22' : arc.primaryContainer + '22' },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      s.statusIconGlyph,
-                      { color: c.ok ? arc.tertiary : arc.primaryContainer },
-                    ]}
-                  >
-                    {c.ok ? '✓' : '✗'}
-                  </Text>
-                </View>
-                <View style={s.cardRowBody}>
-                  <View style={s.cardRowMeta}>
-                    <View style={[s.typeTag, { backgroundColor: tc + '22' }]}>
-                      <Text style={[s.typeTagText, { color: tc }]}>{c.type}</Text>
-                    </View>
-                    <Text style={s.cardMeta}>{c.cat} · {c.val}pt</Text>
+          {snap == null ? (
+            <ActivityIndicator color={arc.secondaryContainer} style={{ marginTop: 20 }} />
+          ) : snap.you.discard_pile.length === 0 ? (
+            <Text style={[s.cardMeta, { textAlign: 'center', marginTop: 20 }]}>No cards played</Text>
+          ) : (
+            snap.you.discard_pile.map((cardId, i) => {
+              const ct: CardType = cardTypes[cardId] ?? 'DMG';
+              const dt = toDisplay(ct);
+              const tc = TYPE_COLORS[dt];
+              return (
+                <View key={i} style={s.cardRow}>
+                  <View style={[s.statusIcon, { backgroundColor: tc + '22' }]}>
+                    <Text style={[s.statusIconGlyph, { color: tc }]}>{dt[0]}</Text>
                   </View>
-                  <Text style={s.cardQuestion} numberOfLines={1}>{c.q}</Text>
+                  <View style={s.cardRowBody}>
+                    <View style={s.cardRowMeta}>
+                      <View style={[s.typeTag, { backgroundColor: tc + '22' }]}>
+                        <Text style={[s.typeTagText, { color: tc }]}>{ct}</Text>
+                      </View>
+                      <Text style={s.cardMeta}>Card #{cardId}</Text>
+                    </View>
+                    <Text style={s.cardQuestion} numberOfLines={1}>{ct.replace('_', ' ')}</Text>
+                  </View>
+                  <Text style={s.chevron}>›</Text>
                 </View>
-                <Text style={s.cardTime}>{c.t}</Text>
-                <Text style={s.chevron}>›</Text>
-              </Pressable>
-            );
-          })}
+              );
+            })
+          )}
         </ScrollView>
 
         {/* Bottom CTAs */}
@@ -173,7 +180,7 @@ export default function GameSummaryScreen() {
                 elevation: 6,
               },
             ]}
-            onPress={() => router.replace('/game' as never)}
+            onPress={() => router.replace('/' as never)}
           >
             <Text style={s.playAgainBtnText}>Play again →</Text>
           </Pressable>
