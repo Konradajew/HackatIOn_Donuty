@@ -4,35 +4,29 @@ import {
     Text,
     TouchableOpacity,
     ScrollView,
-    StyleSheet,
     Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '@/lib/supabase';
 import * as Haptics from 'expo-haptics';
+import {router} from "expo-router";
+
+import { ArcadeColors as C, ArcadeSpacing as S } from '@/constants/theme';
+
+import { styles as s} from './deck.styles';
 
 const { width: SW } = Dimensions.get('window');
 
-// ── Design tokens ───────────────────────────────────────────────────────────
-const BG       = '#13121c';
-const SURFACE  = '#1f1f28';
-const SURF_LOW = '#1b1b24';
-const BORDER   = '#5b3f47';
-const TEXT     = '#e4e1ee';
-const DIM      = '#aa8891';
-const LIME     = '#C8FF1A';
-const CYAN     = '#19F0DC';
-
 // Kolor per typ — dostosuj gdy zmienią się typy w bazie
 const TYPE_COLOR: Record<string, string> = {
-    damage:   '#FF1F8F',
-    heal:     '#C8FF1A',
-    poison:   '#a100ff',
-    sabotage: '#fff87a',
-    "50/50":  '#19F0DC',
-    time:     '#009dff',
+    DMG:           '#FF1F8F',
+    HEAL:          '#C8FF1A',
+    POISON:        '#a100ff',
+    DMG_BLOCK:     '#fff87a',
+    HEAL_REMOVE:   '#19F0DC',
+    TIME_BUFF:     '#009dff',
 };
-const tc = (type?: string | null) => (type && TYPE_COLOR[type]) || BORDER;
+const tc = (type?: string | null) => (type && TYPE_COLOR[type]) || C.outlineVariant;
 
 // ── Wymiary ─────────────────────────────────────────────────────────────────
 const TOTAL_DECKS = 5;
@@ -127,6 +121,11 @@ export default function DeckScreen() {
 
             {/* ── Header ── */}
             <View style={s.header}>
+                <View style={s.headerRight}>
+                    <TouchableOpacity style={s.backBtn} activeOpacity={0.8} onPress={() => router.push("/")}>
+                        <Text style={s.backBtnText}>BACK</Text>
+                    </TouchableOpacity>
+                </View>
                 <View>
                     <Text style={s.title}>DECK BUILDER</Text>
                     <Text style={s.subtitle}>{filled} / {DECK_SIZE} CARDS</Text>
@@ -183,7 +182,7 @@ export default function DeckScreen() {
                         return (
                             <TouchableOpacity
                                 key={i}
-                                style={[s.slot, { borderColor: card ? color : BORDER }]}
+                                style={[s.slot, { borderColor: card ? color : C.outlineVariant }]}
                                 onPress={() => card && removeSlot(i)}
                                 activeOpacity={card ? 0.65 : 1}
                             >
@@ -237,7 +236,7 @@ export default function DeckScreen() {
                                 key={card.card_id}
                                 style={[
                                     s.typeCard,
-                                    { borderColor: isFull ? BORDER : col },
+                                    { borderColor: isFull ? C.outlineVariant : col },
                                     isFull && s.typeCardDisabled,
                                 ]}
                                 onPress={() => addCard(card.card_id)}
@@ -251,7 +250,7 @@ export default function DeckScreen() {
                                     </View>
                                 )}
 
-                                <Text style={[s.typeCardType, { color: isFull ? DIM : col }]}>
+                                <Text style={[s.typeCardType, { color: isFull ? C.outline : col }]}>
                                     {card.type}
                                 </Text>
 
@@ -269,161 +268,3 @@ export default function DeckScreen() {
     );
 }
 
-// ── StyleSheet ──────────────────────────────────────────────────────────────
-const s = StyleSheet.create({
-    container: { flex: 1, backgroundColor: BG },
-
-    header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: 14,
-        paddingVertical: 10,
-        borderBottomWidth: 1,
-        borderBottomColor: BORDER,
-        backgroundColor: SURF_LOW,
-    },
-    title:    { color: TEXT, fontFamily: 'monospace', fontSize: 17, fontWeight: '700', letterSpacing: 2 },
-    subtitle: { color: DIM,  fontFamily: 'monospace', fontSize: 10, letterSpacing: 1,  marginTop: 2 },
-
-    headerRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-    clearBtn: {
-        paddingHorizontal: 12,
-        paddingVertical: 8,
-        borderWidth: 1,
-        borderColor: BORDER,
-    },
-    clearBtnText: { color: DIM, fontFamily: 'monospace', fontSize: 10, fontWeight: '600', letterSpacing: 1 },
-    saveBtn: {
-        backgroundColor: LIME,
-        paddingHorizontal: 18,
-        paddingVertical: 8,
-        shadowColor: LIME,
-        shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 0.55,
-        shadowRadius: 10,
-        elevation: 8,
-    },
-    saveBtnText: { color: '#000', fontFamily: 'monospace', fontSize: 12, fontWeight: '700', letterSpacing: 2 },
-
-    tabsWrap: { borderBottomWidth: 1, borderBottomColor: BORDER, backgroundColor: SURF_LOW, maxHeight: 60 },
-    tabsRow:  { paddingHorizontal: PAD, paddingVertical: 8, gap: 6, flexDirection: 'row' },
-    tab: {
-        paddingHorizontal: 14,
-        paddingVertical: 6,
-        borderWidth: 1,
-        borderColor: BORDER,
-        backgroundColor: SURFACE,
-        minWidth: 72,
-        alignItems: 'center',
-    },
-    tabActive: {
-        borderColor: CYAN,
-        backgroundColor: '#0a1f1e',
-        shadowColor: CYAN,
-        shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 0.4,
-        shadowRadius: 8,
-        elevation: 8,
-    },
-    tabTitle:       { color: DIM,    fontFamily: 'monospace', fontSize: 9, fontWeight: '700', letterSpacing: 1.5 },
-    tabTitleActive: { color: CYAN },
-    tabSub:         { color: BORDER, fontFamily: 'monospace', fontSize: 8, letterSpacing: 0.5, marginTop: 2 },
-    tabSubActive:   { color: CYAN + 'aa' },
-
-    sectionRow:  { paddingHorizontal: PAD, paddingTop: 10, paddingBottom: 6 },
-    sectionText: { color: DIM, fontFamily: 'monospace', fontSize: 8, letterSpacing: 2 },
-
-    // Deck slots
-    slotsGrid: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        paddingHorizontal: PAD,
-        gap: SLOT_GAP,
-    },
-    slot: {
-        width: SLOT_W,
-        height: SLOT_H,
-        borderWidth: 1,
-        backgroundColor: SURFACE,
-        padding: 5,
-        justifyContent: 'space-between',
-        overflow: 'hidden',
-    },
-    slotType: { fontFamily: 'monospace', fontSize: 7,  fontWeight: '700', letterSpacing: 1 },
-    slotBar:  { flex: 1, marginVertical: 3 },
-    slotCat:  { fontFamily: 'monospace', fontSize: 6,  letterSpacing: 0.5 },
-
-    // Proporcje
-    proportionsRow: {
-        paddingHorizontal: PAD,
-        paddingTop: 10,
-        gap: 5,
-    },
-    propChip: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-        paddingHorizontal: 10,
-        paddingVertical: 5,
-        borderWidth: 1,
-        backgroundColor: SURFACE,
-    },
-    propType:  { fontFamily: 'monospace', fontSize: 9, fontWeight: '700', letterSpacing: 1, width: 64 },
-    propBarBg: { flex: 1, height: 4, backgroundColor: BORDER },
-    propBarFill: { height: 4 },
-    propCount: { fontFamily: 'monospace', fontSize: 11, fontWeight: '700', width: 20, textAlign: 'right' },
-
-    divider: {
-        height: 1,
-        backgroundColor: BORDER,
-        marginHorizontal: PAD,
-        marginTop: 12,
-        marginBottom: 4,
-    },
-
-    // Siatka 6 typów kart
-    typesGrid: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        paddingHorizontal: PAD,
-        gap: TYPE_GAP,
-        paddingTop: 4,
-    },
-    typeCard: {
-        width: TYPE_W,
-        height: TYPE_H,
-        borderWidth: 1,
-        backgroundColor: SURFACE,
-        padding: 10,
-        justifyContent: 'space-between',
-    },
-    typeCardDisabled: { opacity: 0.45 },
-    typeCardType: {
-        fontFamily: 'monospace',
-        fontSize: 14,
-        fontWeight: '700',
-        letterSpacing: 2,
-    },
-    typeCardCats: {
-        color: DIM,
-        fontFamily: 'monospace',
-        fontSize: 7,
-        letterSpacing: 0.5,
-        lineHeight: 11,
-    },
-
-    // Badge z liczbą
-    badge: {
-        position: 'absolute',
-        top: 6,
-        right: 6,
-        width: 20,
-        height: 20,
-        borderRadius: 10,
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 1,
-    },
-    badgeText: { color: '#000', fontFamily: 'monospace', fontSize: 10, fontWeight: '700' },
-});

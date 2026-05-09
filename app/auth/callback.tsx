@@ -1,7 +1,7 @@
 import { ActivityIndicator, View } from 'react-native';
 import { Redirect } from 'expo-router';
 import { useAuth } from '@/lib/auth-context';
-import { arc } from '@/lib/arcade-theme';
+import { ArcadeColors as C} from '@/constants/theme';
 
 export default function AuthCallback() {
   const { session, loading, profileLoading, nicknameReady } = useAuth();
@@ -13,8 +13,8 @@ export default function AuthCallback() {
   }
 
   return (
-    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: arc.bg }}>
-      <ActivityIndicator size="large" color={arc.secondaryContainer} />
+    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: C.background }}>
+      <ActivityIndicator size="large" color={C.secondaryContainer} />
     </View>
   );
 }
