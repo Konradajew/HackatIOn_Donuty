@@ -5,8 +5,7 @@ import { supabase } from './supabase';
 WebBrowser.maybeCompleteAuthSession();
 
 export async function signInWithGoogle(): Promise<{ error?: string }> {
-  const redirectTo = Linking.createURL('/');
-  console.log('[google-oauth] redirectTo =', redirectTo);
+  const redirectTo = Linking.createURL('auth/callback');
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: { redirectTo, skipBrowserRedirect: true },
@@ -15,14 +14,20 @@ export async function signInWithGoogle(): Promise<{ error?: string }> {
   if (!data?.url) return { error: 'Brak URL autoryzacji' };
 
   const res = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
-  if (res.type === 'cancel' || res.type === 'dismiss') return { error: 'Anulowano logowanie' };
-  if (res.type !== 'success') return { error: 'Nie udało się otworzyć przeglądarki' };
 
-  const url = new URL(res.url);
-  const code = url.searchParams.get('code');
-  if (!code) return { error: 'Brak kodu autoryzacji w odpowiedzi' };
+  // Fast path (iOS / Custom Tab closes cleanly) — exchange code immediately.
+  if (res.type === 'success' && res.url) {
+    const { queryParams } = Linking.parse(res.url);
+    const code = queryParams?.code as string | undefined;
+    if (code) {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) return {};
+      const { error: ex } = await supabase.auth.exchangeCodeForSession(code);
+      if (ex) return { error: ex.message };
+    }
+    return {};
+  }
 
-  const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
-  if (exchangeError) return { error: exchangeError.message };
+  // Android: dismiss/cancel is expected — AuthProvider's deep-link listener completes the flow.
   return {};
 }
