@@ -3,7 +3,7 @@
   <defs>
     <style>
       .cls-1 {
-        fill: #c4fa19;
+        fill: #7e44c4;
       }
 
       .cls-2 {
@@ -31,41 +31,41 @@
       }
 
       .cls-8 {
-        fill: #d31c80;
+        fill: #7e44c4;
       }
     </style>
     <filter id="outer-glow-3" x="-10" y="160" width="126" height="163" filterUnits="userSpaceOnUse">
       <feOffset dx="0" dy="0"/>
       <feGaussianBlur result="blur" stdDeviation="9"/>
-      <feFlood flood-color="#1fc13a" flood-opacity=".75"/>
+      <feFlood flood-color="#7e44c4" flood-opacity=".75"/>
       <feComposite in2="blur" operator="in"/>
       <feComposite in="SourceGraphic"/>
     </filter>
     <filter id="outer-glow-4" x="192" y="157" width="97" height="166" filterUnits="userSpaceOnUse">
       <feOffset dx="0" dy="0"/>
       <feGaussianBlur result="blur-2" stdDeviation="9"/>
-      <feFlood flood-color="#fff" flood-opacity=".75"/>
+      <feFlood flood-color="#7e44c4" flood-opacity=".75"/>
       <feComposite in2="blur-2" operator="in"/>
       <feComposite in="SourceGraphic"/>
     </filter>
     <filter id="outer-glow-5" x="282" y="160" width="126" height="163" filterUnits="userSpaceOnUse">
       <feOffset dx="0" dy="0"/>
       <feGaussianBlur result="blur-3" stdDeviation="9"/>
-      <feFlood flood-color="#d823d8" flood-opacity=".75"/>
+      <feFlood flood-color="#7e44c4" flood-opacity=".75"/>
       <feComposite in2="blur-3" operator="in"/>
       <feComposite in="SourceGraphic"/>
     </filter>
     <filter id="outer-glow-6" x="73" y="158" width="125" height="165" filterUnits="userSpaceOnUse">
       <feOffset dx="0" dy="0"/>
       <feGaussianBlur result="blur-4" stdDeviation="9"/>
-      <feFlood flood-color="#1fc13a" flood-opacity=".75"/>
+      <feFlood flood-color="#7e44c4" flood-opacity=".75"/>
       <feComposite in2="blur-4" operator="in"/>
       <feComposite in="SourceGraphic"/>
     </filter>
     <filter id="outer-glow-7" x="365" y="158" width="125" height="165" filterUnits="userSpaceOnUse">
       <feOffset dx="0" dy="0"/>
       <feGaussianBlur result="blur-5" stdDeviation="9"/>
-      <feFlood flood-color="#d823d8" flood-opacity=".75"/>
+      <feFlood flood-color="#7e44c4" flood-opacity=".75"/>
       <feComposite in2="blur-5" operator="in"/>
       <feComposite in="SourceGraphic"/>
     </filter>

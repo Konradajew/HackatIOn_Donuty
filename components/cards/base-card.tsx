@@ -4,10 +4,11 @@ import { SvgProps } from "react-native-svg";
 
 interface BaseCardProps {
   type: string; // np. DMG, HEAL
-  topValue: string; // np. 4, 13
+  topValue?: string; // np. 4, 13
   centerIcon: React.ComponentType<SvgProps>; // SVG component
-  category: string; // np. MATH, CHEM
+  category?: string; // np. MATH, CHEMISTRY (optional, losowana podczas gry)
   mainColor: string; // Kolor neonu
+  categoryColor?: string; // Kolor kategorii (domyślnie mainColor)
 }
 
 export const BaseCard: React.FC<BaseCardProps> = ({
@@ -16,17 +17,38 @@ export const BaseCard: React.FC<BaseCardProps> = ({
   centerIcon: CenterIcon,
   category,
   mainColor,
+  categoryColor = mainColor,
 }) => {
   return (
-    <View style={[styles.cardContainer]}>
+    <View
+      style={[
+        styles.cardContainer,
+        { borderColor: mainColor },
+        { borderWidth: 3 },
+      ]}
+    >
       {/* Górny pasek */}
-      <View style={[styles.header, { backgroundColor: mainColor }]}>
+      <View
+        style={[
+          styles.header,
+          {
+            backgroundColor: mainColor,
+            justifyContent: topValue ? "space-between" : "center",
+          },
+        ]}
+      >
         <Text style={styles.headerText}>{type}</Text>
-        <Text style={styles.headerText}>{topValue}</Text>
+        {topValue && <Text style={styles.headerText}>{topValue}</Text>}
       </View>
 
       {/* Środek karty (tu można wstawić SVG dla pasków) */}
-      <View style={styles.centerBox}>
+      <View
+        style={[
+          styles.centerBox,
+          { borderColor: category ? categoryColor : undefined },
+          { borderWidth: category ? 3 : 0 },
+        ]}
+      >
         <View style={{ width: 60, height: 60 }}>
           <CenterIcon width="100%" height="100%" />
         </View>
@@ -34,7 +56,7 @@ export const BaseCard: React.FC<BaseCardProps> = ({
 
       {/* Dolny tekst */}
       <View style={styles.footer}>
-        <Text style={styles.categoryText}>{category}</Text>
+        {category && <Text style={styles.categoryText}>{category}</Text>}
       </View>
     </View>
   );

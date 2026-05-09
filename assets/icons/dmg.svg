@@ -7,13 +7,13 @@
       }
 
       .cls-2 {
-        fill: #d31c80;
+        fill: #FF2A7A;
       }
     </style>
     <filter id="outer-glow-1" x="-18" y="-18" width="516" height="516" filterUnits="userSpaceOnUse">
       <feOffset dx="0" dy="0"/>
       <feGaussianBlur result="blur" stdDeviation="9"/>
-      <feFlood flood-color="#d82a89" flood-opacity=".75"/>
+      <feFlood flood-color="#FF2A7A" flood-opacity=".75"/>
       <feComposite in2="blur" operator="in"/>
       <feComposite in="SourceGraphic"/>
     </filter>

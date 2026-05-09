@@ -11,7 +11,7 @@
       }
 
       .cls-3 {
-        fill: #d31c80;
+        fill: #ff9d00;
       }
 
       .cls-4 {
@@ -41,49 +41,49 @@
     <filter id="outer-glow-9" x="122" y="377" width="236" height="80" filterUnits="userSpaceOnUse">
       <feOffset dx="0" dy="0"/>
       <feGaussianBlur result="blur" stdDeviation="9"/>
-      <feFlood flood-color="#d816bd" flood-opacity=".75"/>
+      <feFlood flood-color="#ff9d00" flood-opacity=".75"/>
       <feComposite in2="blur" operator="in"/>
       <feComposite in="SourceGraphic"/>
     </filter>
     <filter id="outer-glow-10" x="147" y="345" width="186" height="73" filterUnits="userSpaceOnUse">
       <feOffset dx="0" dy="0"/>
       <feGaussianBlur result="blur-2" stdDeviation="9"/>
-      <feFlood flood-color="#d816bd" flood-opacity=".75"/>
+      <feFlood flood-color="#ff9d00" flood-opacity=".75"/>
       <feComposite in2="blur-2" operator="in"/>
       <feComposite in="SourceGraphic"/>
     </filter>
     <filter id="outer-glow-11" x="169" y="316" width="142" height="69" filterUnits="userSpaceOnUse">
       <feOffset dx="0" dy="0"/>
       <feGaussianBlur result="blur-3" stdDeviation="9"/>
-      <feFlood flood-color="#d816bd" flood-opacity=".75"/>
+      <feFlood flood-color="#ff9d00" flood-opacity=".75"/>
       <feComposite in2="blur-3" operator="in"/>
       <feComposite in="SourceGraphic"/>
     </filter>
     <filter id="outer-glow-12" x="186" y="290" width="108" height="66" filterUnits="userSpaceOnUse">
       <feOffset dx="0" dy="0"/>
       <feGaussianBlur result="blur-4" stdDeviation="9"/>
-      <feFlood flood-color="#d816bd" flood-opacity=".75"/>
+      <feFlood flood-color="#ff9d00" flood-opacity=".75"/>
       <feComposite in2="blur-4" operator="in"/>
       <feComposite in="SourceGraphic"/>
     </filter>
     <filter id="outer-glow-13" x="189" y="94" width="101" height="71" filterUnits="userSpaceOnUse">
       <feOffset dx="0" dy="0"/>
       <feGaussianBlur result="blur-5" stdDeviation="9"/>
-      <feFlood flood-color="#d816bd" flood-opacity=".75"/>
+      <feFlood flood-color="#ff9d00" flood-opacity=".75"/>
       <feComposite in2="blur-5" operator="in"/>
       <feComposite in="SourceGraphic"/>
     </filter>
     <filter id="outer-glow-14" x="169" y="62" width="142" height="72" filterUnits="userSpaceOnUse">
       <feOffset dx="0" dy="0"/>
       <feGaussianBlur result="blur-6" stdDeviation="9"/>
-      <feFlood flood-color="#d816bd" flood-opacity=".75"/>
+      <feFlood flood-color="#ff9d00" flood-opacity=".75"/>
       <feComposite in2="blur-6" operator="in"/>
       <feComposite in="SourceGraphic"/>
     </filter>
     <filter id="outer-glow-15" x="149" y="27" width="181" height="72" filterUnits="userSpaceOnUse">
       <feOffset dx="0" dy="0"/>
       <feGaussianBlur result="blur-7" stdDeviation="9"/>
-      <feFlood flood-color="#d816bd" flood-opacity=".75"/>
+      <feFlood flood-color="#ff9d00" flood-opacity=".75"/>
       <feComposite in2="blur-7" operator="in"/>
       <feComposite in="SourceGraphic"/>
     </filter>
