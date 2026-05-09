@@ -9,7 +9,11 @@ import { StatusBar } from 'expo-status-bar';
 import { arc } from '@/lib/arcade-theme';
 import { useQuestions } from '@/lib/forum-store';
 
-const CATEGORIES = ['MATH', 'SPCE', 'MED', 'MOV', 'TRVL', 'CHEM', 'BOOKS', 'ENG'];
+const CATEGORIES = [
+  'math', 'space', 'medicine', 'movies', 'travel',
+  'chemistry', 'books', 'english', 'history', 'music',
+  'nature', 'games', 'IT', 'culinary', 'flags',
+];
 const ANSWER_LABELS = ['A', 'B', 'C', 'D'] as const;
 type AnswerLabel = typeof ANSWER_LABELS[number];
 
@@ -18,7 +22,7 @@ export default function AddQuestionScreen() {
   const { addQuestion } = useQuestions();
 
   const [question, setQuestion] = useState('');
-  const [category, setCategory] = useState('MATH');
+  const [category, setCategory] = useState('math');
   const [answers, setAnswers] = useState<Record<AnswerLabel, string>>({ A: '', B: '', C: '', D: '' });
   const [correct, setCorrect] = useState<AnswerLabel>('C');
   const [explanation, setExplanation] = useState('');

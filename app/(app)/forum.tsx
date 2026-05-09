@@ -8,11 +8,13 @@ import { arc } from '@/lib/arcade-theme';
 import { useQuestions, avgDifficulty, type Question } from '@/lib/forum-store';
 
 const CHIPS: { l: string; cat: string | null }[] = [
-  { l: 'ALL', cat: null },
-  { l: 'MATH', cat: 'MATH' },
-  { l: 'SPACE', cat: 'SPCE' },
-  { l: 'MOVIES', cat: 'MOV' },
-  { l: 'MED', cat: 'MED' },
+  { l: 'ALL',     cat: null },
+  { l: 'MATH',    cat: 'math' },
+  { l: 'SPACE',   cat: 'space' },
+  { l: 'MOVIES',  cat: 'movies' },
+  { l: 'MED',     cat: 'medicine' },
+  { l: 'HISTORY', cat: 'history' },
+  { l: 'MUSIC',   cat: 'music' },
 ];
 
 function QuestionCard({ q, onPress }: { q: Question; onPress: () => void }) {

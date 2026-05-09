@@ -681,19 +681,19 @@ $$;
 
 INSERT INTO public.questions (category, title, correct_answer, wrong_answers, explanation)
 VALUES
-    ('MATH', 'What is the smallest prime number greater than 100?',
+    ('math', 'What is the smallest prime number greater than 100?',
      '101', ARRAY['103','107','109'],
      '101 is prime — divisible only by 1 and itself. 102 = 2·51, so 101 is the next prime after 97.'),
 
-    ('SPCE', 'Which planet has the highest surface temperature?',
+    ('space', 'Which planet has the highest surface temperature?',
      'Venus', ARRAY['Mercury','Mars','Jupiter'],
      'Venus reaches ~465°C due to a runaway greenhouse effect — hotter than Mercury despite being farther from the Sun.'),
 
-    ('MED', 'What is the largest organ in the human body?',
+    ('medicine', 'What is the largest organ in the human body?',
      'Skin', ARRAY['Liver','Brain','Lungs'],
      'Skin covers ~1.5–2 m² and weighs ~3.5 kg in adults — larger than any internal organ.'),
 
-    ('MOV', 'Who directed the 2010 film "Inception"?',
+    ('movies', 'Who directed the 2010 film "Inception"?',
      'Christopher Nolan', ARRAY['Steven Spielberg','Denis Villeneuve','James Cameron'],
      'Christopher Nolan wrote and directed Inception (2010), starring Leonardo DiCaprio.');
 

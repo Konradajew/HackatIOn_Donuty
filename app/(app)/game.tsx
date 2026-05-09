@@ -15,11 +15,11 @@ import { applyEffect } from '@/lib/difficulty';
 type CardType = 'DMG' | 'HEAL' | 'DOT';
 
 const HAND: { type: CardType; cat: string; val: number }[] = [
-  { type: 'DMG',  cat: 'MATH', val: 6 },
-  { type: 'HEAL', cat: 'MED',  val: 4 },
-  { type: 'DMG',  cat: 'TRVL', val: 5 },
-  { type: 'DOT',  cat: 'SPCE', val: 3 },
-  { type: 'HEAL', cat: 'MOV',  val: 5 },
+  { type: 'DMG',  cat: 'math',     val: 6 },
+  { type: 'HEAL', cat: 'medicine', val: 4 },
+  { type: 'DMG',  cat: 'travel',   val: 5 },
+  { type: 'DOT',  cat: 'space',    val: 3 },
+  { type: 'HEAL', cat: 'movies',   val: 5 },
 ];
 
 const TOTAL_ROUNDS = 10;
