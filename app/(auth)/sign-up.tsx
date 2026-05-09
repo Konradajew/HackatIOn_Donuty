@@ -1,33 +1,63 @@
-import { useState } from 'react';
+import React, { useState } from "react";
 import {
-  Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View,
-} from 'react-native';
-import { Link } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
-import { supabase } from '@/lib/supabase';
-import { signInWithGoogle } from '@/lib/google-oauth';
+  Alert,
+  Dimensions,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { Link } from "expo-router";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
 import { ArcadeColors as C, ArcadeFonts as F, ArcadeSpacing as S } from "@/constants/theme";
-import { Chamfer, GoogleG } from '@/lib/arcade-shapes';
+import { GoogleG } from "@/lib/arcade-shapes";
+import { supabase } from "@/lib/supabase";
+import { signInWithGoogle } from "@/lib/google-oauth";
 
-function Chip({ label, color }: { label: string; color: string }) {
+const { width: SW } = Dimensions.get("window");
+const GUTTER = 16;
+
+function TricardLogo() {
   return (
-    <View style={[styles.chip, { borderColor: color + '55' }]}>
-      <Text style={[F.labelSm, { color, textTransform: 'uppercase', letterSpacing: 1 }]}>{label}</Text>
-    </View>
+      <View style={s.logoBlock}>
+        <View style={s.logoDiamond} />
+        <Text style={[s.logoText, { color: C.secondaryBright, position: 'absolute', left: 6, top: 6 }]} aria-hidden>
+          TRICARD
+        </Text>
+        <Text style={[s.logoText, { color: C.primaryBright, position: 'absolute', left: 3, top: 3 }]} aria-hidden>
+          TRICARD
+        </Text>
+        <Text style={[s.logoText, { color: C.onSurface }]}>TRICARD</Text>
+      </View>
+  );
+}
+
+function DecorativeCard({ style }: { style?: object }) {
+  return (
+      <View style={[s.decorCard, style]}>
+        <View style={s.decorLine} />
+        <View style={[s.decorLine, { top: 16 }]} />
+        <View style={[s.decorLine, { top: 32 }]} />
+        <View style={s.decorCorner} />
+      </View>
   );
 }
 
 function InputField({
-  label,
-  value,
-  onChangeText,
-  accent,
-  secure,
-  keyboardType,
-  autoComplete,
-  right,
-  hint,
-}: {
+                      label,
+                      value,
+                      onChangeText,
+                      accent,
+                      secure,
+                      keyboardType,
+                      autoComplete,
+                      right,
+                      hint,
+                    }: {
   label: string;
   value: string;
   onChangeText: (t: string) => void;
@@ -39,297 +69,353 @@ function InputField({
   hint?: string;
 }) {
   return (
-    <View style={[styles.inputCard, { borderColor: accent + '66' }]}>
-      <View style={styles.inputHeader}>
-        <Text style={[F.labelSm, { color: accent, textTransform: 'uppercase', letterSpacing: 2 }]}>{label}</Text>
-        {right}
+      <View style={s.inputCard}>
+        <View style={s.inputHeader}>
+          <Text style={s.inputLabel}>{label}</Text>
+          {right}
+        </View>
+        <TextInput
+            style={s.inputText}
+            value={value}
+            onChangeText={onChangeText}
+            secureTextEntry={secure}
+            keyboardType={keyboardType}
+            autoComplete={autoComplete}
+            autoCapitalize="none"
+            placeholderTextColor={C.outline}
+            selectionColor={accent}
+            cursorColor={accent}
+        />
+        {hint && (
+            <Text style={[F.labelSm, { color: C.outline, marginTop: S.xs, letterSpacing: 0.5 }]}>{hint}</Text>
+        )}
       </View>
-      <TextInput
-        style={[F.labelLg, styles.inputText]}
-        value={value}
-        onChangeText={onChangeText}
-        secureTextEntry={secure}
-        keyboardType={keyboardType}
-        autoComplete={autoComplete}
-        autoCapitalize="none"
-        placeholderTextColor={C.outline}
-        selectionColor={accent}
-        cursorColor={accent}
-      />
-      {hint && (
-        <Text style={[F.labelSm, { color: C.outline, marginTop: S.xs, letterSpacing: 0.5 }]}>{hint}</Text>
-      )}
-    </View>
   );
 }
 
 export default function SignUp() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
 
   async function signUp() {
     setLoading(true);
     const { error } = await supabase.auth.signUp({ email, password });
-    if (error) Alert.alert('REGISTER FAILED', error.message);
-    else Alert.alert('CHECK YOUR EMAIL', 'Confirm your account to continue.');
+    if (error) Alert.alert("REGISTER FAILED", error.message);
+    else Alert.alert("CHECK YOUR EMAIL", "Confirm your account to continue.");
     setLoading(false);
   }
 
   async function handleGoogle() {
     setLoading(true);
     const { error } = await signInWithGoogle();
-    if (error) Alert.alert('GOOGLE AUTH FAILED', error);
+    if (error) Alert.alert("GOOGLE AUTH FAILED", error);
     setLoading(false);
   }
 
   return (
-    <View style={styles.root}>
-      <LinearGradient
-        colors={['rgba(167,215,0,0.06)', 'transparent', 'rgba(255,72,152,0.06)']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFillObject}
-        pointerEvents="none"
-      />
+      <View style={s.root}>
+        <View style={s.crtOverlay} pointerEvents="none" />
+        <SafeAreaView style={s.safe}>
 
-      <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={styles.scroll}
-        keyboardShouldPersistTaps="handled"
-      >
-        <View style={styles.topRow}>
-          <Chip label="v0.9.2" color={C.tertiaryDim} />
-          <Chip label="NEW PLAYER" color={C.primaryBright} />
-        </View>
+          {/* ── LOGO ── */}
+          <View style={s.logoSection}>
+            <DecorativeCard style={s.decorLeft} />
+            <DecorativeCard style={s.decorRight} />
+            <TricardLogo />
+            <Text style={s.tagline}>NEW · PLAYER · INIT</Text>
+          </View>
 
-        {/* Logo */}
-        <View style={styles.logoBlock}>
-          <Text style={[styles.logoText, { color: C.secondaryBright, position: 'absolute', left: 6, top: 6 }]} aria-hidden>
-            TRICARD
-          </Text>
-          <Text style={[styles.logoText, { color: C.primaryBright, position: 'absolute', left: 3, top: 3 }]} aria-hidden>
-            TRICARD
-          </Text>
-          <Text style={[styles.logoText, { color: C.onSurface }]}>TRICARD</Text>
-          <View style={styles.logoDiamond} />
-        </View>
-        <Text style={[F.labelSm, styles.logoSub]}>NEW · PLAYER · INIT</Text>
-
-        <View style={styles.form}>
-          <InputField
-            label="EMAIL"
-            value={email}
-            onChangeText={setEmail}
-            accent={C.secondaryBright}
-            keyboardType="email-address"
-            autoComplete="email"
-          />
-          <InputField
-            label="PASSWORD"
-            value={password}
-            onChangeText={setPassword}
-            accent={C.primaryBright}
-            secure={!showPass}
-            hint="min. 6 characters"
-            right={
-              <Pressable onPress={() => setShowPass(v => !v)}>
-                <Text style={[F.labelSm, styles.showPill]}>{showPass ? 'HIDE' : 'SHOW'}</Text>
-              </Pressable>
-            }
-          />
-
-          <Pressable
-            onPress={signUp}
-            disabled={loading}
-            style={({ pressed }) => pressed ? { opacity: 0.85 } : undefined}
+          <ScrollView
+              contentContainerStyle={{ flexGrow: 1 }}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
           >
-            <Chamfer
-              fill={C.primaryBright}
-              stroke={C.primaryBright}
-              strokeWidth={1.5}
-              glow={C.primaryBright}
-              glowRadius={16}
-              chamfer={[0, 8, 0, 8]}
-              style={styles.primaryBtn}
-            >
-              <View style={styles.ctaInner}>
-                <View>
-                  <Text style={[styles.ctaTitle, { color: C.background }]}>
-                    {loading ? 'REGISTERING...' : 'REGISTER'}
-                  </Text>
-                  <Text style={[F.labelSm, { color: C.background, opacity: 0.7, letterSpacing: 1, marginTop: 2 }]}>
-                    create your profile
-                  </Text>
-                </View>
-                <Text style={[styles.ctaGlyph, { color: C.background }]}>▶</Text>
-              </View>
-            </Chamfer>
-          </Pressable>
-        </View>
 
-        <View style={styles.dividerRow}>
-          <View style={styles.dividerLine} />
-          <Text style={[F.labelSm, { color: C.outline, letterSpacing: 3, marginHorizontal: S.sm }]}>OR</Text>
-          <View style={styles.dividerLine} />
-        </View>
-
-        <Pressable
-          onPress={handleGoogle}
-          disabled={loading}
-          style={({ pressed }) => pressed ? { opacity: 0.85 } : undefined}
-        >
-          <Chamfer
-            fill={C.surface}
-            stroke={C.secondaryBright}
-            strokeWidth={1.5}
-            chamfer={[0, 8, 0, 8]}
-          >
-            <View style={styles.googleInner}>
-              <View style={styles.googleLeft}>
-                <GoogleG size={20} />
-                <View style={{ marginLeft: S.sm }}>
-                  <Text style={[styles.ctaTitle, { color: C.onSurface }]}>GOOGLE</Text>
-                  <Text style={[F.labelSm, { color: C.outline, letterSpacing: 1, marginTop: 2 }]}>one-tap auth</Text>
-                </View>
-              </View>
-              <Text style={[styles.ctaGlyph, { color: C.secondaryBright }]}>▶</Text>
+            {/* ── FORM ── */}
+            <View style={s.form}>
+              <InputField
+                  label="EMAIL"
+                  value={email}
+                  onChangeText={setEmail}
+                  accent={C.secondaryBright}
+                  keyboardType="email-address"
+                  autoComplete="email"
+              />
+              <InputField
+                  label="PASSWORD"
+                  value={password}
+                  onChangeText={setPassword}
+                  accent={C.primaryBright}
+                  secure={!showPass}
+                  hint="min. 6 characters"
+                  right={
+                    <TouchableOpacity onPress={() => setShowPass((v) => !v)} activeOpacity={0.7}>
+                      <Text style={s.showPill}>{showPass ? "HIDE" : "SHOW"}</Text>
+                    </TouchableOpacity>
+                  }
+              />
             </View>
-          </Chamfer>
-        </Pressable>
 
-        <View style={styles.footer}>
-          <Text style={[F.labelSm, { color: C.outline, letterSpacing: 1 }]}>ALREADY PLAYING? </Text>
-          <Link href="/sign-in" asChild>
-            <Pressable>
-              <Text style={[F.labelSm, { color: C.secondaryBright, letterSpacing: 1 }]}>◂ SIGN IN</Text>
-            </Pressable>
-          </Link>
-        </View>
-      </ScrollView>
-    </View>
+            {/* ── PRZYCISKI ── */}
+            <View style={s.buttons}>
+              <TouchableOpacity
+                  style={s.soloBtn}
+                  onPress={signUp}
+                  disabled={loading}
+                  activeOpacity={0.8}
+              >
+                <Text style={s.soloBtnTitle}>{loading ? "REGISTERING..." : "REGISTER"}</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                  style={s.multiBtn}
+                  onPress={handleGoogle}
+                  disabled={loading}
+                  activeOpacity={0.8}
+              >
+                <View style={s.btnLabelGroupCentered}>
+                  <GoogleG size={16} />
+                  <Text style={[s.multiBtnTitle, { marginLeft: 8 }]}>GOOGLE</Text>
+                </View>
+              </TouchableOpacity>
+
+              <Link href="/sign-in" asChild>
+                <TouchableOpacity style={s.signupBtn} activeOpacity={0.8}>
+                  <View style={s.btnLabelGroupCentered}>
+                    <Ionicons
+                        name="log-in-outline"
+                        size={16}
+                        color={C.tertiary}
+                        style={s.btnIcon}
+                    />
+                    <Text style={s.signupBtnText}>SIGN IN</Text>
+                  </View>
+                </TouchableOpacity>
+              </Link>
+            </View>
+          </ScrollView>
+        </SafeAreaView>
+      </View>
   );
 }
 
-const styles = StyleSheet.create({
+const s = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: C.background,
   },
-  scroll: {
-    paddingHorizontal: S.md,
-    paddingTop: 64,
-    paddingBottom: S.xl,
+  crtOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "#000",
+    opacity: 0.04,
   },
-  topRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: S.lg,
+  safe: {
+    flex: 1,
+    paddingHorizontal: GUTTER,
   },
-  chip: {
-    paddingHorizontal: S.sm + 2,
-    paddingVertical: S.xs + 1,
-    backgroundColor: C.surface,
+
+  // ── LOGO
+  logoSection: {
+    justifyContent: "center",
+    alignItems: "center",
+    position: "relative",
+    minHeight: 180,
+    marginTop: 50,
+    marginBottom: 40,
+  },
+
+  decorCard: {
+    position: "absolute",
+    width: 85,
+    height: 122,
+    backgroundColor: C.surfaceContainerHigh,
     borderWidth: 1,
+    borderColor: C.outlineVariant,
+    overflow: "hidden",
   },
+  decorLeft: { left: -25, transform: [{ rotate: "-18deg" }] },
+  decorRight: { right: -25, transform: [{ rotate: "18deg" }] },
+  decorLine: {
+    position: "absolute",
+    top: 8,
+    left: 8,
+    right: 8,
+    height: 1,
+    backgroundColor: C.outlineVariant,
+    opacity: 0.6,
+  },
+  decorCorner: {
+    position: "absolute",
+    bottom: 8,
+    right: 8,
+    width: 16,
+    height: 16,
+    borderWidth: 1,
+    borderColor: C.outlineVariant,
+    opacity: 0.6,
+  },
+
   logoBlock: {
-    alignSelf: 'center',
+    alignSelf: "center",
     marginBottom: S.xs,
   },
   logoText: {
-    fontFamily: 'SpaceGrotesk_700Bold',
+    fontFamily: "SpaceGrotesk_700Bold",
     fontSize: 52,
     letterSpacing: 6,
     lineHeight: 58,
   },
   logoDiamond: {
-    position: 'absolute',
+    position: "absolute",
     top: -8,
-    right: -12,
+    left: -12,
     width: 14,
     height: 14,
     backgroundColor: C.tertiaryDim,
-    transform: [{ rotate: '45deg' }],
+    transform: [{ rotate: "45deg" }],
   },
-  logoSub: {
+
+  tagline: {
+    fontFamily: "JetBrainsMono_400Regular",
+    fontSize: 10,
     color: C.outline,
-    textAlign: 'center',
     letterSpacing: 4,
-    textTransform: 'uppercase',
-    marginBottom: S.xl,
+    marginTop: 12,
+    textTransform: "uppercase",
   },
+
+  // ── FORM
   form: {
-    gap: S.sm,
+    gap: 12,
+    marginBottom: 24,
   },
   inputCard: {
-    backgroundColor: C.surface,
+    backgroundColor: C.surfaceContainerHigh,
     borderWidth: 1,
-    padding: S.sm + 2,
+    borderColor: C.outlineVariant,
+    borderRadius: 14,
+    padding: 14,
   },
+
   inputHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: S.xs + 2,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 6,
+  },
+  inputLabel: {
+    fontFamily: "JetBrainsMono_500Medium",
+    fontSize: 10,
+    color: C.outline,
+    letterSpacing: 2,
+    textTransform: "uppercase",
   },
   inputText: {
     color: C.onSurface,
+    fontFamily: "JetBrainsMono_500Medium",
+    fontSize: 14,
     paddingVertical: 0,
   },
   showPill: {
+    fontFamily: "JetBrainsMono_500Medium",
+    fontSize: 10,
     color: C.outline,
     letterSpacing: 1,
     borderWidth: 1,
-    borderColor: C.surfaceContainerHigh,
-    paddingHorizontal: S.xs + 2,
+    borderColor: C.outlineVariant,
+    paddingHorizontal: 6,
     paddingVertical: 2,
   },
-  primaryBtn: {
-    marginTop: S.xs,
+
+  // ── PRZYCISKI
+  buttons: {
+    paddingBottom: Platform.OS === "android" ? 20 : 8,
+    gap: 16,
   },
-  ctaInner: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: S.md + 2,
-    paddingVertical: S.md + 2,
+  btnLabelGroupCentered: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
   },
-  ctaTitle: {
-    fontFamily: 'SpaceGrotesk_700Bold',
-    fontSize: 16,
-    letterSpacing: 2,
-    lineHeight: 19,
+  btnIcon: {
+    marginRight: 8,
   },
-  ctaGlyph: {
-    fontFamily: 'SpaceGrotesk_700Bold',
+
+  // REGISTER (jak SoloBtn w sign-in)
+  soloBtn: {
+    backgroundColor: "transparent",
+    paddingHorizontal: 20,
+    paddingVertical: 18,
+    borderRadius: 999,
+    borderWidth: 2,
+    borderColor: C.primary,
+    width: "70%",
+    alignSelf: "center",
+    shadowColor: C.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.85,
+    shadowRadius: 16,
+    elevation: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  soloBtnTitle: {
+    fontFamily: "SpaceGrotesk_700Bold",
     fontSize: 18,
-    lineHeight: 19,
+    color: C.onSurface || "#ffffff",
+    letterSpacing: 1.5,
   },
-  dividerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: S.md,
+
+  // GOOGLE (jak MultiBtn w sign-in)
+  multiBtn: {
+    backgroundColor: "transparent",
+    paddingHorizontal: 20,
+    paddingVertical: 18,
+    borderRadius: 999,
+    borderWidth: 2,
+    borderColor: C.secondary,
+    width: "70%",
+    alignSelf: "center",
+    shadowColor: C.secondary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 10,
+    elevation: 6,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: C.surfaceContainerHigh,
+  multiBtnTitle: {
+    fontFamily: "SpaceGrotesk_700Bold",
+    fontSize: 18,
+    color: C.onSurface || "#ffffff",
+    letterSpacing: 1,
   },
-  googleInner: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: S.md,
-    paddingVertical: S.md + 2,
+
+  // SIGN IN (powrót — jak signupBtn w sign-in)
+  signupBtn: {
+    alignSelf: "center",
+    width: "70%",
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 999,
+    borderWidth: 2,
+    borderColor: C.tertiary,
+    shadowColor: C.tertiary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 8,
+    elevation: 4,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 8,
   },
-  googleLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: S.xl,
+  signupBtnText: {
+    fontFamily: "JetBrainsMono_500Medium",
+    fontSize: 12,
+    color: C.onSurface || "#ffffff",
+    letterSpacing: 2,
+    textTransform: "uppercase",
   },
 });
