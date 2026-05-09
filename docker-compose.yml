@@ -8,13 +8,17 @@ services:
       - "8081:8081"
     env_file:
       - .env
-    command: npx expo start
+    command: ["npx", "expo", "start", "${EXPO_START_FLAGS:---lan}"]
     tty: true
     stdin_open: true
 
     environment:
       - CHOKIDAR_USEPOLLING=true
       - REACT_NATIVE_PACKAGER_HOSTNAME=${REACT_NATIVE_PACKAGER_HOSTNAME}
+      - EXPO_TOKEN=${EXPO_TOKEN:-}
+
+    volumes:
+      - ${EXPO_HOME_DIR:-/root}/.expo:/root/.expo
 
     develop:
       watch:

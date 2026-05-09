@@ -1,5 +1,7 @@
-import { networkInterfaces } from 'os';
+import { networkInterfaces, homedir } from 'os';
 import { spawn } from 'child_process';
+
+const tunnelMode = process.argv.includes('--tunnel');
 
 function detectLanIp() {
   if (process.env.HOST_IP) {
@@ -43,11 +45,21 @@ function detectLanIp() {
   return preferred.ip;
 }
 
-const ip = detectLanIp();
+const ip = tunnelMode ? '' : detectLanIp();
+
+if (tunnelMode) {
+  console.log('[start-docker] Tunnel mode — pomijam LAN IP detection.');
+  console.log('[start-docker] Upewnij się, że jesteś zalogowany w Expo: npx expo login\n');
+}
 
 const child = spawn('docker', ['compose', 'up', '--build'], {
   stdio: 'inherit',
-  env: { ...process.env, REACT_NATIVE_PACKAGER_HOSTNAME: ip },
+  env: {
+    ...process.env,
+    REACT_NATIVE_PACKAGER_HOSTNAME: ip,
+    EXPO_START_FLAGS: tunnelMode ? '--tunnel' : '--lan',
+    EXPO_HOME_DIR: homedir(),
+  },
 });
 
 const forward = (sig) => child.kill(sig);
