@@ -34,6 +34,8 @@ export type Snapshot = {
     title: string | null;
     options: string[] | null;
     category: string | null;
+    blackout_idx: number | null;
+    disabled_idxs: number[] | null;
   };
   you: {
     is_player1: boolean;

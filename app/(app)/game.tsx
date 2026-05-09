@@ -5,7 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, useLocalSearchParams, Redirect } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { arc, arcSpace } from '@/lib/arcade-theme';
-import { BattleCard } from '@/components/arcade/BattleCard';
+import { TypedCard, CARD_META } from '@/components/cards/typed-card';
 import { QuestionSheet } from '@/components/arcade/QuestionSheet';
 import { VictoryOverlay } from '@/components/arcade/VictoryOverlay';
 import { DefeatOverlay } from '@/components/arcade/DefeatOverlay';
@@ -13,27 +13,6 @@ import { MatchProvider, useMatch, QUESTION_TIMEOUT_SENTINEL } from '@/lib/match-
 import { concedeMatch } from '@/lib/match-api';
 import { useAuth } from '@/lib/auth-context';
 import type { CardType } from '@/lib/match-api';
-
-// Map our 6 game types → the 3 display types BattleCard understands
-type DisplayType = 'DMG' | 'HEAL' | 'DOT';
-function toDisplayType(ct: CardType): DisplayType {
-  if (ct === 'HEAL' || ct === 'HEAL_REMOVE' || ct === 'TIME_BUFF') return 'HEAL';
-  if (ct === 'POISON') return 'DOT';
-  return 'DMG';
-}
-
-const CARD_DISPLAY_VAL: Record<CardType, number> = {
-  DMG: 15, HEAL: 12, POISON: 3, DMG_BLOCK: 5, HEAL_REMOVE: 4, TIME_BUFF: 5,
-};
-
-const TYPE_LABEL: Record<CardType, string> = {
-  DMG: 'DMG · DAMAGE',
-  HEAL: 'HEAL · RESTORE',
-  POISON: 'POISON · DOT',
-  DMG_BLOCK: 'BLOCK · DEBUFF',
-  HEAL_REMOVE: 'CURE · RESTORE',
-  TIME_BUFF: 'TIME · BUFF',
-};
 
 function GameInner() {
   const router = useRouter();
@@ -47,7 +26,10 @@ function GameInner() {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const autoSubmittedRef = useRef(false);
 
-  // Stable callbacks — must be declared before any early return (Rules of Hooks)
+  const [pickTimeLeft, setPickTimeLeft] = useState(15);
+  const pickTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pickAutoFiredRef = useRef(false);
+
   const handlePlayCard = useCallback(async () => {
     if (!snapshot) return;
     const isMyTurn = snapshot.whose_turn === uid;
@@ -84,7 +66,7 @@ function GameInner() {
     );
   };
 
-  // Countdown timer — only active when a question is pending
+  // Question countdown timer
   useEffect(() => {
     if (questionDeadline == null) {
       if (timerRef.current) clearInterval(timerRef.current);
@@ -101,7 +83,7 @@ function GameInner() {
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [questionDeadline]);
 
-  // Auto-submit on timeout
+  // Auto-submit on question timeout
   useEffect(() => {
     if (
       timeLeft <= 0 &&
@@ -113,6 +95,32 @@ function GameInner() {
       answer(QUESTION_TIMEOUT_SENTINEL).catch(() => {});
     }
   }, [timeLeft, questionDeadline, answer, snapshot?.current_question.q_id]);
+
+  // Card-pick timer — only active on player's turn, no active question
+  const myTurnForTimer = snapshot?.whose_turn === uid;
+  const questionActiveForTimer = snapshot?.current_question.q_id != null;
+  const handLengthForTimer = snapshot?.you.hand.length ?? 0;
+
+  useEffect(() => {
+    if (!myTurnForTimer || questionActiveForTimer || handLengthForTimer === 0) {
+      if (pickTimerRef.current) clearInterval(pickTimerRef.current);
+      setPickTimeLeft(15);
+      pickAutoFiredRef.current = false;
+      return;
+    }
+    const start = Date.now();
+    const tick = () => {
+      const remaining = Math.max(0, 15 - Math.floor((Date.now() - start) / 1000));
+      setPickTimeLeft(remaining);
+      if (remaining <= 0 && !pickAutoFiredRef.current) {
+        pickAutoFiredRef.current = true;
+        handlePlayCard();
+      }
+    };
+    tick();
+    pickTimerRef.current = setInterval(tick, 200);
+    return () => { if (pickTimerRef.current) clearInterval(pickTimerRef.current); };
+  }, [myTurnForTimer, questionActiveForTimer, handLengthForTimer, handlePlayCard]);
 
   if (loading) {
     return (
@@ -138,7 +146,6 @@ function GameInner() {
   const questionActive = snapshot.current_question.q_id != null;
   const myAnswerCount = snapshot.answer_log.filter(a => a.player_id === uid).length;
 
-  // Derive overlay state
   const isFinished  = !snapshot.is_currently_played || snapshot.finished_at != null;
   const isWin  = isFinished && snapshot.winner_id === uid;
   const isLoss = isFinished && snapshot.winner_id != null && snapshot.winner_id !== uid;
@@ -148,15 +155,21 @@ function GameInner() {
     router.replace({ pathname: '/game-summary', params: { matchId: String(snapshot.match_id), result } } as never);
   };
 
-  // Ensure selectedSlot is valid in current hand
   const validSelectedIdx = selectedSlotIdx != null && selectedSlotIdx < hand.length ? selectedSlotIdx : (hand.length > 0 ? 0 : null);
-
   const selectedEntry = validSelectedIdx != null ? hand[validSelectedIdx] : undefined;
   const selectedType: CardType = selectedEntry ? (cardTypes[selectedEntry.id] ?? 'DMG') : 'DMG';
-  const displayType = toDisplayType(selectedType);
-  const displayVal  = CARD_DISPLAY_VAL[selectedType];
+  const selectedMeta = CARD_META[selectedType];
+
+  // Played card for QuestionSheet display
+  const playedCardId = snapshot.pending_card_id;
+  const playedType: CardType = playedCardId != null ? (cardTypes[playedCardId] ?? 'DMG') : selectedType;
+  const playedCat: string = snapshot.current_question.category ?? '';
 
   const oppNick = snapshot.opponent.id === '00000000-0000-0000-0000-000000000b07' ? 'BOT' : 'Opponent';
+
+  // Timer display
+  const showPickTimer = myTurn && !questionActive && hand.length > 0;
+  const displayedTimer = questionActive ? timeLeft : showPickTimer ? pickTimeLeft : null;
 
   return (
     <View style={s.root}>
@@ -167,7 +180,6 @@ function GameInner() {
         start={{ x: 1, y: 1 }} end={{ x: 0, y: 0 }} pointerEvents="none" />
 
       <SafeAreaView style={s.safe}>
-        {/* Error banner */}
         {error ? (
           <View style={s.errorBanner}>
             <Text style={s.errorBannerText}>{error}</Text>
@@ -186,9 +198,18 @@ function GameInner() {
             <Text style={s.turnText}>{myTurn ? 'Your Turn' : "Opponent's Turn"}</Text>
           </View>
           <View style={[s.timerBox, questionActive && { borderColor: arc.primaryContainer + '88' }]}>
-            <Text style={[s.timerText, questionActive && timeLeft <= 5 && { color: arc.primaryContainer }]}>
-              {questionActive ? `${timeLeft}s` : '—'}
-            </Text>
+            {displayedTimer != null ? (
+              <>
+                <Text style={[s.timerText, displayedTimer <= 5 && { color: arc.primaryContainer }]}>
+                  {displayedTimer}s
+                </Text>
+                {showPickTimer && (
+                  <Text style={s.timerSubLabel}>PICK</Text>
+                )}
+              </>
+            ) : (
+              <Text style={s.timerText}>—</Text>
+            )}
           </View>
         </View>
 
@@ -210,11 +231,18 @@ function GameInner() {
                   start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
                 />
               </View>
-              <View style={s.opponentChips}>
+              <View style={s.statusChips}>
                 {(snapshot.opponent.status_public.ps ?? 0) > 0 && (
-                  <View style={[s.statusChip, { backgroundColor: arc.tertiary + '22' }]}>
-                    <Text style={[s.statusChipText, { color: arc.tertiary }]}>
+                  <View style={[s.statusChip, { backgroundColor: '#C1FF0022' }]}>
+                    <Text style={[s.statusChipText, { color: '#C1FF00' }]}>
                       POISON ×{snapshot.opponent.status_public.ps}
+                    </Text>
+                  </View>
+                )}
+                {(snapshot.opponent.status_public.ba ?? 0) > 0 && (
+                  <View style={[s.statusChip, { backgroundColor: '#FFD40022' }]}>
+                    <Text style={[s.statusChipText, { color: '#FFD400' }]}>
+                      BLIND ×{snapshot.opponent.status_public.ba}
                     </Text>
                   </View>
                 )}
@@ -243,11 +271,29 @@ function GameInner() {
               start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
             />
           </View>
-          {(snapshot.you.status.ps ?? 0) > 0 && (
-            <Text style={{ fontFamily: 'JetBrainsMono_500Medium', fontSize: 9, color: arc.tertiary, marginTop: 3, letterSpacing: 0.5 }}>
-              POISON ×{snapshot.you.status.ps}
-            </Text>
-          )}
+          <View style={s.statusChips}>
+            {(snapshot.you.status.ps ?? 0) > 0 && (
+              <View style={[s.statusChip, { backgroundColor: '#C1FF0022' }]}>
+                <Text style={[s.statusChipText, { color: '#C1FF00' }]}>
+                  POISON ×{snapshot.you.status.ps}
+                </Text>
+              </View>
+            )}
+            {(snapshot.you.status.rw ?? 0) > 0 && (
+              <View style={[s.statusChip, { backgroundColor: '#7e44c422' }]}>
+                <Text style={[s.statusChipText, { color: '#7e44c4' }]}>
+                  50/50 ×{snapshot.you.status.rw}
+                </Text>
+              </View>
+            )}
+            {(snapshot.you.status.et ?? 0) > 0 && (
+              <View style={[s.statusChip, { backgroundColor: '#ff9d0022' }]}>
+                <Text style={[s.statusChipText, { color: '#ff9d00' }]}>
+                  +{snapshot.you.status.et}s NEXT
+                </Text>
+              </View>
+            )}
+          </View>
         </View>
 
         {/* Hand meta */}
@@ -264,12 +310,11 @@ function GameInner() {
             const handKey = `${c.id}-${i}`;
             return (
               <Pressable key={handKey} onPress={() => setSelectedSlotIdx(i)}>
-                <BattleCard
-                  type={toDisplayType(ct)}
+                <TypedCard
+                  type={ct}
                   cat={c.cat}
-                  val={CARD_DISPLAY_VAL[ct]}
-                  w={62}
-                  sel={i === validSelectedIdx}
+                  width={62}
+                  selected={i === validSelectedIdx}
                 />
               </Pressable>
             );
@@ -277,17 +322,14 @@ function GameInner() {
         </ScrollView>
 
         {/* Selected card detail */}
-        <View style={[s.cardDetail, { borderColor: (arc.secondaryContainer) + '88' }]}>
+        <View style={[s.cardDetail, { borderColor: selectedMeta.color + '88' }]}>
           <View style={s.cardDetailMeta}>
-            <View style={[s.cardTypeChip, { backgroundColor: arc.secondaryContainer + '22' }]}>
-              <Text style={[s.cardTypeChipText, { color: arc.secondaryContainer }]}>
-                {selectedEntry ? TYPE_LABEL[selectedType] : '—'}
+            <View style={[s.cardTypeChip, { backgroundColor: selectedMeta.color + '22' }]}>
+              <Text style={[s.cardTypeChipText, { color: selectedMeta.color }]}>
+                {selectedEntry ? selectedMeta.label : '—'}
               </Text>
             </View>
             <View style={s.spacer} />
-            <Text style={[s.dmgLabel, { color: arc.secondaryContainer }]}>
-              {displayVal} {displayType === 'DMG' ? 'DMG' : displayType === 'HEAL' ? 'HP' : 'DOT'}
-            </Text>
           </View>
           <Pressable
             style={[
@@ -313,12 +355,14 @@ function GameInner() {
         visible={(questionActive && myTurn) || lastResult != null}
         onClose={() => {}}
         onSubmit={handleAnswer}
-        card={{ type: displayType, cat: snapshot.current_question.category ?? '', val: displayVal }}
+        card={{ type: playedType, cat: playedCat }}
         question={snapshot.current_question.title ?? ''}
         answers={snapshot.current_question.options ?? []}
         timerSec={timeLeft}
         durationSec={15}
         result={lastResult}
+        blackoutIdx={snapshot.current_question.blackout_idx}
+        disabledIdxs={snapshot.current_question.disabled_idxs}
       />
 
       <VictoryOverlay
@@ -333,7 +377,6 @@ function GameInner() {
         onContinue={() => navigateSummary('loss')}
         stats={{ cards: String(myAnswerCount) }}
       />
-      {/* Draw: reuse VictoryOverlay with different text (no dedicated component) */}
       <VictoryOverlay
         visible={isDraw}
         onClose={() => navigateSummary('draw')}
@@ -391,6 +434,7 @@ const s = StyleSheet.create({
     borderWidth: 1, borderColor: arc.secondaryContainer + '55', alignItems: 'center', justifyContent: 'center',
   },
   timerText: { fontFamily: 'JetBrainsMono_500Medium', fontSize: 16, color: arc.secondaryContainer },
+  timerSubLabel: { fontFamily: 'JetBrainsMono_500Medium', fontSize: 8, color: arc.outline, letterSpacing: 1 },
 
   opponentPanel: {
     borderWidth: 1, borderColor: arc.surfaceHigh,
@@ -406,13 +450,12 @@ const s = StyleSheet.create({
   opponentNameRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 },
   opponentName:    { fontFamily: 'SpaceGrotesk_700Bold', fontSize: 16, color: arc.ink },
   opponentHpLabel: { fontFamily: 'JetBrainsMono_500Medium', fontSize: 14, color: arc.primaryContainer },
-  hpTrack:      { height: 8,  backgroundColor: arc.surfaceHigh, marginBottom: 6, overflow: 'hidden' },
+  hpTrack:      { height: 8,  backgroundColor: arc.surfaceHigh, marginBottom: 4, overflow: 'hidden' },
   hpTrackPlayer:{ height: 10, backgroundColor: arc.surfaceHigh, overflow: 'hidden' },
   hpFill: { height: '100%' },
-  opponentChips:   { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  statusChip:      { paddingHorizontal: 6, paddingVertical: 2 },
-  statusChipText:  { fontFamily: 'JetBrainsMono_500Medium', fontSize: 9, letterSpacing: 0.5 },
-  levelText:       { fontFamily: 'JetBrainsMono_500Medium', fontSize: 9, color: arc.outline, letterSpacing: 0.5 },
+  statusChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 },
+  statusChip:  { paddingHorizontal: 6, paddingVertical: 2 },
+  statusChipText: { fontFamily: 'JetBrainsMono_500Medium', fontSize: 9, letterSpacing: 0.5 },
 
   battlefield:  { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: arcSpace.sm },
   noPlayText:   { fontFamily: 'JetBrainsMono_500Medium', fontSize: 11, color: arc.outline, letterSpacing: 3 },
@@ -434,7 +477,6 @@ const s = StyleSheet.create({
   cardTypeChip:   { paddingHorizontal: 8, paddingVertical: 4 },
   cardTypeChipText: { fontFamily: 'JetBrainsMono_500Medium', fontSize: 9, letterSpacing: 1 },
   spacer:    { flex: 1 },
-  dmgLabel:  { fontFamily: 'SpaceGrotesk_700Bold', fontSize: 16 },
   playBtn: {
     height: 56, alignItems: 'center', justifyContent: 'center',
     shadowOpacity: 0.5, shadowRadius: 12, shadowOffset: { width: 0, height: 0 }, elevation: 6,

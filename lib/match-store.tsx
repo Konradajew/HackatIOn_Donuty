@@ -156,8 +156,9 @@ export function MatchProvider({
     }
   }, [snapshot?.current_question.q_id]);
 
+  const etBonus = snapshot?.you.status.et ?? 0;
   const questionDeadline =
-    questionStartedClientMs != null ? questionStartedClientMs + 15_000 : null;
+    questionStartedClientMs != null ? questionStartedClientMs + (15 + etBonus) * 1000 : null;
 
   return (
     <Ctx.Provider

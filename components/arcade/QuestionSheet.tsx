@@ -1,24 +1,34 @@
 import { useState } from 'react';
 import { Modal, View, Text, Pressable, StyleSheet } from 'react-native';
 import { arc } from '@/lib/arcade-theme';
-import { BattleCard } from './BattleCard';
+import { TypedCard } from '@/components/cards/typed-card';
+import type { CardType } from '@/lib/match-api';
 
-type CardType = 'DMG' | 'HEAL' | 'DOT';
+const HINT: Record<CardType, string> = {
+  DMG:         'Answer to damage your opponent',
+  HEAL:        'Answer to heal yourself',
+  POISON:      'Answer to poison your opponent',
+  DMG_BLOCK:   'Answer to blackout one opponent answer',
+  HEAL_REMOVE: 'Answer for a 50/50 buff next turn',
+  TIME_BUFF:   'Answer for extra time next turn',
+};
+
+const LABELS = ['A', 'B', 'C', 'D'];
 
 interface QuestionSheetProps {
   visible: boolean;
   onClose: () => void;
   onSubmit: (answerIndex: number) => void;
-  card: { type: CardType; cat: string; val: number };
+  card: { type: CardType; cat: string };
   question: string;
   answers: string[];
   timerSec: number;
   durationSec: number;
   difficulty?: number;
   result?: { correct_idx: number; picked_idx: number } | null;
+  blackoutIdx?: number | null;
+  disabledIdxs?: number[] | null;
 }
-
-const LABELS = ['A', 'B', 'C', 'D'];
 
 export function QuestionSheet({
   visible,
@@ -31,6 +41,8 @@ export function QuestionSheet({
   durationSec,
   difficulty = 3,
   result,
+  blackoutIdx,
+  disabledIdxs,
 }: QuestionSheetProps) {
   const [selected, setSelected] = useState<number | null>(null);
   const progress = Math.max(0, Math.min(1, timerSec / durationSec));
@@ -56,7 +68,7 @@ export function QuestionSheet({
 
           {/* Card meta + timer */}
           <View style={s.metaRow}>
-            <BattleCard type={card.type} cat={card.cat} val={card.val} w={56} sel />
+            <TypedCard type={card.type} cat={card.cat} width={56} selected />
             <View style={s.metaText}>
               <View style={s.chipRow}>
                 <View style={[s.chip, { backgroundColor: arc.primaryContainer + '22' }]}>
@@ -68,7 +80,7 @@ export function QuestionSheet({
                 </Text>
               </View>
               <Text style={s.hintText} numberOfLines={2}>
-                Answer to deal {card.val} damage
+                {HINT[card.type]}
               </Text>
             </View>
             <View style={s.timerBox}>
@@ -102,12 +114,16 @@ export function QuestionSheet({
               const isSel = selected === i;
               const isCorrectResult = result != null && i === result.correct_idx;
               const isWrongPick = result != null && i === result.picked_idx && i !== result.correct_idx;
+              const isBlackedOut = result == null && blackoutIdx === i;
+              const isDisabled = result == null && !!(disabledIdxs?.includes(i));
+
               return (
                 <Pressable
                   key={i}
                   style={[
                     s.answerRow,
-                    isSel && !result && {
+                    isDisabled && s.answerRowDisabled,
+                    isSel && !result && !isDisabled && {
                       backgroundColor: arc.secondaryContainer + '18',
                       borderColor: arc.secondaryContainer,
                       borderWidth: 1.5,
@@ -128,8 +144,8 @@ export function QuestionSheet({
                       borderWidth: 1.5,
                     },
                   ]}
-                  onPress={() => result == null && setSelected(i)}
-                  disabled={result != null}
+                  onPress={() => result == null && !isDisabled && setSelected(i)}
+                  disabled={result != null || isDisabled}
                 >
                   <View
                     style={[
@@ -138,25 +154,31 @@ export function QuestionSheet({
                         ? { backgroundColor: arc.tertiary }
                         : isWrongPick
                           ? { backgroundColor: arc.primaryContainer }
-                          : isSel
+                          : isSel && !isDisabled
                             ? { backgroundColor: arc.secondaryContainer }
                             : { backgroundColor: arc.surfaceHigh, borderWidth: 1, borderColor: arc.surfaceHigh },
                     ]}
                   >
-                    <Text style={[s.answerLabelText, { color: (isCorrectResult || isWrongPick || isSel) ? arc.bg : arc.outline }]}>
+                    <Text style={[s.answerLabelText, { color: (isCorrectResult || isWrongPick || (isSel && !isDisabled)) ? arc.bg : arc.outline }]}>
                       {LABELS[i]}
                     </Text>
                   </View>
-                  <Text style={s.answerText} numberOfLines={2}>
-                    {ans}
-                  </Text>
+
+                  {isBlackedOut ? (
+                    <View style={s.blackoutBar} />
+                  ) : (
+                    <Text style={[s.answerText, isDisabled && { color: arc.outline }]} numberOfLines={2}>
+                      {ans}
+                    </Text>
+                  )}
+
                   {isCorrectResult && (
                     <Text style={[s.checkMark, { color: arc.tertiary }]}>✓</Text>
                   )}
                   {isWrongPick && (
                     <Text style={[s.checkMark, { color: arc.primaryContainer }]}>✗</Text>
                   )}
-                  {!result && isSel && (
+                  {!result && isSel && !isDisabled && (
                     <Text style={[s.checkMark, { color: arc.secondaryContainer }]}>✓</Text>
                   )}
                 </Pressable>
@@ -313,6 +335,9 @@ const s = StyleSheet.create({
     alignItems: 'center',
     gap: 14,
   },
+  answerRowDisabled: {
+    opacity: 0.35,
+  },
   answerLabel: {
     width: 36,
     height: 36,
@@ -329,6 +354,12 @@ const s = StyleSheet.create({
     fontSize: 18,
     color: arc.ink,
     flex: 1,
+  },
+  blackoutBar: {
+    flex: 1,
+    height: 22,
+    backgroundColor: '#000000',
+    borderRadius: 2,
   },
   checkMark: {
     fontFamily: 'SpaceGrotesk_400Regular',
