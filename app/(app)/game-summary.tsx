@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
-import { View, Text, ScrollView, Pressable, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, Pressable, StyleSheet, ActivityIndicator, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { arc, arcSpace } from '@/lib/arcade-theme';
-import { getMatchSnapshot, getCardTypes, type CardType, type Snapshot } from '@/lib/match-api';
+import { useAuth } from '@/lib/auth-context';
+import { getMatchSnapshot, getCardTypes, type CardType, type Snapshot, type AnswerLogEntry } from '@/lib/match-api';
 
 type DisplayType = 'DMG' | 'HEAL' | 'DOT';
 function toDisplay(ct: CardType): DisplayType {
@@ -22,12 +23,15 @@ const TYPE_COLORS: Record<DisplayType, string> = {
 
 export default function GameSummaryScreen() {
   const router = useRouter();
+  const { session } = useAuth();
+  const uid = session?.user.id ?? '';
   const { result, matchId } = useLocalSearchParams<{ result?: string; matchId?: string }>();
   const isWin  = result === 'win';
   const isDraw = result === 'draw';
 
   const [snap, setSnap] = useState<Snapshot | null>(null);
   const [cardTypes, setCardTypes] = useState<Record<number, CardType>>({});
+  const [review, setReview] = useState<AnswerLogEntry | null>(null);
 
   useEffect(() => {
     const id = Number(matchId);
@@ -38,21 +42,25 @@ export default function GameSummaryScreen() {
   }, [matchId]);
 
   const accentColor = isWin ? arc.tertiary : isDraw ? arc.secondaryContainer : arc.primaryContainer;
-  const heroColors: [string, string] = isWin
-    ? [arc.tertiary, arc.tertiaryContainer]
-    : isDraw
-    ? [arc.secondaryContainer, arc.surface]
-    : [arc.primaryContainer, arc.onPrimary];
 
-  const totalCards = snap
-    ? snap.you.discard_pile.length + snap.you.hand.length + snap.you.remaining_cards.length
-    : 0;
-  const playedCards = snap?.you.discard_pile.length ?? 0;
+  const myAnswers: AnswerLogEntry[] = (snap?.answer_log ?? []).filter(a => a.player_id === uid);
+  const playedCards = myAnswers.length;
+  const correctCount = myAnswers.filter(a => a.was_correct).length;
+  const accPct = myAnswers.length > 0 ? Math.round((correctCount / myAnswers.length) * 100) : null;
 
-  const STATS = [
-    { l: 'CARDS PLAYED', v: snap ? `${playedCards}/${totalCards}` : '—', sub: 'this match', c: arc.secondaryContainer },
-    { l: 'YOUR HP', v: snap ? `${snap.you.hp}` : '—', sub: 'final', c: isWin ? arc.tertiary : arc.primaryContainer },
-    { l: 'OPP HP', v: snap ? `${snap.opponent.hp}` : '—', sub: 'final', c: arc.outline },
+  const startMs = snap ? new Date(snap.started_at).getTime() : 0;
+  const endMs   = snap?.finished_at ? new Date(snap.finished_at).getTime() : (snap ? Date.now() : 0);
+  const durSec  = snap ? Math.max(0, Math.round((endMs - startMs) / 1000)) : 0;
+  const timeStr = snap ? `${Math.floor(durSec / 60)}:${String(durSec % 60).padStart(2, '0')}` : '—';
+
+  const ROW1 = [
+    { l: 'CARDS PLAYED', v: snap ? String(playedCards) : '—',                   sub: 'this match', c: arc.secondaryContainer },
+    { l: 'ACCURACY',     v: snap ? (accPct != null ? `${accPct}%` : '—') : '—', sub: 'correct',    c: isWin ? arc.tertiary : arc.secondaryContainer },
+    { l: 'TIME',         v: snap ? timeStr : '—',                                sub: 'duration',   c: arc.outline },
+  ];
+  const ROW2 = [
+    { l: 'YOUR HP', v: snap ? `${snap.you.hp}` : '—',       sub: 'final', c: isWin ? arc.tertiary : arc.primaryContainer },
+    { l: 'OPP HP',  v: snap ? `${snap.opponent.hp}` : '—',  sub: 'final', c: arc.outline },
   ];
 
   return (
@@ -92,33 +100,26 @@ export default function GameSummaryScreen() {
           </View>
         </View>
 
-        {/* Hero panel */}
-        <LinearGradient
-          colors={heroColors}
-          style={s.heroBg}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-        >
-          <View style={[s.heroDecor, { borderColor: arc.bg + '22' }]} />
-          <Text style={s.heroEarned}>YOU EARNED</Text>
-          <Text style={s.heroXp}>
-            {isWin ? '+148' : isDraw ? '±0' : '−12'}
-            <Text style={s.heroXpUnit}>xp</Text>
-          </Text>
-          <Text style={s.heroSub}>
-            {isWin ? '+24◆ coins  ·  5-win streak' : isDraw ? 'Equal HP · no streak change' : '−5◆ coins  ·  streak reset'}
-          </Text>
-        </LinearGradient>
-
-        {/* Stats row */}
-        <View style={s.statsRow}>
-          {STATS.map(stat => (
-            <View key={stat.l} style={s.statTile}>
-              <Text style={s.statL}>{stat.l}</Text>
-              <Text style={[s.statV, { color: stat.c }]}>{stat.v}</Text>
-              <Text style={s.statSub}>{stat.sub}</Text>
-            </View>
-          ))}
+        {/* Stats rows */}
+        <View style={s.statsBlock}>
+          <View style={s.statsRow}>
+            {ROW1.map(stat => (
+              <View key={stat.l} style={s.statTile}>
+                <Text style={s.statL}>{stat.l}</Text>
+                <Text style={[s.statV, { color: stat.c }]}>{stat.v}</Text>
+                <Text style={s.statSub}>{stat.sub}</Text>
+              </View>
+            ))}
+          </View>
+          <View style={s.statsRow}>
+            {ROW2.map(stat => (
+              <View key={stat.l} style={s.statTile}>
+                <Text style={s.statL}>{stat.l}</Text>
+                <Text style={[s.statV, { color: stat.c }]}>{stat.v}</Text>
+                <Text style={s.statSub}>{stat.sub}</Text>
+              </View>
+            ))}
+          </View>
         </View>
 
         {/* Cards list header */}
@@ -135,29 +136,31 @@ export default function GameSummaryScreen() {
         >
           {snap == null ? (
             <ActivityIndicator color={arc.secondaryContainer} style={{ marginTop: 20 }} />
-          ) : snap.you.discard_pile.length === 0 ? (
+          ) : myAnswers.length === 0 ? (
             <Text style={[s.cardMeta, { textAlign: 'center', marginTop: 20 }]}>No cards played</Text>
           ) : (
-            snap.you.discard_pile.map((cardId, i) => {
-              const ct: CardType = cardTypes[cardId] ?? 'DMG';
+            myAnswers.map((entry, i) => {
+              const ct: CardType = cardTypes[entry.card_id] ?? 'DMG';
               const dt = toDisplay(ct);
               const tc = TYPE_COLORS[dt];
               return (
-                <View key={i} style={s.cardRow}>
+                <Pressable key={i} style={s.cardRow} onPress={() => setReview(entry)}>
                   <View style={[s.statusIcon, { backgroundColor: tc + '22' }]}>
                     <Text style={[s.statusIconGlyph, { color: tc }]}>{dt[0]}</Text>
                   </View>
                   <View style={s.cardRowBody}>
                     <View style={s.cardRowMeta}>
                       <View style={[s.typeTag, { backgroundColor: tc + '22' }]}>
-                        <Text style={[s.typeTagText, { color: tc }]}>{ct}</Text>
+                        <Text style={[s.typeTagText, { color: tc }]}>{entry.q_category}</Text>
                       </View>
-                      <Text style={s.cardMeta}>Card #{cardId}</Text>
+                      <Text style={[s.cardMeta, { color: entry.was_correct ? arc.tertiary : arc.primaryContainer }]}>
+                        {entry.was_correct ? '✓ correct' : entry.was_timeout ? '✗ timeout' : '✗ wrong'}
+                      </Text>
                     </View>
-                    <Text style={s.cardQuestion} numberOfLines={1}>{ct.replace('_', ' ')}</Text>
+                    <Text style={s.cardQuestion} numberOfLines={1}>{entry.q_title}</Text>
                   </View>
                   <Text style={s.chevron}>›</Text>
-                </View>
+                </Pressable>
               );
             })
           )}
@@ -186,6 +189,37 @@ export default function GameSummaryScreen() {
           </Pressable>
         </View>
       </SafeAreaView>
+
+      {/* Review modal */}
+      {review != null && (
+        <Modal transparent animationType="fade" visible onRequestClose={() => setReview(null)}>
+          <Pressable style={s.reviewOverlay} onPress={() => setReview(null)}>
+            <View style={s.reviewBox}>
+              <Text style={s.reviewQuestion}>{review.q_title}</Text>
+              <View style={s.reviewOptions}>
+                {review.q_options.map((opt, i) => {
+                  const isCorrect = i === review.correct_idx;
+                  const isWrong   = i === review.picked_idx && !review.was_correct;
+                  const borderColor = isCorrect ? arc.tertiary : isWrong ? arc.primaryContainer : arc.surfaceHigh;
+                  const bgColor     = isCorrect ? arc.tertiary + '22' : isWrong ? arc.primaryContainer + '22' : arc.surface;
+                  return (
+                    <View key={i} style={[s.reviewOption, { borderColor, backgroundColor: bgColor }]}>
+                      <Text style={[s.reviewOptionText, {
+                        color: isCorrect ? arc.tertiary : isWrong ? arc.primaryContainer : arc.ink,
+                      }]}>{opt}</Text>
+                      {isCorrect && <Text style={[s.reviewMark, { color: arc.tertiary }]}>✓</Text>}
+                      {isWrong   && <Text style={[s.reviewMark, { color: arc.primaryContainer }]}>✗</Text>}
+                    </View>
+                  );
+                })}
+              </View>
+              <Pressable style={s.reviewClose} onPress={() => setReview(null)}>
+                <Text style={s.reviewCloseText}>CLOSE</Text>
+              </Pressable>
+            </View>
+          </Pressable>
+        </Modal>
+      )}
     </View>
   );
 }
@@ -264,54 +298,14 @@ const s = StyleSheet.create({
     letterSpacing: 1,
   },
 
-  // Hero
-  heroBg: {
-    padding: 22,
-    marginBottom: arcSpace.sm,
-    overflow: 'hidden',
-  },
-  heroDecor: {
-    position: 'absolute',
-    top: -40,
-    right: -40,
-    width: 180,
-    height: 180,
-    borderRadius: 90,
-    borderWidth: 1.5,
-  },
-  heroEarned: {
-    fontFamily: 'JetBrainsMono_500Medium',
-    fontSize: 11,
-    letterSpacing: 2,
-    color: arc.bg,
-    opacity: 0.7,
-  },
-  heroXp: {
-    fontFamily: 'SpaceGrotesk_700Bold',
-    fontSize: 44,
-    color: arc.bg,
-    lineHeight: 50,
-    letterSpacing: -1,
-    marginTop: 4,
-  },
-  heroXpUnit: {
-    fontFamily: 'SpaceGrotesk_700Bold',
-    fontSize: 22,
-    opacity: 0.7,
-  },
-  heroSub: {
-    fontFamily: 'SpaceGrotesk_700Bold',
-    fontSize: 13,
-    color: arc.bg,
-    marginTop: 8,
-    opacity: 0.85,
-  },
-
   // Stats
+  statsBlock: {
+    gap: 8,
+    marginBottom: arcSpace.md,
+  },
   statsRow: {
     flexDirection: 'row',
     gap: 8,
-    marginBottom: arcSpace.md,
   },
   statTile: {
     flex: 1,
@@ -409,12 +403,6 @@ const s = StyleSheet.create({
     fontSize: 13,
     color: arc.ink,
   },
-  cardTime: {
-    fontFamily: 'JetBrainsMono_500Medium',
-    fontSize: 11,
-    color: arc.outline,
-    letterSpacing: 0.5,
-  },
   chevron: {
     fontFamily: 'SpaceGrotesk_400Regular',
     fontSize: 14,
@@ -454,5 +442,61 @@ const s = StyleSheet.create({
     fontFamily: 'SpaceGrotesk_700Bold',
     fontSize: 16,
     color: arc.bg,
+  },
+
+  // Review modal
+  reviewOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(13,12,28,0.88)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+  },
+  reviewBox: {
+    width: '100%',
+    backgroundColor: arc.surface,
+    borderWidth: 1,
+    borderColor: arc.surfaceHigh,
+    padding: 18,
+    gap: 12,
+  },
+  reviewQuestion: {
+    fontFamily: 'SpaceGrotesk_700Bold',
+    fontSize: 18,
+    color: arc.ink,
+    lineHeight: 24,
+  },
+  reviewOptions: {
+    gap: 8,
+  },
+  reviewOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    borderWidth: 1,
+    gap: 8,
+  },
+  reviewOptionText: {
+    flex: 1,
+    fontFamily: 'SpaceGrotesk_400Regular',
+    fontSize: 14,
+    lineHeight: 18,
+  },
+  reviewMark: {
+    fontFamily: 'SpaceGrotesk_700Bold',
+    fontSize: 16,
+  },
+  reviewClose: {
+    height: 48,
+    backgroundColor: arc.surfaceHigh,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 4,
+  },
+  reviewCloseText: {
+    fontFamily: 'JetBrainsMono_500Medium',
+    fontSize: 13,
+    color: arc.ink,
+    letterSpacing: 2,
   },
 });

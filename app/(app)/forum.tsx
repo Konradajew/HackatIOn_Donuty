@@ -8,13 +8,25 @@ import { ArcadeColors as C, ArcadeFonts as F, ArcadeSpacing as S } from "@/const
 import { useQuestions, avgDifficulty, type Question } from '@/lib/forum-store';
 
 const CHIPS: { l: string; cat: string | null }[] = [
-  { l: 'ALL',     cat: null },
-  { l: 'MATH',    cat: 'math' },
-  { l: 'SPACE',   cat: 'space' },
-  { l: 'MOVIES',  cat: 'movies' },
-  { l: 'MED',     cat: 'medicine' },
-  { l: 'HISTORY', cat: 'history' },
-  { l: 'MUSIC',   cat: 'music' },
+  { l: 'ALL',       cat: null },
+  { l: 'MATH',      cat: 'math' },
+  { l: 'SPACE',     cat: 'space' },
+  { l: 'MED',       cat: 'medicine' },
+  { l: 'MOVIES',    cat: 'movies' },
+  { l: 'TRAVEL',    cat: 'travel' },
+  { l: 'CHEMISTRY', cat: 'chemistry' },
+  { l: 'BOOKS',     cat: 'books' },
+  { l: 'ENGLISH',   cat: 'english' },
+  { l: 'HISTORY',   cat: 'history' },
+  { l: 'MUSIC',     cat: 'music' },
+  { l: 'NATURE',    cat: 'nature' },
+  { l: 'GAMES',     cat: 'games' },
+  { l: 'IT',        cat: 'IT' },
+  { l: 'CULINARY',  cat: 'culinary' },
+  { l: 'FLAGS',     cat: 'flags' },
+  { l: 'COUNTRIES', cat: 'countries' },
+  { l: 'RELIGION',  cat: 'religion' },
+  { l: 'FACTS',     cat: 'useless_facts' },
 ];
 
 function QuestionCard({ q, onPress }: { q: Question; onPress: () => void }) {

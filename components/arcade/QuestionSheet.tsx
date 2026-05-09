@@ -15,6 +15,7 @@ interface QuestionSheetProps {
   timerSec: number;
   durationSec: number;
   difficulty?: number;
+  result?: { correct_idx: number; picked_idx: number } | null;
 }
 
 const LABELS = ['A', 'B', 'C', 'D'];
@@ -29,6 +30,7 @@ export function QuestionSheet({
   timerSec,
   durationSec,
   difficulty = 3,
+  result,
 }: QuestionSheetProps) {
   const [selected, setSelected] = useState<number | null>(null);
   const progress = Math.max(0, Math.min(1, timerSec / durationSec));
@@ -98,12 +100,14 @@ export function QuestionSheet({
           <View style={s.answers}>
             {answers.map((ans, i) => {
               const isSel = selected === i;
+              const isCorrectResult = result != null && i === result.correct_idx;
+              const isWrongPick = result != null && i === result.picked_idx && i !== result.correct_idx;
               return (
                 <Pressable
                   key={i}
                   style={[
                     s.answerRow,
-                    isSel && {
+                    isSel && !result && {
                       backgroundColor: arc.secondaryContainer + '18',
                       borderColor: arc.secondaryContainer,
                       borderWidth: 1.5,
@@ -113,25 +117,46 @@ export function QuestionSheet({
                       shadowOffset: { width: 0, height: 0 },
                       elevation: 4,
                     },
+                    isCorrectResult && {
+                      backgroundColor: arc.tertiary + '22',
+                      borderColor: arc.tertiary,
+                      borderWidth: 1.5,
+                    },
+                    isWrongPick && {
+                      backgroundColor: arc.primaryContainer + '22',
+                      borderColor: arc.primaryContainer,
+                      borderWidth: 1.5,
+                    },
                   ]}
-                  onPress={() => setSelected(i)}
+                  onPress={() => result == null && setSelected(i)}
+                  disabled={result != null}
                 >
                   <View
                     style={[
                       s.answerLabel,
-                      isSel
-                        ? { backgroundColor: arc.secondaryContainer }
-                        : { backgroundColor: arc.surfaceHigh, borderWidth: 1, borderColor: arc.surfaceHigh },
+                      isCorrectResult
+                        ? { backgroundColor: arc.tertiary }
+                        : isWrongPick
+                          ? { backgroundColor: arc.primaryContainer }
+                          : isSel
+                            ? { backgroundColor: arc.secondaryContainer }
+                            : { backgroundColor: arc.surfaceHigh, borderWidth: 1, borderColor: arc.surfaceHigh },
                     ]}
                   >
-                    <Text style={[s.answerLabelText, { color: isSel ? arc.bg : arc.outline }]}>
+                    <Text style={[s.answerLabelText, { color: (isCorrectResult || isWrongPick || isSel) ? arc.bg : arc.outline }]}>
                       {LABELS[i]}
                     </Text>
                   </View>
                   <Text style={s.answerText} numberOfLines={2}>
                     {ans}
                   </Text>
-                  {isSel && (
+                  {isCorrectResult && (
+                    <Text style={[s.checkMark, { color: arc.tertiary }]}>✓</Text>
+                  )}
+                  {isWrongPick && (
+                    <Text style={[s.checkMark, { color: arc.primaryContainer }]}>✗</Text>
+                  )}
+                  {!result && isSel && (
                     <Text style={[s.checkMark, { color: arc.secondaryContainer }]}>✓</Text>
                   )}
                 </Pressable>
@@ -144,7 +169,7 @@ export function QuestionSheet({
             <Pressable
               style={[
                 s.submitBtn,
-                selected !== null
+                selected !== null && result == null
                   ? {
                       backgroundColor: arc.secondaryContainer,
                       shadowColor: arc.secondaryContainer,
@@ -156,9 +181,9 @@ export function QuestionSheet({
                   : { backgroundColor: arc.surfaceHigh },
               ]}
               onPress={handleSubmit}
-              disabled={selected === null}
+              disabled={selected === null || result != null}
             >
-              <Text style={[s.submitText, { color: selected !== null ? arc.bg : arc.outline }]}>
+              <Text style={[s.submitText, { color: selected !== null && result == null ? arc.bg : arc.outline }]}>
                 Lock in answer →
               </Text>
             </Pressable>

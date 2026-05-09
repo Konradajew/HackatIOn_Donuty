@@ -78,8 +78,8 @@ export function QuestionsProvider({ children }: { children: ReactNode }) {
       const voted = new Set(rows.filter(r => r.voted_by_me).map(r => String(r.q_id)));
       setVotedYesNo(voted);
       setVotedDifficulty(new Set(voted));
-    } catch {
-      // keep stale data on network error
+    } catch (e) {
+      console.warn('forum-store load failed:', e);
     } finally {
       setLoading(false);
     }

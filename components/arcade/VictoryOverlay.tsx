@@ -5,12 +5,10 @@ interface VictoryOverlayProps {
   visible: boolean;
   onClose: () => void;
   onContinue: () => void;
-  xp: number;
-  coins: number;
-  stats: { cards: string; acc: string; time: string };
+  stats: { cards: string };
 }
 
-export function VictoryOverlay({ visible, onClose, onContinue, xp, coins, stats }: VictoryOverlayProps) {
+export function VictoryOverlay({ visible, onClose, onContinue, stats }: VictoryOverlayProps) {
   return (
     <Modal transparent animationType="fade" visible={visible} onRequestClose={onClose}>
       <View style={s.backdrop}>
@@ -22,16 +20,14 @@ export function VictoryOverlay({ visible, onClose, onContinue, xp, coins, stats 
             </View>
             <View>
               <Text style={s.title}>VICTORY</Text>
-              <Text style={s.sub}>+{xp} XP · +{coins} COINS</Text>
+              <Text style={s.sub}>WELL PLAYED</Text>
             </View>
           </View>
 
           {/* Stats row */}
           <View style={s.statsRow}>
             {[
-              { l: 'CARDS', v: stats.cards },
-              { l: 'ACC', v: stats.acc },
-              { l: 'TIME', v: stats.time },
+              { l: 'CARDS PLAYED', v: stats.cards },
             ].map((stat) => (
               <View key={stat.l} style={s.statTile}>
                 <Text style={s.statValue}>{stat.v}</Text>

@@ -14,7 +14,26 @@ const CATEGORIES = [
   'math', 'space', 'medicine', 'movies', 'travel',
   'chemistry', 'books', 'english', 'history', 'music',
   'nature', 'games', 'IT', 'culinary', 'flags',
+  'countries', 'religion', 'useless_facts',
 ];
+
+const CATEGORY_TO_TYPE: Record<string, string> = {
+  math: 'DMG', travel: 'DMG', english: 'DMG',
+  medicine: 'HEAL', nature: 'HEAL', movies: 'HEAL',
+  chemistry: 'POISON', books: 'POISON', space: 'POISON',
+  religion: 'DMG_BLOCK', music: 'DMG_BLOCK', culinary: 'DMG_BLOCK',
+  games: 'HEAL_REMOVE', history: 'HEAL_REMOVE', flags: 'HEAL_REMOVE',
+  IT: 'TIME_BUFF', countries: 'TIME_BUFF', useless_facts: 'TIME_BUFF',
+};
+
+const TYPE_COLOR: Record<string, string> = {
+  DMG: '#FF1F8F',
+  HEAL: '#C8FF1A',
+  POISON: '#a100ff',
+  DMG_BLOCK: '#fff87a',
+  HEAL_REMOVE: '#19F0DC',
+  TIME_BUFF: '#009dff',
+};
 const ANSWER_LABELS = ['A', 'B', 'C', 'D'] as const;
 type AnswerLabel = typeof ANSWER_LABELS[number];
 
@@ -30,6 +49,9 @@ export default function AddQuestionScreen() {
   const [explanation, setExplanation] = useState('');
   const [showCatModal, setShowCatModal] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const cardType = CATEGORY_TO_TYPE[category] ?? 'DMG';
+  const cardColor = TYPE_COLOR[cardType] ?? C.primaryBright;
 
   const handleSubmit = async () => {
     setSubmitError(null);
@@ -53,12 +75,17 @@ export default function AddQuestionScreen() {
       });
       router.back();
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : String(e);
-      if (msg.includes('title_length_invalid')) setSubmitError('Title must be 5–100 characters.');
-      else if (msg.includes('wrong_answers_must_be_3')) setSubmitError('All four answers are required.');
-      else if (msg.includes('explanation_too_long')) setSubmitError('Explanation too long (max 1000 chars).');
-      else if (msg.includes('not_authenticated')) setSubmitError('Session expired — please sign in again.');
-      else setSubmitError(msg);
+      const errMsg =
+        e instanceof Error
+          ? e.message
+          : typeof e === 'object' && e !== null && 'message' in e && typeof (e as { message: unknown }).message === 'string'
+            ? (e as { message: string }).message
+            : String(e);
+      if (errMsg.includes('title_length_invalid')) setSubmitError('Title must be 5–100 characters.');
+      else if (errMsg.includes('wrong_answers_must_be_3')) setSubmitError('All four answers are required.');
+      else if (errMsg.includes('explanation_too_long')) setSubmitError('Explanation too long (max 1000 chars).');
+      else if (errMsg.includes('not_authenticated')) setSubmitError('Session expired — please sign in again.');
+      else setSubmitError(errMsg);
     }
   };
 
@@ -108,8 +135,8 @@ export default function AddQuestionScreen() {
           <View style={s.typeCard}>
             <Text style={s.fieldLabel}>TYPE / CATEGORY</Text>
             <View style={s.tagsRow}>
-              <View style={s.dmgTag}>
-                <Text style={s.dmgTagText}>DMG</Text>
+              <View style={[s.dmgTag, { backgroundColor: cardColor }]}>
+                <Text style={s.dmgTagText}>{cardType}</Text>
               </View>
               <Pressable style={s.catTag} onPress={() => setShowCatModal(true)}>
                 <Text style={s.catTagText}>{category} ▾</Text>
@@ -201,15 +228,17 @@ export default function AddQuestionScreen() {
         <Pressable style={s.modalOverlay} onPress={() => setShowCatModal(false)}>
           <View style={s.modalBox}>
             <Text style={s.modalTitle}>SELECT CATEGORY</Text>
-            {CATEGORIES.map(cat => (
-              <Pressable
-                key={cat}
-                style={[s.modalItem, cat === category && { backgroundColor: `${C.secondaryBright}22` }]}
-                onPress={() => { setCategory(cat); setShowCatModal(false); }}
-              >
-                <Text style={[s.modalItemText, { color: cat === category ? C.secondaryBright : C.onSurface }]}>{cat}</Text>
-              </Pressable>
-            ))}
+            <ScrollView style={{ maxHeight: 320 }} showsVerticalScrollIndicator={false}>
+              {CATEGORIES.map(cat => (
+                <Pressable
+                  key={cat}
+                  style={[s.modalItem, cat === category && { backgroundColor: `${C.secondaryBright}22` }]}
+                  onPress={() => { setCategory(cat); setShowCatModal(false); }}
+                >
+                  <Text style={[s.modalItemText, { color: cat === category ? C.secondaryBright : C.onSurface }]}>{cat}</Text>
+                </Pressable>
+              ))}
+            </ScrollView>
           </View>
         </Pressable>
       </Modal>
@@ -411,6 +440,7 @@ const s = StyleSheet.create({
   },
   modalBox: {
     width: 220,
+    maxHeight: 380,
     backgroundColor: C.surface,
     borderWidth: 1,
     borderColor: C.secondaryBright,

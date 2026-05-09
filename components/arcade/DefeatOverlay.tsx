@@ -5,7 +5,7 @@ interface DefeatOverlayProps {
   visible: boolean;
   onClose: () => void;
   onContinue: () => void;
-  stats: { cards: string; acc: string; time: string };
+  stats: { cards: string };
 }
 
 export function DefeatOverlay({ visible, onClose, onContinue, stats }: DefeatOverlayProps) {
@@ -20,16 +20,14 @@ export function DefeatOverlay({ visible, onClose, onContinue, stats }: DefeatOve
             </View>
             <View>
               <Text style={s.title}>DEFEAT</Text>
-              <Text style={s.sub}>−12 XP · TRY AGAIN</Text>
+              <Text style={s.sub}>TRY AGAIN</Text>
             </View>
           </View>
 
           {/* Stats row */}
           <View style={s.statsRow}>
             {[
-              { l: 'CARDS', v: stats.cards },
-              { l: 'ACC', v: stats.acc },
-              { l: 'TIME', v: stats.time },
+              { l: 'CARDS PLAYED', v: stats.cards },
             ].map((stat) => (
               <View key={stat.l} style={s.statTile}>
                 <Text style={s.statValue}>{stat.v}</Text>

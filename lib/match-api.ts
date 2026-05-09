@@ -5,6 +5,20 @@ export type CardType = 'DMG' | 'HEAL' | 'POISON' | 'DMG_BLOCK' | 'HEAL_REMOVE' |
 export const BOT_UUID = '00000000-0000-0000-0000-000000000b07';
 export const QUESTION_TIMEOUT_SENTINEL = -1;
 
+export type AnswerLogEntry = {
+  q_id: number;
+  q_title: string;
+  q_options: string[];
+  q_category: string;
+  correct_idx: number;
+  picked_idx: number;
+  was_correct: boolean;
+  was_timeout: boolean;
+  card_id: number;
+  player_id: string;
+  ts: string;
+};
+
 export type Snapshot = {
   match_id: number;
   is_currently_played: boolean;
@@ -37,6 +51,8 @@ export type Snapshot = {
     discard_pile_count: number;
     status_public: { ps?: number; ba?: number; rw?: number; et?: number };
   };
+  answer_log: AnswerLogEntry[];
+  last_answer: AnswerLogEntry | null;
 };
 
 let _cardTypeCache: Record<number, CardType> | null = null;
@@ -139,8 +155,8 @@ export async function getMatchSnapshot(matchId: number): Promise<Snapshot> {
   return data as Snapshot;
 }
 
-export async function playCard(matchId: number, cardId: number): Promise<Snapshot> {
-  const { data, error } = await supabase.rpc('play_card', { p_match_id: matchId, p_card_id: cardId });
+export async function playCard(matchId: number, slotIdx: number): Promise<Snapshot> {
+  const { data, error } = await supabase.rpc('play_card', { p_match_id: matchId, p_slot_idx: slotIdx });
   if (error) throw error;
   return data as Snapshot;
 }

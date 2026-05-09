@@ -40,9 +40,9 @@ function GameInner() {
   const { session } = useAuth();
   const uid = session?.user.id ?? '';
 
-  const { snapshot, cardTypes, loading, error, play, answer, questionDeadline } = useMatch();
+  const { snapshot, cardTypes, loading, error, play, answer, questionDeadline, lastResult } = useMatch();
 
-  const [selectedCardId, setSelectedCardId] = useState<number | null>(null);
+  const [selectedSlotIdx, setSelectedSlotIdx] = useState<number | null>(null);
   const [timeLeft, setTimeLeft] = useState(15);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const autoSubmittedRef = useRef(false);
@@ -53,12 +53,13 @@ function GameInner() {
     const isMyTurn = snapshot.whose_turn === uid;
     const isQuestionActive = snapshot.current_question.q_id != null;
     const currentHand = snapshot.you.hand;
-    const cardId = currentHand.find(c => c.id === selectedCardId)
-      ? selectedCardId
-      : (currentHand[0]?.id ?? null);
-    if (!cardId || !isMyTurn || isQuestionActive) return;
-    try { await play(cardId); } catch {}
-  }, [snapshot, uid, selectedCardId, play]);
+    if (currentHand.length === 0 || !isMyTurn || isQuestionActive) return;
+    const idx = selectedSlotIdx != null && selectedSlotIdx < currentHand.length ? selectedSlotIdx : 0;
+    try {
+      await play(idx);
+      setSelectedSlotIdx(0);
+    } catch {}
+  }, [snapshot, uid, selectedSlotIdx, play]);
 
   const handleAnswer = useCallback(async (idx: number) => {
     try { await answer(idx); } catch {}
@@ -102,11 +103,16 @@ function GameInner() {
 
   // Auto-submit on timeout
   useEffect(() => {
-    if (timeLeft <= 0 && questionDeadline != null && !autoSubmittedRef.current) {
+    if (
+      timeLeft <= 0 &&
+      questionDeadline != null &&
+      snapshot?.current_question.q_id != null &&
+      !autoSubmittedRef.current
+    ) {
       autoSubmittedRef.current = true;
       answer(QUESTION_TIMEOUT_SENTINEL).catch(() => {});
     }
-  }, [timeLeft, questionDeadline]);
+  }, [timeLeft, questionDeadline, answer, snapshot?.current_question.q_id]);
 
   if (loading) {
     return (
@@ -130,6 +136,7 @@ function GameInner() {
   const myTurn = snapshot.whose_turn === uid;
   const hand   = snapshot.you.hand;
   const questionActive = snapshot.current_question.q_id != null;
+  const myAnswerCount = snapshot.answer_log.filter(a => a.player_id === uid).length;
 
   // Derive overlay state
   const isFinished  = !snapshot.is_currently_played || snapshot.finished_at != null;
@@ -138,13 +145,13 @@ function GameInner() {
   const isDraw = isFinished && snapshot.winner_id == null && snapshot.finished_at != null;
 
   const navigateSummary = (result: 'win' | 'loss' | 'draw') => {
-    router.push({ pathname: '/game-summary', params: { matchId: String(snapshot.match_id), result } } as never);
+    router.replace({ pathname: '/game-summary', params: { matchId: String(snapshot.match_id), result } } as never);
   };
 
-  // Ensure selectedCard is valid in current hand
-  const validSelected = hand.find(c => c.id === selectedCardId) ? selectedCardId : (hand[0]?.id ?? null);
+  // Ensure selectedSlot is valid in current hand
+  const validSelectedIdx = selectedSlotIdx != null && selectedSlotIdx < hand.length ? selectedSlotIdx : (hand.length > 0 ? 0 : null);
 
-  const selectedEntry = hand.find(c => c.id === validSelected);
+  const selectedEntry = validSelectedIdx != null ? hand[validSelectedIdx] : undefined;
   const selectedType: CardType = selectedEntry ? (cardTypes[selectedEntry.id] ?? 'DMG') : 'DMG';
   const displayType = toDisplayType(selectedType);
   const displayVal  = CARD_DISPLAY_VAL[selectedType];
@@ -211,7 +218,6 @@ function GameInner() {
                     </Text>
                   </View>
                 )}
-                <Text style={s.levelText}>HAND {snapshot.opponent.hand_size}</Text>
               </View>
             </View>
           </View>
@@ -257,13 +263,13 @@ function GameInner() {
             const ct = cardTypes[c.id] ?? 'DMG';
             const handKey = `${c.id}-${i}`;
             return (
-              <Pressable key={handKey} onPress={() => setSelectedCardId(c.id)}>
+              <Pressable key={handKey} onPress={() => setSelectedSlotIdx(i)}>
                 <BattleCard
                   type={toDisplayType(ct)}
                   cat={c.cat}
                   val={CARD_DISPLAY_VAL[ct]}
                   w={62}
-                  sel={c.id === validSelected}
+                  sel={i === validSelectedIdx}
                 />
               </Pressable>
             );
@@ -287,14 +293,14 @@ function GameInner() {
             style={[
               s.playBtn,
               {
-                backgroundColor: myTurn && !questionActive && validSelected
+                backgroundColor: myTurn && !questionActive && validSelectedIdx != null
                   ? arc.secondaryContainer
                   : arc.surfaceHigh,
                 shadowColor: arc.secondaryContainer,
               },
             ]}
             onPress={handlePlayCard}
-            disabled={!myTurn || questionActive || !validSelected}
+            disabled={!myTurn || questionActive || validSelectedIdx == null}
           >
             <Text style={[s.playBtnText, { color: myTurn && !questionActive ? arc.bg : arc.outline }]}>
               {myTurn && !questionActive ? 'Play card ↗' : questionActive ? 'Answering...' : 'Wait for your turn'}
@@ -304,7 +310,7 @@ function GameInner() {
       </SafeAreaView>
 
       <QuestionSheet
-        visible={questionActive && myTurn}
+        visible={(questionActive && myTurn) || lastResult != null}
         onClose={() => {}}
         onSubmit={handleAnswer}
         card={{ type: displayType, cat: snapshot.current_question.category ?? '', val: displayVal }}
@@ -312,36 +318,27 @@ function GameInner() {
         answers={snapshot.current_question.options ?? []}
         timerSec={timeLeft}
         durationSec={15}
+        result={lastResult}
       />
 
       <VictoryOverlay
         visible={isWin}
         onClose={() => navigateSummary('win')}
         onContinue={() => navigateSummary('win')}
-        xp={148} coins={24}
-        stats={{
-          cards: `${snapshot.you.discard_pile.length}/${snapshot.you.discard_pile.length + hand.length + snapshot.you.remaining_cards.length}`,
-          acc: '—',
-          time: '—',
-        }}
+        stats={{ cards: String(myAnswerCount) }}
       />
       <DefeatOverlay
         visible={isLoss}
         onClose={() => navigateSummary('loss')}
         onContinue={() => navigateSummary('loss')}
-        stats={{
-          cards: `${snapshot.you.discard_pile.length}/${snapshot.you.discard_pile.length + hand.length + snapshot.you.remaining_cards.length}`,
-          acc: '—',
-          time: '—',
-        }}
+        stats={{ cards: String(myAnswerCount) }}
       />
       {/* Draw: reuse VictoryOverlay with different text (no dedicated component) */}
       <VictoryOverlay
         visible={isDraw}
         onClose={() => navigateSummary('draw')}
         onContinue={() => navigateSummary('draw')}
-        xp={0} coins={0}
-        stats={{ cards: '—', acc: '—', time: 'DRAW' }}
+        stats={{ cards: '—' }}
       />
     </View>
   );

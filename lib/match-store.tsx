@@ -18,15 +18,25 @@ import {
   type Snapshot,
 } from './match-api';
 
+function errMsg(e: unknown): string {
+  if (typeof e === 'object' && e !== null && 'message' in e &&
+      typeof (e as { message: unknown }).message === 'string') {
+    return (e as { message: string }).message;
+  }
+  if (e instanceof Error) return e.message;
+  return String(e);
+}
+
 type MatchCtx = {
   snapshot: Snapshot | null;
   cardTypes: Record<number, CardType>;
   loading: boolean;
   error: string | null;
   refresh: () => Promise<void>;
-  play: (cardId: number) => Promise<void>;
+  play: (slotIdx: number) => Promise<void>;
   answer: (answerIndex: number) => Promise<void>;
   questionDeadline: number | null;
+  lastResult: { correct_idx: number; picked_idx: number; was_correct: boolean } | null;
 };
 
 const Ctx = createContext<MatchCtx | null>(null);
@@ -42,7 +52,11 @@ export function MatchProvider({
   const [cardTypes, setCardTypes] = useState<Record<number, CardType>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [lastResult, setLastResult] = useState<{ correct_idx: number; picked_idx: number; was_correct: boolean } | null>(null);
   const answeringRef = useRef(false);
+  const lastQIdRef = useRef<number | null>(null);
+  const freezeUntilRef = useRef<number>(0);
+  const [questionStartedClientMs, setQuestionStartedClientMs] = useState<number | null>(null);
 
   const applySnapshot = (s: Snapshot) => setSnapshot(s);
 
@@ -51,7 +65,7 @@ export function MatchProvider({
       const s = await getMatchSnapshot(matchId);
       applySnapshot(s);
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(errMsg(e));
     }
   };
 
@@ -64,7 +78,7 @@ export function MatchProvider({
         applySnapshot(snap);
         setCardTypes(types);
       } catch (e: unknown) {
-        if (active) setError(e instanceof Error ? e.message : String(e));
+        if (active) setError(errMsg(e));
       } finally {
         if (active) setLoading(false);
       }
@@ -77,6 +91,7 @@ export function MatchProvider({
         { event: 'UPDATE', schema: 'public', table: 'matches', filter: `m_id=eq.${matchId}` },
         async () => {
           if (!active) return;
+          if (Date.now() < freezeUntilRef.current) return;
           try {
             const s = await getMatchSnapshot(matchId);
             if (active) applySnapshot(s);
@@ -91,12 +106,12 @@ export function MatchProvider({
     };
   }, [matchId]);
 
-  const play = async (cardId: number) => {
+  const play = async (slotIdx: number) => {
     try {
-      const s = await playCard(matchId, cardId);
+      const s = await playCard(matchId, slotIdx);
       applySnapshot(s);
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(errMsg(e));
       throw e;
     }
   };
@@ -106,8 +121,17 @@ export function MatchProvider({
     answeringRef.current = true;
     try {
       const s = await answerQuestion(matchId, answerIndex);
+      if (s.last_answer) {
+        setLastResult({
+          correct_idx: s.last_answer.correct_idx,
+          picked_idx:  s.last_answer.picked_idx,
+          was_correct: s.last_answer.was_correct,
+        });
+        freezeUntilRef.current = Date.now() + 1200;
+        await new Promise<void>(r => setTimeout(r, 1200));
+        setLastResult(null);
+      }
       applySnapshot(s);
-      // Auto-trigger bot turn if it's a bot match and game is still active
       if (
         s.is_currently_played &&
         s.opponent.id === BOT_UUID &&
@@ -117,21 +141,27 @@ export function MatchProvider({
         applySnapshot(bs);
       }
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(errMsg(e));
       throw e;
     } finally {
       answeringRef.current = false;
     }
   };
 
+  useEffect(() => {
+    const qid = snapshot?.current_question.q_id ?? null;
+    if (qid !== lastQIdRef.current) {
+      lastQIdRef.current = qid;
+      setQuestionStartedClientMs(qid != null ? Date.now() : null);
+    }
+  }, [snapshot?.current_question.q_id]);
+
   const questionDeadline =
-    snapshot?.question_started_at != null
-      ? new Date(snapshot.question_started_at).getTime() + 15_000
-      : null;
+    questionStartedClientMs != null ? questionStartedClientMs + 15_000 : null;
 
   return (
     <Ctx.Provider
-      value={{ snapshot, cardTypes, loading, error, refresh, play, answer, questionDeadline }}
+      value={{ snapshot, cardTypes, loading, error, refresh, play, answer, questionDeadline, lastResult }}
     >
       {children}
     </Ctx.Provider>
