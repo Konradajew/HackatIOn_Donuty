@@ -11,37 +11,47 @@ LogBox.ignoreLogs([/Invalid Refresh Token/]);
 import * as SplashScreen from 'expo-splash-screen';
 import { useFonts } from 'expo-font';
 import {
-  SpaceGrotesk_400Regular,
-  SpaceGrotesk_600SemiBold,
-  SpaceGrotesk_700Bold,
+    SpaceGrotesk_400Regular, SpaceGrotesk_500Medium,
+    SpaceGrotesk_600SemiBold,
+    SpaceGrotesk_700Bold,
 } from '@expo-google-fonts/space-grotesk';
 import {
-  JetBrainsMono_400Regular,
-  JetBrainsMono_500Medium,
+    JetBrainsMono_400Regular,
+    JetBrainsMono_500Medium, JetBrainsMono_700Bold,
 } from '@expo-google-fonts/jetbrains-mono';
 import { AuthProvider } from '@/lib/auth-context';
+import {SafeAreaProvider, SafeAreaView} from "react-native-safe-area-context";
 
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const [loaded] = useFonts({
-    SpaceGrotesk_400Regular,
-    SpaceGrotesk_600SemiBold,
-    SpaceGrotesk_700Bold,
-    JetBrainsMono_400Regular,
-    JetBrainsMono_500Medium,
-  });
+    const [fontsLoaded, fontError] = useFonts({
+        SpaceGrotesk_400Regular,
+        SpaceGrotesk_500Medium,
+        SpaceGrotesk_600SemiBold,
+        SpaceGrotesk_700Bold,
+        JetBrainsMono_400Regular,
+        JetBrainsMono_500Medium,
+        JetBrainsMono_700Bold,
+    });
 
-  useEffect(() => {
-    if (loaded) SplashScreen.hideAsync();
-  }, [loaded]);
 
-  if (!loaded) return null;
+    useEffect(() => {
+        if (fontsLoaded || fontError) {
+            SplashScreen.hideAsync();
+        }
+    }, [fontsLoaded, fontError]);
 
-  return (
-    <AuthProvider>
-      <Stack screenOptions={{ headerShown: false }} />
-      <StatusBar style="light" />
-    </AuthProvider>
+    if (!fontsLoaded && !fontError) return null;
+
+
+
+    return (
+      <SafeAreaProvider>
+        <AuthProvider>
+          <Stack screenOptions={{ headerShown: false }} />
+          <StatusBar style="light" backgroundColor="13121c" />
+        </AuthProvider>
+      </SafeAreaProvider>
   );
 }
