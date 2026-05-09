@@ -8,28 +8,85 @@ import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { ArcadeColors as C } from "@/constants/theme";
 import { useQuestions } from '@/lib/forum-store';
-import {useAuth} from "@/lib/auth-context";
+import { useAuth } from "@/lib/auth-context";
 
-const CATEGORIES = ['MATH', 'SPCE', 'MED', 'MOV', 'TRVL', 'CHEM', 'BOOKS', 'ENG'];
+const CATEGORIES = [
+  'math', 'space', 'medicine', 'movies', 'travel',
+  'chemistry', 'books', 'english', 'history', 'music',
+  'nature', 'games', 'IT', 'culinary', 'flags',
+  'countries', 'religion', 'useless_facts',
+];
+
+const CATEGORY_TO_TYPE: Record<string, string> = {
+  math: 'DMG', travel: 'DMG', english: 'DMG',
+  medicine: 'HEAL', nature: 'HEAL', movies: 'HEAL',
+  chemistry: 'POISON', books: 'POISON', space: 'POISON',
+  religion: 'DMG_BLOCK', music: 'DMG_BLOCK', culinary: 'DMG_BLOCK',
+  games: 'HEAL_REMOVE', history: 'HEAL_REMOVE', flags: 'HEAL_REMOVE',
+  IT: 'TIME_BUFF', countries: 'TIME_BUFF', useless_facts: 'TIME_BUFF',
+};
+
+const TYPE_COLOR: Record<string, string> = {
+  DMG: '#FF1F8F',
+  HEAL: '#C8FF1A',
+  POISON: '#a100ff',
+  DMG_BLOCK: '#fff87a',
+  HEAL_REMOVE: '#19F0DC',
+  TIME_BUFF: '#009dff',
+};
 const ANSWER_LABELS = ['A', 'B', 'C', 'D'] as const;
 type AnswerLabel = typeof ANSWER_LABELS[number];
 
 export default function AddQuestionScreen() {
   const router = useRouter();
   const { addQuestion } = useQuestions();
+  const { profile } = useAuth();
 
   const [question, setQuestion] = useState('');
-  const [category, setCategory] = useState('MATH');
+  const [category, setCategory] = useState('math');
   const [answers, setAnswers] = useState<Record<AnswerLabel, string>>({ A: '', B: '', C: '', D: '' });
   const [correct, setCorrect] = useState<AnswerLabel>('C');
   const [explanation, setExplanation] = useState('');
   const [showCatModal, setShowCatModal] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const handleSubmit = () => {
-    if (!question.trim()) return;
-    const { profile } = useAuth();
-    addQuestion({ cat: category, t: question.trim(), user: profile?.nickname?.toLowerCase() ?? 'you', answers, correct, explanation: explanation.trim() });
-    router.back();
+  const cardType = CATEGORY_TO_TYPE[category] ?? 'DMG';
+  const cardColor = TYPE_COLOR[cardType] ?? C.primaryBright;
+
+  const handleSubmit = async () => {
+    setSubmitError(null);
+    const title = question.trim();
+    if (title.length < 5 || title.length > 100) {
+      setSubmitError('Title must be 5–100 characters.');
+      return;
+    }
+    if (Object.values(answers).some(a => !a.trim())) {
+      setSubmitError('All four answers are required.');
+      return;
+    }
+    try {
+      await addQuestion({
+        cat: category,
+        t: title,
+        user: profile?.nickname?.toLowerCase() ?? 'you',
+        answers,
+        correct,
+        explanation: explanation.trim(),
+      });
+      router.back();
+    } catch (e: unknown) {
+      const errMsg =
+        e instanceof Error
+          ? e.message
+          : typeof e === 'object' && e !== null && 'message' in e && typeof (e as { message: unknown }).message === 'string'
+            ? (e as { message: string }).message
+            : String(e);
+      if (errMsg.includes('title_length_invalid')) setSubmitError('Title must be 5–100 characters.');
+      else if (errMsg.includes('wrong_answers_must_be_3')) setSubmitError('All four answers are required.');
+      else if (errMsg.includes('explanation_too_long')) setSubmitError('Explanation too long (max 1000 chars).');
+      else if (errMsg.includes('not_authenticated')) setSubmitError('Session expired — please sign in again.');
+      else setSubmitError(errMsg);
+    }
   };
 
   const setAnswer = (label: AnswerLabel, value: string) =>
@@ -78,8 +135,8 @@ export default function AddQuestionScreen() {
           <View style={s.typeCard}>
             <Text style={s.fieldLabel}>TYPE / CATEGORY</Text>
             <View style={s.tagsRow}>
-              <View style={s.dmgTag}>
-                <Text style={s.dmgTagText}>DMG</Text>
+              <View style={[s.dmgTag, { backgroundColor: cardColor }]}>
+                <Text style={s.dmgTagText}>{cardType}</Text>
               </View>
               <Pressable style={s.catTag} onPress={() => setShowCatModal(true)}>
                 <Text style={s.catTagText}>{category} ▾</Text>
@@ -149,6 +206,11 @@ export default function AddQuestionScreen() {
             />
           </View>
 
+          {/* Error display */}
+          {submitError ? (
+            <Text style={s.errorText}>{submitError}</Text>
+          ) : null}
+
           {/* Footer buttons */}
           <View style={s.footerRow}>
             <Pressable style={s.cancelBtn} onPress={() => router.back()}>
@@ -166,15 +228,17 @@ export default function AddQuestionScreen() {
         <Pressable style={s.modalOverlay} onPress={() => setShowCatModal(false)}>
           <View style={s.modalBox}>
             <Text style={s.modalTitle}>SELECT CATEGORY</Text>
-            {CATEGORIES.map(cat => (
-              <Pressable
-                key={cat}
-                style={[s.modalItem, cat === category && { backgroundColor: `${C.secondaryBright}22` }]}
-                onPress={() => { setCategory(cat); setShowCatModal(false); }}
-              >
-                <Text style={[s.modalItemText, { color: cat === category ? C.secondaryBright : C.onSurface }]}>{cat}</Text>
-              </Pressable>
-            ))}
+            <ScrollView style={{ maxHeight: 320 }} showsVerticalScrollIndicator={false}>
+              {CATEGORIES.map(cat => (
+                <Pressable
+                  key={cat}
+                  style={[s.modalItem, cat === category && { backgroundColor: `${C.secondaryBright}22` }]}
+                  onPress={() => { setCategory(cat); setShowCatModal(false); }}
+                >
+                  <Text style={[s.modalItemText, { color: cat === category ? C.secondaryBright : C.onSurface }]}>{cat}</Text>
+                </Pressable>
+              ))}
+            </ScrollView>
           </View>
         </Pressable>
       </Modal>
@@ -328,6 +392,15 @@ const s = StyleSheet.create({
     minHeight: 20,
   },
 
+  errorText: {
+    fontFamily: 'JetBrainsMono_500Medium',
+    fontSize: 12,
+    color: C.error,
+    letterSpacing: 0.5,
+    textAlign: 'center',
+    marginTop: -4,
+  },
+
   footerRow: { flexDirection: 'row', gap: 8, marginTop: 4 },
   cancelBtn: {
     flex: 1,
@@ -367,6 +440,7 @@ const s = StyleSheet.create({
   },
   modalBox: {
     width: 220,
+    maxHeight: 380,
     backgroundColor: C.surface,
     borderWidth: 1,
     borderColor: C.secondaryBright,

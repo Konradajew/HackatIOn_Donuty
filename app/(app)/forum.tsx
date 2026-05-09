@@ -8,11 +8,25 @@ import { ArcadeColors as C, ArcadeFonts as F, ArcadeSpacing as S } from "@/const
 import { useQuestions, avgDifficulty, type Question } from '@/lib/forum-store';
 
 const CHIPS: { l: string; cat: string | null }[] = [
-  { l: 'ALL', cat: null },
-  { l: 'MATH', cat: 'MATH' },
-  { l: 'SPACE', cat: 'SPCE' },
-  { l: 'MOVIES', cat: 'MOV' },
-  { l: 'MED', cat: 'MED' },
+  { l: 'ALL',       cat: null },
+  { l: 'MATH',      cat: 'math' },
+  { l: 'SPACE',     cat: 'space' },
+  { l: 'MED',       cat: 'medicine' },
+  { l: 'MOVIES',    cat: 'movies' },
+  { l: 'TRAVEL',    cat: 'travel' },
+  { l: 'CHEMISTRY', cat: 'chemistry' },
+  { l: 'BOOKS',     cat: 'books' },
+  { l: 'ENGLISH',   cat: 'english' },
+  { l: 'HISTORY',   cat: 'history' },
+  { l: 'MUSIC',     cat: 'music' },
+  { l: 'NATURE',    cat: 'nature' },
+  { l: 'GAMES',     cat: 'games' },
+  { l: 'IT',        cat: 'IT' },
+  { l: 'CULINARY',  cat: 'culinary' },
+  { l: 'FLAGS',     cat: 'flags' },
+  { l: 'COUNTRIES', cat: 'countries' },
+  { l: 'RELIGION',  cat: 'religion' },
+  { l: 'FACTS',     cat: 'useless_facts' },
 ];
 
 function QuestionCard({ q, onPress }: { q: Question; onPress: () => void }) {
@@ -45,7 +59,7 @@ function QuestionCard({ q, onPress }: { q: Question; onPress: () => void }) {
 
 export default function ForumScreen() {
   const router = useRouter();
-  const { questions } = useQuestions();
+  const { questions, loading, refresh } = useQuestions();
   const [selectedChip, setSelectedChip] = useState<string>('ALL');
   const [search, setSearch] = useState<string>('');
   const [sortMode, setSortMode] = useState<'TOP' | 'NEW'>('TOP');
@@ -132,8 +146,11 @@ export default function ForumScreen() {
           style={s.questionList}
           contentContainerStyle={{ gap: 10, paddingBottom: 20 }}
           showsVerticalScrollIndicator={false}
+          onScrollEndDrag={() => refresh()}
         >
-          {sorted.length === 0 ? (
+          {loading ? (
+            <Text style={s.emptyText}>LOADING...</Text>
+          ) : sorted.length === 0 ? (
             <Text style={s.emptyText}>NO QUESTIONS</Text>
           ) : (
             sorted.map(q => (

@@ -1,14 +1,17 @@
 import React from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View, ViewStyle } from "react-native";
 import { SvgProps } from "react-native-svg";
 
 interface BaseCardProps {
-  type: string; // np. DMG, HEAL
-  topValue?: string; // np. 4, 13
-  centerIcon: React.ComponentType<SvgProps>; // SVG component
-  category?: string; // np. MATH, CHEMISTRY (optional, losowana podczas gry)
-  mainColor: string; // Kolor neonu
-  categoryColor?: string; // Kolor kategorii (domyślnie mainColor)
+  type: string;
+  topValue?: string;
+  centerIcon: React.ComponentType<SvgProps>;
+  category?: string;
+  mainColor: string;
+  categoryColor?: string;
+  width?: number;
+  selected?: boolean;
+  style?: ViewStyle;
 }
 
 export const BaseCard: React.FC<BaseCardProps> = ({
@@ -18,16 +21,26 @@ export const BaseCard: React.FC<BaseCardProps> = ({
   category,
   mainColor,
   categoryColor = mainColor,
+  width = 140,
+  selected = false,
+  style,
 }) => {
+  const height = Math.round(width * 1.43);
   return (
     <View
       style={[
         styles.cardContainer,
-        { borderColor: mainColor },
-        { borderWidth: 3 },
+        { width, height, borderColor: mainColor, borderWidth: selected ? 2 : 1 },
+        selected && {
+          shadowColor: mainColor,
+          shadowOpacity: 0.65,
+          shadowRadius: 12,
+          shadowOffset: { width: 0, height: 0 },
+          elevation: 6,
+        },
+        style,
       ]}
     >
-      {/* Górny pasek */}
       <View
         style={[
           styles.header,
@@ -37,26 +50,30 @@ export const BaseCard: React.FC<BaseCardProps> = ({
           },
         ]}
       >
-        <Text style={styles.headerText}>{type}</Text>
-        {topValue && <Text style={styles.headerText}>{topValue}</Text>}
+        <Text style={[styles.headerText, { fontSize: Math.max(7, Math.round(width * 0.085)) }]}>{type}</Text>
+        {topValue && <Text style={[styles.headerText, { fontSize: Math.max(7, Math.round(width * 0.085)) }]}>{topValue}</Text>}
       </View>
 
-      {/* Środek karty (tu można wstawić SVG dla pasków) */}
       <View
         style={[
           styles.centerBox,
-          { borderColor: category ? categoryColor : undefined },
-          { borderWidth: category ? 3 : 0 },
+          { borderColor: category ? categoryColor : "transparent", borderWidth: category ? 1 : 0 },
         ]}
       >
-        <View style={{ width: 60, height: 60 }}>
+        <View style={{ width: Math.round(width * 0.45), height: Math.round(width * 0.45) }}>
           <CenterIcon width="100%" height="100%" />
         </View>
       </View>
 
-      {/* Dolny tekst */}
       <View style={styles.footer}>
-        {category && <Text style={styles.categoryText}>{category}</Text>}
+        {category && (
+          <Text
+            style={[styles.categoryText, { fontSize: Math.max(6, Math.round(width * 0.07)) }]}
+            numberOfLines={1}
+          >
+            {category.toUpperCase()}
+          </Text>
+        )}
       </View>
     </View>
   );
@@ -64,17 +81,14 @@ export const BaseCard: React.FC<BaseCardProps> = ({
 
 const styles = StyleSheet.create({
   cardContainer: {
-    width: 140,
-    height: 200,
-    borderWidth: 2,
-    borderRadius: 8,
-    backgroundColor: "#12121A", // Ciemne tło kart
+    borderRadius: 6,
+    backgroundColor: "#12121A",
     padding: 6,
     justifyContent: "space-between",
+    overflow: "hidden",
   },
   header: {
     flexDirection: "row",
-    justifyContent: "space-between",
     paddingHorizontal: 4,
     paddingVertical: 2,
     borderRadius: 2,
@@ -82,34 +96,22 @@ const styles = StyleSheet.create({
   headerText: {
     color: "#000",
     fontWeight: "bold",
-    fontSize: 12,
+    letterSpacing: 0.5,
   },
   centerBox: {
     flex: 1,
-    borderWidth: 1,
-    marginVertical: 8,
-    borderRadius: 4,
+    marginVertical: 6,
+    borderRadius: 3,
     justifyContent: "center",
     alignItems: "center",
-    // backgroundColor ma dodane '20' na końcu hexu dla przezroczystości (opacity 12%)
-  },
-  centerLetter: {
-    fontSize: 48,
-    fontWeight: "900",
   },
   footer: {
     alignItems: "center",
-    marginBottom: 4,
+    minHeight: 14,
   },
   categoryText: {
     color: "#FFF",
     fontWeight: "bold",
-    fontSize: 14,
-    letterSpacing: 2,
-  },
-  pointsText: {
-    color: "#888",
-    fontSize: 10,
-    marginTop: 2,
+    letterSpacing: 1,
   },
 });

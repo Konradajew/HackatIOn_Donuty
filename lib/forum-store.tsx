@@ -1,22 +1,47 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import * as api from './forum-api';
+import type { ForumQuestionRaw } from './forum-api';
 
 export type AnswerKey = 'A' | 'B' | 'C' | 'D';
 
 export type Question = {
   id: string;
+  q_id: number;
   cat: string;
-  diffVotes: number[];
-  up: number;
-  down: number;
   t: string;
   user: string;
   answers: Record<AnswerKey, string>;
   correct: AnswerKey;
   explanation: string;
+  up: number;
+  down: number;
+  diffAvg: number | null;
 };
 
+function rowToQuestion(r: ForumQuestionRaw): Question {
+  return {
+    id:          String(r.q_id),
+    q_id:        r.q_id,
+    cat:         r.category,
+    t:           r.title,
+    user:        r.author_nickname,
+    answers:     {
+      A: r.correct_answer,
+      B: r.wrong_answers[0] ?? '',
+      C: r.wrong_answers[1] ?? '',
+      D: r.wrong_answers[2] ?? '',
+    },
+    correct:     'A',
+    explanation: r.explanation,
+    up:          r.yes_votes,
+    down:        r.no_votes,
+    diffAvg:     r.diff_avg,
+  };
+}
+
+// Backward-compat helper — returns int 0-5 (same as old Math.round behaviour)
 export const avgDifficulty = (q: Question): number =>
-  q.diffVotes.length === 0 ? 0 : Math.round(q.diffVotes.reduce((a, b) => a + b, 0) / q.diffVotes.length);
+  q.diffAvg === null ? 0 : Math.round(q.diffAvg);
 
 type AddQuestionInput = {
   cat: string;
@@ -29,77 +54,97 @@ type AddQuestionInput = {
 
 type Ctx = {
   questions: Question[];
-  addQuestion: (q: AddQuestionInput) => void;
-  submitVote: (id: string, params: { diff: number; verdict: 'up' | 'down' }) => void;
+  loading: boolean;
+  addQuestion: (q: AddQuestionInput) => Promise<void>;
+  submitVote: (id: string, params: { diff: number; verdict: 'up' | 'down' }) => Promise<void>;
   hasVotedYesNo: (id: string) => boolean;
   hasVotedDifficulty: (id: string) => boolean;
+  refresh: () => Promise<void>;
 };
 
 const QuestionsContext = createContext<Ctx | null>(null);
 
-const INITIAL: Question[] = [
-  {
-    id: 'q1', cat: 'MATH', diffVotes: [4,4,4,5,3], up: 312, down: 12,
-    t: 'What is the smallest prime number greater than 100?',
-    user: 'mathlord',
-    answers: { A: '101', B: '103', C: '107', D: '109' },
-    correct: 'A',
-    explanation: '101 is prime — divisible only by 1 and itself. 102 = 2·51, so 101 is the next prime after 97.',
-  },
-  {
-    id: 'q2', cat: 'SPCE', diffVotes: [5,5,5,4], up: 198, down: 47,
-    t: 'Which planet has the highest surface temperature?',
-    user: 'astro_kid',
-    answers: { A: 'Mercury', B: 'Venus', C: 'Mars', D: 'Jupiter' },
-    correct: 'B',
-    explanation: 'Venus reaches ~465°C due to runaway greenhouse effect from its dense CO₂ atmosphere — hotter than Mercury despite being farther from the Sun.',
-  },
-  {
-    id: 'q3', cat: 'MED', diffVotes: [2,2,3,1], up: 89, down: 4,
-    t: 'What is the largest organ in the human body?',
-    user: 'dr.donut',
-    answers: { A: 'Liver', B: 'Brain', C: 'Skin', D: 'Lungs' },
-    correct: 'C',
-    explanation: 'Skin covers ~1.5–2 m² and weighs ~3.5 kg in adults — larger than any internal organ.',
-  },
-  {
-    id: 'q4', cat: 'MOV', diffVotes: [3,3,4,2], up: 156, down: 23,
-    t: 'Who directed the 2010 film "Inception"?',
-    user: 'cinephile',
-    answers: { A: 'Steven Spielberg', B: 'Christopher Nolan', C: 'Denis Villeneuve', D: 'James Cameron' },
-    correct: 'B',
-    explanation: 'Christopher Nolan wrote and directed Inception (2010), starring Leonardo DiCaprio.',
-  },
-];
-
 export function QuestionsProvider({ children }: { children: ReactNode }) {
-  const [questions, setQuestions] = useState<Question[]>(INITIAL);
-  const [votedYesNo, setVotedYesNo] = useState<Set<string>>(new Set());
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [loading, setLoading]     = useState(true);
+  const [votedYesNo, setVotedYesNo]           = useState<Set<string>>(new Set());
   const [votedDifficulty, setVotedDifficulty] = useState<Set<string>>(new Set());
 
-  const addQuestion = (q: AddQuestionInput) =>
-    setQuestions(prev => [{ ...q, id: Date.now().toString(), diffVotes: [], up: 0, down: 0 }, ...prev]);
+  const load = async () => {
+    try {
+      const rows = await api.listQuestions();
+      setQuestions(rows.map(rowToQuestion));
+      // Seed voted Sets from server-side voted_by_me flag
+      const voted = new Set(rows.filter(r => r.voted_by_me).map(r => String(r.q_id)));
+      setVotedYesNo(voted);
+      setVotedDifficulty(new Set(voted));
+    } catch (e) {
+      console.warn('forum-store load failed:', e);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const submitVote = (id: string, { diff, verdict }: { diff: number; verdict: 'up' | 'down' }) => {
+  useEffect(() => { load(); }, []);
+
+  const refresh = () => load();
+
+  const addQuestion = async (q: AddQuestionInput) => {
+    const correctText  = q.answers[q.correct];
+    const wrongAnswers = (['A', 'B', 'C', 'D'] as AnswerKey[])
+      .filter(k => k !== q.correct)
+      .map(k => q.answers[k]);
+
+    const qId = await api.addQuestion({
+      category:    q.cat,
+      title:       q.t,
+      correctAnswer: correctText,
+      wrongAnswers,
+      explanation: q.explanation,
+    });
+
+    const optimistic: Question = {
+      id:          String(qId),
+      q_id:        qId,
+      cat:         q.cat,
+      t:           q.t,
+      user:        q.user,
+      answers:     { A: correctText, B: wrongAnswers[0], C: wrongAnswers[1], D: wrongAnswers[2] },
+      correct:     'A',
+      explanation: q.explanation,
+      up:          0,
+      down:        0,
+      diffAvg:     null,
+    };
+    setQuestions(prev => [optimistic, ...prev]);
+  };
+
+  const submitVote = async (id: string, { diff, verdict }: { diff: number; verdict: 'up' | 'down' }) => {
     if (votedYesNo.has(id)) return;
-    setQuestions(prev => prev.map(q => {
-      if (q.id !== id) return q;
-      return {
-        ...q,
-        up: verdict === 'up' ? q.up + 1 : q.up,
-        down: verdict === 'down' ? q.down + 1 : q.down,
-        diffVotes: votedDifficulty.has(id) ? q.diffVotes : [...q.diffVotes, diff],
-      };
+
+    const q = questions.find(x => x.id === id);
+    if (!q) return;
+
+    // Optimistic update
+    setQuestions(prev => prev.map(x => x.id !== id ? x : {
+      ...x,
+      up:      verdict === 'up'   ? x.up + 1   : x.up,
+      down:    verdict === 'down' ? x.down + 1 : x.down,
+      diffAvg: x.diffAvg === null
+        ? diff
+        : Math.round(((x.diffAvg * (x.up + x.down)) + diff) / (x.up + x.down + 1) * 10) / 10,
     }));
     setVotedYesNo(prev => new Set(prev).add(id));
     setVotedDifficulty(prev => new Set(prev).add(id));
+
+    await api.submitVote(q.q_id, verdict, diff);
   };
 
-  const hasVotedYesNo = (id: string) => votedYesNo.has(id);
+  const hasVotedYesNo      = (id: string) => votedYesNo.has(id);
   const hasVotedDifficulty = (id: string) => votedDifficulty.has(id);
 
   return (
-    <QuestionsContext.Provider value={{ questions, addQuestion, submitVote, hasVotedYesNo, hasVotedDifficulty }}>
+    <QuestionsContext.Provider value={{ questions, loading, addQuestion, submitVote, hasVotedYesNo, hasVotedDifficulty, refresh }}>
       {children}
     </QuestionsContext.Provider>
   );
