@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -8,393 +8,425 @@ import {
     Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { supabase } from '@/lib/supabase';
 import * as Haptics from 'expo-haptics';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const { width: SW } = Dimensions.get('window');
 
-const PINK = '#FF1F8F';
-const CYAN = '#19F0DC';
-const LIME = '#C8FF1A';
-const BG = '#13121c';
-const SURFACE = '#1f1f28';
-const SURFACE_LOW = '#1b1b24';
-const SURFACE_HIGH = '#292933';
-const BORDER = '#5b3f47';
-const TEXT_DIM = '#aa8891';
+// ── Design tokens ───────────────────────────────────────────────────────────
+const BG       = '#13121c';
+const SURFACE  = '#1f1f28';
+const SURF_LOW = '#1b1b24';
+const BORDER   = '#5b3f47';
+const TEXT     = '#e4e1ee';
+const DIM      = '#aa8891';
+const LIME     = '#C8FF1A';
+const CYAN     = '#19F0DC';
 
+// Kolor per typ — dostosuj gdy zmienią się typy w bazie
+const TYPE_COLOR: Record<string, string> = {
+    DMG:      '#FF1F8F',
+    HEAL:     '#C8FF1A',
+    DOT:      '#ff7a00',
+    SABOTAGE: '#a07aff',
+    "50/50":  '#19F0DC',
+    TIME:     '#FFD700',
+};
+const tc = (type?: string | null) => (type && TYPE_COLOR[type]) || BORDER;
+
+// ── Wymiary ─────────────────────────────────────────────────────────────────
 const TOTAL_DECKS = 5;
-const CARDS_PER_DECK = 10;
-const CARD_COLS = 5;
-const GRID_PADDING = 12;
-const CARD_GAP = 6;
-const CARD_WIDTH = (SCREEN_WIDTH - GRID_PADDING * 2 - CARD_GAP * (CARD_COLS - 1)) / CARD_COLS;
-const CARD_HEIGHT = CARD_WIDTH * 1.45;
+const DECK_SIZE   = 10;
+const SLOT_COLS   = 5;
+const PAD         = 12;
+const SLOT_GAP    = 5;
+const SLOT_W = (SW - PAD * 2 - SLOT_GAP * (SLOT_COLS - 1)) / SLOT_COLS;
+const SLOT_H = SLOT_W * 1.4;
 
+const TYPE_COLS = 3;
+const TYPE_GAP  = 8;
+const TYPE_W    = (SW - PAD * 2 - TYPE_GAP * (TYPE_COLS - 1)) / TYPE_COLS;
+const TYPE_H    = TYPE_W * 0.85;
+
+// ── Typy — schema public.cards ──────────────────────────────────────────────
+type CardType = {
+    card_id: number;
+    type: string;
+    categories: string[] | null;
+};
+
+// ── Mock (aktywny gdy baza pusta) ───────────────────────────────────────────
+const MOCK: CardType[] = [
+    { card_id: 1, type: 'DMG',      categories: ['MATH', 'TRAVEL', 'ENGLISH'] },
+    { card_id: 2, type: 'HEAL',     categories: ['MEDICINE', 'NATURE', 'MOVIES'] },
+    { card_id: 3, type: 'DOT',      categories: ['CHEMISTRY', 'BOOKS', 'SPACE'] },
+    { card_id: 4, type: 'SABOTAGE', categories: ['RELIGION', 'MUSIC', 'CULINARY'] },
+    { card_id: 5, type: '50/50',    categories: ['GAMES', 'HISTORY', 'FLAGS'] },
+    { card_id: 6, type: 'TIME',     categories: ['COUNTRIES', 'IT', 'TRIVIA'] },
+];
+
+// ── Główny ekran ────────────────────────────────────────────────────────────
 export default function DeckScreen() {
     const [activeDeck, setActiveDeck] = useState(0);
+    // Każdy deck to tablica card_id (max 10, mogą się powtarzać)
+    const [decks, setDecks] = useState<number[][]>(
+        Array.from({ length: TOTAL_DECKS }, () => [])
+    );
+    const [cardTypes, setCardTypes] = useState<CardType[]>([]);
 
-    const handleDeckSelect = (index: number) => {
-        setActiveDeck(index);
+    useEffect(() => { loadCards(); }, []);
+
+    async function loadCards() {
+        const { data, error } = await supabase
+            .from('cards')
+            .select('card_id, type, categories')
+            .order('card_id');
+
+        setCardTypes(
+            (!error && data && data.length > 0) ? (data as CardType[]) : MOCK
+        );
+    }
+
+    // ── Pochodne ──────────────────────────────────────────────────────────────
+    const currentDeck = decks[activeDeck];
+    const filled      = currentDeck.length;
+    const isFull      = filled >= DECK_SIZE;
+
+    // Szybki lookup card_id → CardType
+    const byId = Object.fromEntries(cardTypes.map(c => [c.card_id, c]));
+
+    // Ile każdego typu jest w aktualnym decku
+    const countById: Record<number, number> = {};
+    for (const id of currentDeck)
+        countById[id] = (countById[id] ?? 0) + 1;
+
+    // ── Akcje ─────────────────────────────────────────────────────────────────
+    function addCard(card_id: number) {
+        if (isFull) return;
+        setDecks(prev => prev.map((d, i) =>
+            i === activeDeck ? [...d, card_id] : d
+        ));
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    };
+    }
 
-    const handleCardTap = () => {
+    function removeSlot(slotIdx: number) {
+        setDecks(prev => prev.map((d, i) =>
+            i === activeDeck ? d.filter((_, j) => j !== slotIdx) : d
+        ));
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+
+    function clearDeck() {
+        setDecks(prev => prev.map((d, i) => i === activeDeck ? [] : d));
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    };
+    }
 
+    // ── Render ────────────────────────────────────────────────────────────────
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
-            {/* Header */}
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} activeOpacity={0.7}>
-                    <Text style={styles.backText}>◀ BACK</Text>
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>DECK BUILDER</Text>
-                <View style={styles.headerRight}>
-                    <Text style={styles.deckCount}>5 DECKS</Text>
+        <SafeAreaView style={s.container} edges={['top']}>
+
+            {/* ── Header ── */}
+            <View style={s.header}>
+                <View>
+                    <Text style={s.title}>DECK BUILDER</Text>
+                    <Text style={s.subtitle}>{filled} / {DECK_SIZE} CARDS</Text>
+                </View>
+                <View style={s.headerRight}>
+                    {filled > 0 && (
+                        <TouchableOpacity onPress={clearDeck} style={s.clearBtn} activeOpacity={0.7}>
+                            <Text style={s.clearBtnText}>CLEAR</Text>
+                        </TouchableOpacity>
+                    )}
+                    <TouchableOpacity style={s.saveBtn} activeOpacity={0.8}>
+                        <Text style={s.saveBtnText}>SAVE</Text>
+                    </TouchableOpacity>
                 </View>
             </View>
 
-            {/* Deck Selector */}
-            <View style={styles.deckSelectorWrapper}>
-                <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={styles.deckSelectorContent}
-                >
-                    {Array.from({ length: TOTAL_DECKS }, (_, i) => {
-                        const isActive = activeDeck === i;
+            {/* ── Deck tabs ── */}
+            <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={s.tabsRow}
+                style={s.tabsWrap}
+            >
+                {Array.from({ length: TOTAL_DECKS }, (_, i) => {
+                    const active = activeDeck === i;
+                    return (
+                        <TouchableOpacity
+                            key={i}
+                            onPress={() => setActiveDeck(i)}
+                            style={[s.tab, active && s.tabActive]}
+                            activeOpacity={0.8}
+                        >
+                            <Text style={[s.tabTitle, active && s.tabTitleActive]}>DECK {i + 1}</Text>
+                            <Text style={[s.tabSub,   active && s.tabSubActive]}>
+                                {decks[i].length} CARDS
+                            </Text>
+                        </TouchableOpacity>
+                    );
+                })}
+            </ScrollView>
+
+            <ScrollView showsVerticalScrollIndicator={false}>
+
+                {/* ── Sloty decku ── */}
+                <View style={s.sectionRow}>
+                    <Text style={s.sectionText}>CURRENT DECK · TAP TO REMOVE</Text>
+                </View>
+
+                <View style={s.slotsGrid}>
+                    {Array.from({ length: DECK_SIZE }, (_, i) => {
+                        const card_id = currentDeck[i];
+                        const card    = card_id !== undefined ? byId[card_id] : null;
+                        const color   = tc(card?.type);
                         return (
                             <TouchableOpacity
                                 key={i}
-                                onPress={() => handleDeckSelect(i)}
-                                style={[styles.deckTab, isActive && styles.deckTabActive]}
-                                activeOpacity={0.8}
+                                style={[s.slot, { borderColor: card ? color : BORDER }]}
+                                onPress={() => card && removeSlot(i)}
+                                activeOpacity={card ? 0.65 : 1}
                             >
-                                <Text style={[styles.deckTabLabel, isActive && styles.deckTabLabelActive]}>
-                                    DECK {i + 1}
-                                </Text>
-                                <View style={styles.deckMiniGrid}>
-                                    {Array.from({ length: CARDS_PER_DECK }, (_, j) => (
-                                        <View
-                                            key={j}
-                                            style={[styles.deckMiniCard, isActive && styles.deckMiniCardActive]}
-                                        />
-                                    ))}
-                                </View>
+                                {card && (
+                                    <>
+                                        <Text style={[s.slotType, { color }]}>{card.type}</Text>
+                                        <View style={[s.slotBar, { backgroundColor: color + '22' }]} />
+                                        <Text style={[s.slotCat, { color: color + 'bb' }]}>
+                                            {card.categories?.[0] ?? ''}
+                                        </Text>
+                                    </>
+                                )}
                             </TouchableOpacity>
                         );
                     })}
-                </ScrollView>
-            </View>
-
-            {/* Section divider */}
-            <View style={styles.sectionHeader}>
-                <View style={styles.sectionLine} />
-                <Text style={styles.sectionLabel}>DECK {activeDeck + 1} — 10 KART</Text>
-                <View style={styles.sectionLine} />
-            </View>
-
-            {/* Card Grid + actions */}
-            <ScrollView
-                contentContainerStyle={styles.gridContainer}
-                showsVerticalScrollIndicator={false}
-                style={styles.gridScroll}
-            >
-                <View style={styles.grid}>
-                    {Array.from({ length: CARDS_PER_DECK }, (_, i) => (
-                        <TouchableOpacity
-                            key={i}
-                            style={styles.cardSlot}
-                            onPress={handleCardTap}
-                            activeOpacity={0.7}
-                        >
-                            <View style={styles.cardBody}>
-                                <Text style={styles.cardPlus}>+</Text>
-                            </View>
-                            <View style={styles.cardFooter}>
-                                <Text style={styles.cardIndex}>{String(i + 1).padStart(2, '0')}</Text>
-                            </View>
-                        </TouchableOpacity>
-                    ))}
                 </View>
 
-                {/* Stats bar */}
-                <View style={styles.statsBar}>
-                    <View style={styles.statItem}>
-                        <Text style={styles.statLabel}>KARTY</Text>
-                        <Text style={[styles.statValue, { color: CYAN }]}>0 / 10</Text>
+                {/* ── Proporcje typów ── */}
+                {filled > 0 && (
+                    <View style={s.proportionsRow}>
+                        {cardTypes.map(card => {
+                            const count = countById[card.card_id] ?? 0;
+                            if (count === 0) return null;
+                            const col = tc(card.type);
+                            const pct = (count / DECK_SIZE) * 100;
+                            return (
+                                <View key={card.card_id} style={[s.propChip, { borderColor: col + '55' }]}>
+                                    <Text style={[s.propType, { color: col }]}>{card.type}</Text>
+                                    <View style={s.propBarBg}>
+                                        <View style={[s.propBarFill, { width: `${pct}%` as any, backgroundColor: col }]} />
+                                    </View>
+                                    <Text style={[s.propCount, { color: col }]}>{count}</Text>
+                                </View>
+                            );
+                        })}
                     </View>
-                    <View style={styles.statDivider} />
-                    <View style={styles.statItem}>
-                        <Text style={styles.statLabel}>ŚR. KOSZT</Text>
-                        <Text style={[styles.statValue, { color: LIME }]}>—</Text>
-                    </View>
-                    <View style={styles.statDivider} />
-                    <View style={styles.statItem}>
-                        <Text style={styles.statLabel}>STATUS</Text>
-                        <Text style={[styles.statValue, { color: TEXT_DIM }]}>PUSTY</Text>
-                    </View>
+                )}
+
+                <View style={s.divider} />
+
+                {/* ── Wybór typów ── */}
+                <View style={s.sectionRow}>
+                    <Text style={s.sectionText}>
+                        {isFull ? 'DECK PEŁNY · USUŃ KARTĘ ABY DODAĆ' : 'CHOOSE TYPE · TAP TO ADD'}
+                    </Text>
                 </View>
 
-                {/* Action buttons */}
-                <View style={styles.actions}>
-                    <TouchableOpacity style={styles.btnPrimary} activeOpacity={0.8}>
-                        <Text style={styles.btnPrimaryText}>EDYTUJ DECK</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.btnSecondary} activeOpacity={0.8}>
-                        <Text style={styles.btnSecondaryText}>KOPIUJ</Text>
-                    </TouchableOpacity>
+                <View style={s.typesGrid}>
+                    {cardTypes.map(card => {
+                        const col   = tc(card.type);
+                        const count = countById[card.card_id] ?? 0;
+                        return (
+                            <TouchableOpacity
+                                key={card.card_id}
+                                style={[
+                                    s.typeCard,
+                                    { borderColor: isFull ? BORDER : col },
+                                    isFull && s.typeCardDisabled,
+                                ]}
+                                onPress={() => addCard(card.card_id)}
+                                disabled={isFull}
+                                activeOpacity={0.7}
+                            >
+                                {/* Licznik w rogu */}
+                                {count > 0 && (
+                                    <View style={[s.badge, { backgroundColor: col }]}>
+                                        <Text style={s.badgeText}>{count}</Text>
+                                    </View>
+                                )}
+
+                                <Text style={[s.typeCardType, { color: isFull ? DIM : col }]}>
+                                    {card.type}
+                                </Text>
+
+                                <Text style={s.typeCardCats}>
+                                    {card.categories?.join('\n') ?? '—'}
+                                </Text>
+                            </TouchableOpacity>
+                        );
+                    })}
                 </View>
+
+                <View style={{ height: 40 }} />
             </ScrollView>
         </SafeAreaView>
     );
 }
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: BG,
-    },
+// ── StyleSheet ──────────────────────────────────────────────────────────────
+const s = StyleSheet.create({
+    container: { flex: 1, backgroundColor: BG },
 
-    // Header
     header: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingHorizontal: 16,
+        paddingHorizontal: 14,
         paddingVertical: 10,
         borderBottomWidth: 1,
         borderBottomColor: BORDER,
-        backgroundColor: SURFACE_LOW,
+        backgroundColor: SURF_LOW,
     },
-    backBtn: {
-        paddingHorizontal: 10,
-        paddingVertical: 6,
-        borderWidth: 1,
-        borderColor: CYAN,
-    },
-    backText: {
-        color: CYAN,
-        fontFamily: 'monospace',
-        fontSize: 11,
-        fontWeight: '600',
-        letterSpacing: 1.5,
-    },
-    headerTitle: {
-        color: PINK,
-        fontFamily: 'monospace',
-        fontSize: 18,
-        fontWeight: '700',
-        letterSpacing: 3,
-        textShadowColor: PINK,
-        textShadowOffset: { width: 0, height: 0 },
-        textShadowRadius: 8,
-    },
-    headerRight: {
-        width: 70,
-        alignItems: 'flex-end',
-    },
-    deckCount: {
-        color: TEXT_DIM,
-        fontFamily: 'monospace',
-        fontSize: 10,
-        letterSpacing: 1,
-    },
+    title:    { color: TEXT, fontFamily: 'monospace', fontSize: 17, fontWeight: '700', letterSpacing: 2 },
+    subtitle: { color: DIM,  fontFamily: 'monospace', fontSize: 10, letterSpacing: 1,  marginTop: 2 },
 
-    // Deck Selector
-    deckSelectorWrapper: {
-        borderBottomWidth: 1,
-        borderBottomColor: BORDER,
-        backgroundColor: SURFACE_LOW,
-    },
-    deckSelectorContent: {
+    headerRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    clearBtn: {
         paddingHorizontal: 12,
-        paddingVertical: 12,
-        gap: 8,
-        flexDirection: 'row',
-    },
-    deckTab: {
-        width: 100,
-        padding: 8,
+        paddingVertical: 8,
         borderWidth: 1,
         borderColor: BORDER,
-        backgroundColor: SURFACE,
-        gap: 6,
     },
-    deckTabActive: {
-        borderColor: PINK,
-        borderWidth: 2,
-        backgroundColor: '#1f0a14',
-        shadowColor: PINK,
+    clearBtnText: { color: DIM, fontFamily: 'monospace', fontSize: 10, fontWeight: '600', letterSpacing: 1 },
+    saveBtn: {
+        backgroundColor: LIME,
+        paddingHorizontal: 18,
+        paddingVertical: 8,
+        shadowColor: LIME,
         shadowOffset: { width: 0, height: 0 },
         shadowOpacity: 0.55,
         shadowRadius: 10,
-        elevation: 12,
+        elevation: 8,
     },
-    deckTabLabel: {
-        color: TEXT_DIM,
-        fontFamily: 'monospace',
-        fontSize: 8,
-        fontWeight: '600',
-        letterSpacing: 2,
-    },
-    deckTabLabelActive: {
-        color: PINK,
-    },
-    deckMiniGrid: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: 2,
-    },
-    deckMiniCard: {
-        width: 14,
-        height: 20,
-        backgroundColor: SURFACE_HIGH,
-        borderWidth: 1,
-        borderColor: BORDER,
-    },
-    deckMiniCardActive: {
-        borderColor: '#5b1f3a',
-        backgroundColor: '#2a0f1c',
-    },
+    saveBtnText: { color: '#000', fontFamily: 'monospace', fontSize: 12, fontWeight: '700', letterSpacing: 2 },
 
-    // Section label
-    sectionHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: 12,
-        paddingVertical: 10,
-        gap: 10,
-    },
-    sectionLine: {
-        flex: 1,
-        height: 1,
-        backgroundColor: BORDER,
-    },
-    sectionLabel: {
-        color: TEXT_DIM,
-        fontFamily: 'monospace',
-        fontSize: 9,
-        letterSpacing: 2,
-    },
-
-    // Grid
-    gridScroll: {
-        flex: 1,
-    },
-    gridContainer: {
-        paddingHorizontal: GRID_PADDING,
-        paddingBottom: 32,
-    },
-    grid: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: CARD_GAP,
-    },
-    cardSlot: {
-        width: CARD_WIDTH,
-        height: CARD_HEIGHT + 22,
+    tabsWrap: { borderBottomWidth: 1, borderBottomColor: BORDER, backgroundColor: SURF_LOW, maxHeight: 60 },
+    tabsRow:  { paddingHorizontal: PAD, paddingVertical: 8, gap: 6, flexDirection: 'row' },
+    tab: {
+        paddingHorizontal: 14,
+        paddingVertical: 6,
         borderWidth: 1,
         borderColor: BORDER,
         backgroundColor: SURFACE,
+        minWidth: 72,
+        alignItems: 'center',
+    },
+    tabActive: {
+        borderColor: CYAN,
+        backgroundColor: '#0a1f1e',
+        shadowColor: CYAN,
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.4,
+        shadowRadius: 8,
+        elevation: 8,
+    },
+    tabTitle:       { color: DIM,    fontFamily: 'monospace', fontSize: 9, fontWeight: '700', letterSpacing: 1.5 },
+    tabTitleActive: { color: CYAN },
+    tabSub:         { color: BORDER, fontFamily: 'monospace', fontSize: 8, letterSpacing: 0.5, marginTop: 2 },
+    tabSubActive:   { color: CYAN + 'aa' },
+
+    sectionRow:  { paddingHorizontal: PAD, paddingTop: 10, paddingBottom: 6 },
+    sectionText: { color: DIM, fontFamily: 'monospace', fontSize: 8, letterSpacing: 2 },
+
+    // Deck slots
+    slotsGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        paddingHorizontal: PAD,
+        gap: SLOT_GAP,
+    },
+    slot: {
+        width: SLOT_W,
+        height: SLOT_H,
+        borderWidth: 1,
+        backgroundColor: SURFACE,
+        padding: 5,
+        justifyContent: 'space-between',
         overflow: 'hidden',
     },
-    cardBody: {
-        flex: 1,
-        justifyContent: 'center',
+    slotType: { fontFamily: 'monospace', fontSize: 7,  fontWeight: '700', letterSpacing: 1 },
+    slotBar:  { flex: 1, marginVertical: 3 },
+    slotCat:  { fontFamily: 'monospace', fontSize: 6,  letterSpacing: 0.5 },
+
+    // Proporcje
+    proportionsRow: {
+        paddingHorizontal: PAD,
+        paddingTop: 10,
+        gap: 5,
+    },
+    propChip: {
+        flexDirection: 'row',
         alignItems: 'center',
-        borderBottomWidth: 1,
-        borderBottomColor: BORDER,
+        gap: 8,
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderWidth: 1,
+        backgroundColor: SURFACE,
     },
-    cardPlus: {
-        color: BORDER,
-        fontSize: 24,
-        fontWeight: '200',
-    },
-    cardFooter: {
-        height: 22,
-        backgroundColor: SURFACE_HIGH,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    cardIndex: {
-        color: CYAN,
-        fontFamily: 'monospace',
-        fontSize: 9,
-        letterSpacing: 2,
+    propType:  { fontFamily: 'monospace', fontSize: 9, fontWeight: '700', letterSpacing: 1, width: 64 },
+    propBarBg: { flex: 1, height: 4, backgroundColor: BORDER },
+    propBarFill: { height: 4 },
+    propCount: { fontFamily: 'monospace', fontSize: 11, fontWeight: '700', width: 20, textAlign: 'right' },
+
+    divider: {
+        height: 1,
+        backgroundColor: BORDER,
+        marginHorizontal: PAD,
+        marginTop: 12,
+        marginBottom: 4,
     },
 
-    // Stats bar
-    statsBar: {
+    // Siatka 6 typów kart
+    typesGrid: {
         flexDirection: 'row',
+        flexWrap: 'wrap',
+        paddingHorizontal: PAD,
+        gap: TYPE_GAP,
+        paddingTop: 4,
+    },
+    typeCard: {
+        width: TYPE_W,
+        height: TYPE_H,
         borderWidth: 1,
-        borderColor: BORDER,
-        backgroundColor: SURFACE_LOW,
-        marginTop: 16,
+        backgroundColor: SURFACE,
+        padding: 10,
+        justifyContent: 'space-between',
     },
-    statItem: {
-        flex: 1,
-        paddingVertical: 10,
-        alignItems: 'center',
-        gap: 4,
-    },
-    statDivider: {
-        width: 1,
-        backgroundColor: BORDER,
-        alignSelf: 'stretch',
-    },
-    statLabel: {
-        color: TEXT_DIM,
-        fontFamily: 'monospace',
-        fontSize: 8,
-        letterSpacing: 2,
-    },
-    statValue: {
+    typeCardDisabled: { opacity: 0.45 },
+    typeCardType: {
         fontFamily: 'monospace',
         fontSize: 14,
         fontWeight: '700',
-        letterSpacing: 1,
+        letterSpacing: 2,
+    },
+    typeCardCats: {
+        color: DIM,
+        fontFamily: 'monospace',
+        fontSize: 7,
+        letterSpacing: 0.5,
+        lineHeight: 11,
     },
 
-    // Actions
-    actions: {
-        flexDirection: 'row',
-        gap: 10,
-        marginTop: 12,
-    },
-    btnPrimary: {
-        flex: 1,
-        backgroundColor: PINK,
-        paddingVertical: 14,
-        alignItems: 'center',
-        shadowColor: PINK,
-        shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 0.65,
-        shadowRadius: 14,
-        elevation: 12,
-    },
-    btnPrimaryText: {
-        color: '#000',
-        fontFamily: 'monospace',
-        fontSize: 12,
-        fontWeight: '700',
-        letterSpacing: 3,
-    },
-    btnSecondary: {
-        paddingHorizontal: 20,
-        borderWidth: 2,
-        borderColor: CYAN,
-        paddingVertical: 14,
+    // Badge z liczbą
+    badge: {
+        position: 'absolute',
+        top: 6,
+        right: 6,
+        width: 20,
+        height: 20,
+        borderRadius: 10,
         alignItems: 'center',
         justifyContent: 'center',
+        zIndex: 1,
     },
-    btnSecondaryText: {
-        color: CYAN,
-        fontFamily: 'monospace',
-        fontSize: 12,
-        fontWeight: '600',
-        letterSpacing: 3,
-    },
+    badgeText: { color: '#000', fontFamily: 'monospace', fontSize: 10, fontWeight: '700' },
 });
