@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { View, Text, ScrollView, Pressable, TextInput, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, Pressable, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { arc } from '@/lib/arcade-theme';
+import { Ionicons } from '@expo/vector-icons';
+import { arc, arcSpace } from '@/lib/arcade-theme';
 import { useQuestions, avgDifficulty, type Question } from '@/lib/forum-store';
 
 const CHIPS: { l: string; cat: string | null }[] = [
@@ -14,6 +14,29 @@ const CHIPS: { l: string; cat: string | null }[] = [
   { l: 'MOVIES', cat: 'MOV' },
   { l: 'MED', cat: 'MED' },
 ];
+
+// ── Atomy zgodne z home ─────────────────────────────────────────────────────
+function Chip({ label, color }: { label: string; color: string }) {
+  return (
+    <View style={[s.statChip, { borderColor: color + '66' }]}>
+      <Text style={[s.statChipText, { color }]}>{label}</Text>
+    </View>
+  );
+}
+
+function HudIconButton({
+  icon,
+  onPress,
+}: {
+  icon: React.ComponentProps<typeof Ionicons>['name'];
+  onPress?: () => void;
+}) {
+  return (
+    <TouchableOpacity style={s.iconBtn} onPress={onPress} activeOpacity={0.7}>
+      <Ionicons name={icon} size={18} color={arc.outline} />
+    </TouchableOpacity>
+  );
+}
 
 function QuestionCard({ q, onPress }: { q: Question; onPress: () => void }) {
   const avg = avgDifficulty(q);
@@ -31,7 +54,7 @@ function QuestionCard({ q, onPress }: { q: Question; onPress: () => void }) {
             <Text style={s.catText}>{q.cat}</Text>
           </View>
           <View style={s.diffRow}>
-            {[1,2,3,4,5].map(d => (
+            {[1, 2, 3, 4, 5].map(d => (
               <View key={d} style={[s.diffDot, { backgroundColor: d <= avg ? arc.primaryContainer : arc.surfaceHigh }]} />
             ))}
           </View>
@@ -43,6 +66,7 @@ function QuestionCard({ q, onPress }: { q: Question; onPress: () => void }) {
   );
 }
 
+// ── Główny ekran ────────────────────────────────────────────────────────────
 export default function ForumScreen() {
   const router = useRouter();
   const { questions } = useQuestions();
@@ -67,45 +91,45 @@ export default function ForumScreen() {
   return (
     <View style={s.root}>
       <StatusBar style="light" />
-      <LinearGradient
-        colors={['rgba(255,72,152,0.08)', 'transparent']}
-        style={s.glowTop}
-        start={{ x: 0.5, y: 0 }}
-        end={{ x: 0.5, y: 1 }}
-        pointerEvents="none"
-      />
-      <LinearGradient
-        colors={['rgba(0,235,215,0.06)', 'transparent']}
-        style={s.glowBottom}
-        start={{ x: 1, y: 1 }}
-        end={{ x: 0, y: 0 }}
-        pointerEvents="none"
-      />
+      <View style={s.crtOverlay} pointerEvents="none" />
 
       <SafeAreaView style={s.safe}>
-        <View style={s.header}>
-          <Text style={s.title}>FORUM<Text style={{ color: arc.primaryContainer }}>.</Text></Text>
+        {/* ── HUD jak na home ── */}
+        <View style={s.hud}>
+          <View style={s.hudLeft}>
+            <HudIconButton icon="arrow-back-outline" onPress={() => router.back()} />
+          </View>
+          <View style={s.hudRight}>
+            <Chip label="◉ LIVE" color={arc.secondaryContainer} />
+            <Chip label={`${questions.length}Q`} color={arc.tertiary} />
+          </View>
         </View>
 
+        {/* ── Tytuł z kropką jak FORUM. ── */}
+        <View style={s.titleSection}>
+          <Text style={s.title}>FORUM<Text style={{ color: arc.primaryContainer }}>.</Text></Text>
+          <Text style={s.tagline}>COMMUNITY · QUESTIONS · VOTES</Text>
+        </View>
+
+        {/* ── Search + sort ── */}
         <View style={s.searchRow}>
           <View style={s.searchInput}>
-            <Text style={{ color: arc.outline, fontSize: 15 }}>⊕</Text>
+            <Ionicons name="search-outline" size={16} color={arc.outline} />
             <TextInput
               value={search}
               onChangeText={setSearch}
-              placeholder="search 4,219 questions..."
+              placeholder="search questions..."
               placeholderTextColor={arc.outline}
               style={s.searchField}
               returnKeyType="search"
             />
           </View>
           <Pressable style={s.sortBtn} onPress={toggleSort}>
-            <Text style={[s.mono, { color: arc.secondaryContainer, fontSize: 11, fontFamily: 'JetBrainsMono_500Medium', letterSpacing: 1 }]}>
-              {sortMode}
-            </Text>
+            <Text style={s.sortBtnText}>{sortMode}</Text>
           </Pressable>
         </View>
 
+        {/* ── Filter chips ── */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -128,13 +152,14 @@ export default function ForumScreen() {
           ))}
         </ScrollView>
 
+        {/* ── Question list ── */}
         <ScrollView
           style={s.questionList}
-          contentContainerStyle={{ gap: 10, paddingBottom: 20 }}
+          contentContainerStyle={{ gap: 10, paddingBottom: 100 }}
           showsVerticalScrollIndicator={false}
         >
           {sorted.length === 0 ? (
-            <Text style={s.emptyText}>NO QUESTIONS</Text>
+            <Text style={s.emptyText}>// NO QUESTIONS</Text>
           ) : (
             sorted.map(q => (
               <QuestionCard
@@ -147,58 +172,99 @@ export default function ForumScreen() {
         </ScrollView>
       </SafeAreaView>
 
-      <Pressable style={s.fab} onPress={() => router.push('/add-question' as never)}>
-        <Text style={s.fabIcon}>+</Text>
-      </Pressable>
+      {/* ── FAB jak SoloPlayButton (pill + glow) ── */}
+      <TouchableOpacity
+        style={s.fab}
+        onPress={() => router.push('/add-question' as never)}
+        activeOpacity={0.85}
+      >
+        <Ionicons name="add" size={28} color={arc.bg} />
+      </TouchableOpacity>
     </View>
   );
 }
 
+// ── StyleSheet ──────────────────────────────────────────────────────────────
 const s = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: arc.bg,
-  },
-  glowTop: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 300,
-  },
-  glowBottom: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    width: 260,
-    height: 260,
+  root: { flex: 1, backgroundColor: arc.bg },
+  crtOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#000',
+    opacity: 0.04,
   },
   safe: {
     flex: 1,
-    paddingHorizontal: 16,
+    paddingHorizontal: arcSpace.md,
   },
-  header: {
-    marginTop: 8,
-    marginBottom: 12,
+
+  // ── HUD
+  hud: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: arcSpace.xs,
+    paddingBottom: arcSpace.sm,
+  },
+  hudLeft: { flexDirection: 'row', gap: arcSpace.sm },
+  hudRight: { flexDirection: 'row', alignItems: 'center', gap: arcSpace.sm },
+  iconBtn: {
+    width: 38,
+    height: 38,
+    borderWidth: 1,
+    borderColor: arc.outlineVariant,
+    borderRadius: 999,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  statChip: {
+    paddingHorizontal: arcSpace.sm + 2,
+    paddingVertical: arcSpace.xs + 1,
+    backgroundColor: arc.surface,
+    borderWidth: 1,
+  },
+  statChipText: {
+    fontFamily: 'JetBrainsMono_500Medium',
+    fontSize: 10,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+  },
+
+  // ── Title
+  titleSection: {
+    marginTop: arcSpace.sm,
+    marginBottom: arcSpace.md,
   },
   title: {
     fontFamily: 'SpaceGrotesk_700Bold',
-    fontSize: 28,
+    fontSize: 36,
     color: arc.ink,
     letterSpacing: 2,
+    textShadowColor: arc.primary,
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 16,
   },
+  tagline: {
+    fontFamily: 'JetBrainsMono_400Regular',
+    fontSize: 10,
+    color: arc.outline,
+    letterSpacing: 3,
+    marginTop: 4,
+    textTransform: 'uppercase',
+  },
+
+  // ── Search + sort
   searchRow: {
     flexDirection: 'row',
-    gap: 8,
-    marginBottom: 10,
+    gap: arcSpace.sm,
+    marginBottom: arcSpace.sm + 2,
   },
   searchInput: {
     flex: 1,
     height: 44,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 12,
+    gap: arcSpace.sm,
+    paddingHorizontal: arcSpace.sm + 4,
     backgroundColor: arc.surface,
     borderWidth: 1,
     borderColor: arc.surfaceHigh,
@@ -206,30 +272,45 @@ const s = StyleSheet.create({
   searchField: {
     flex: 1,
     fontFamily: 'JetBrainsMono_500Medium',
-    fontSize: 15,
+    fontSize: 14,
     color: arc.ink,
     padding: 0,
   },
   sortBtn: {
-    width: 56,
+    paddingHorizontal: arcSpace.md,
     height: 44,
-    backgroundColor: arc.surface,
-    borderWidth: 1,
-    borderColor: arc.surfaceHigh,
+    borderRadius: 999,
+    borderWidth: 2,
+    borderColor: arc.secondaryContainer,
+    backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: arc.secondaryContainer,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 8,
+    elevation: 4,
   },
+  sortBtnText: {
+    fontFamily: 'SpaceGrotesk_700Bold',
+    fontSize: 12,
+    color: arc.secondaryContainer,
+    letterSpacing: 1.5,
+  },
+
+  // ── Filter chips (pill)
   chipsScroll: {
     flexGrow: 0,
-    marginBottom: 10,
+    marginBottom: arcSpace.sm + 2,
   },
   chipsContent: {
     flexDirection: 'row',
-    gap: 6,
+    gap: arcSpace.xs + 2,
   },
   chip: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingVertical: arcSpace.xs + 2,
+    paddingHorizontal: arcSpace.sm + 4,
+    borderRadius: 999,
     borderWidth: 1,
   },
   chipText: {
@@ -237,9 +318,9 @@ const s = StyleSheet.create({
     fontSize: 11,
     letterSpacing: 1,
   },
-  questionList: {
-    flex: 1,
-  },
+
+  // ── Question list
+  questionList: { flex: 1 },
   emptyText: {
     fontFamily: 'JetBrainsMono_500Medium',
     fontSize: 12,
@@ -252,23 +333,21 @@ const s = StyleSheet.create({
     backgroundColor: arc.surface,
     borderWidth: 1,
     borderColor: arc.surfaceHigh,
-    padding: 14,
+    padding: arcSpace.md - 2,
     flexDirection: 'row',
-    gap: 10,
+    gap: arcSpace.sm + 2,
   },
   voteCol: {
     width: 32,
     alignItems: 'center',
     gap: 2,
   },
-  cardBody: {
-    flex: 1,
-  },
+  cardBody: { flex: 1 },
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    marginBottom: 4,
+    gap: arcSpace.xs + 2,
+    marginBottom: arcSpace.xs,
   },
   catBadge: {
     paddingVertical: 2,
@@ -288,40 +367,38 @@ const s = StyleSheet.create({
     gap: 2,
     alignItems: 'center',
   },
-  diffDot: {
-    width: 6,
-    height: 6,
-  },
+  diffDot: { width: 6, height: 6 },
   qText: {
     fontFamily: 'SpaceGrotesk_600SemiBold',
     fontSize: 15,
     color: arc.ink,
     lineHeight: 20,
-    marginBottom: 4,
+    marginBottom: arcSpace.xs,
   },
   userText: {
     fontFamily: 'JetBrainsMono_500Medium',
     fontSize: 12,
     color: arc.outline,
   },
+
+  // ── FAB (pill round, jak SoloPlayButton)
   fab: {
     position: 'absolute',
     bottom: 30,
     right: 20,
-    width: 56,
-    height: 56,
+    width: 60,
+    height: 60,
+    borderRadius: 999,
     backgroundColor: arc.primaryContainer,
     alignItems: 'center',
     justifyContent: 'center',
-    // @ts-ignore - boxShadow supported in RN 0.81 new arch
-    boxShadow: '0 0 20px rgba(255,72,152,0.53)',
+    shadowColor: arc.primaryContainer,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.85,
+    shadowRadius: 16,
+    elevation: 10,
   },
-  fabIcon: {
-    fontFamily: 'SpaceGrotesk_700Bold',
-    fontSize: 32,
-    color: arc.bg,
-    lineHeight: 36,
-  },
+
   mono: {
     fontFamily: 'JetBrainsMono_500Medium',
   },

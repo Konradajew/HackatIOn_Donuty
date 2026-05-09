@@ -11,7 +11,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "expo-router";
 import { supabase } from "@/lib/supabase";
 import { Ionicons } from "@expo/vector-icons";
-import { ArcadeColors as C } from "@/constants/theme";
+import { arc } from "@/lib/arcade-theme";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const { width: SW } = Dimensions.get("window");
@@ -26,7 +26,7 @@ function HudIconButton({
 }) {
     return (
         <TouchableOpacity style={s.iconBtn} onPress={onPress} activeOpacity={0.7}>
-            <Ionicons name={icon} size={18} color={C.outline} />
+            <Ionicons name={icon} size={18} color={arc.outline} />
         </TouchableOpacity>
     );
 }
@@ -83,7 +83,7 @@ function ExitButton({ onPress }: { onPress: () => void }) {
                 <Ionicons
                     name="power-outline"
                     size={16}
-                    color={C.error}
+                    color={arc.error}
                     style={s.btnIcon}
                 />
                 <Text style={s.exitBtnText}>EXIT</Text>
@@ -159,15 +159,15 @@ export default function HomeScreen() {
                         <GhostButton
                             label="FORUM"
                             icon="chatbubbles-outline"
-                            borderColor={C.tertiary}
-                            iconColor={C.tertiary}
+                            borderColor={arc.tertiary}
+                            iconColor={arc.tertiary}
                             onPress={() => router.push("/forum")}
                         />
                         <GhostButton
                             label="DECK"
                             icon="layers-outline"
-                            borderColor={C.primaryDim}
-                            iconColor={C.primaryDim}
+                            borderColor={arc.primary}
+                            iconColor={arc.primary}
                             onPress={() => router.push("/deck")}
                         />
                     </View>
@@ -182,7 +182,7 @@ export default function HomeScreen() {
 const s = StyleSheet.create({
     root: {
         flex: 1,
-        backgroundColor: C.background,
+        backgroundColor: arc.bg,
     },
     crtOverlay: {
         ...StyleSheet.absoluteFillObject,
@@ -209,7 +209,7 @@ const s = StyleSheet.create({
         width: 38,
         height: 38,
         borderWidth: 1,
-        borderColor: C.outlineVariant,
+        borderColor: arc.outlineVariant,
         borderRadius: 999,
         justifyContent: "center",
         alignItems: "center",
@@ -219,15 +219,15 @@ const s = StyleSheet.create({
     profileName: {
         fontFamily: "JetBrainsMono_500Medium",
         fontSize: 14,
-        color: C.secondary,
+        color: arc.secondaryContainer,
         letterSpacing: 1.2,
     },
     avatar: {
         width: 42,
         height: 42,
-        backgroundColor: C.primaryBright,
+        backgroundColor: arc.primaryContainer,
         borderWidth: 2,
-        borderColor: C.secondary,
+        borderColor: arc.secondaryContainer,
         justifyContent: "center",
         alignItems: "center",
     },
@@ -251,9 +251,9 @@ const s = StyleSheet.create({
         position: "absolute",
         width: 85,
         height: 122,
-        backgroundColor: C.surfaceContainerHigh,
+        backgroundColor: arc.surfaceHigh,
         borderWidth: 1,
-        borderColor: C.outlineVariant,
+        borderColor: arc.outlineVariant,
         overflow: "hidden",
     },
     decorLeft: { left: -20, transform: [{ rotate: "-18deg" }] },
@@ -264,7 +264,7 @@ const s = StyleSheet.create({
         left: 8,
         right: 8,
         height: 1,
-        backgroundColor: C.outlineVariant,
+        backgroundColor: arc.outlineVariant,
         opacity: 0.6,
     },
     decorCorner: {
@@ -274,7 +274,7 @@ const s = StyleSheet.create({
         width: 16,
         height: 16,
         borderWidth: 1,
-        borderColor: C.outlineVariant,
+        borderColor: arc.outlineVariant,
         opacity: 0.6,
     },
 
@@ -293,14 +293,14 @@ const s = StyleSheet.create({
     },
     logoMain: {
         color: "#ffffff",
-        textShadowColor: C.primaryDim,
+        textShadowColor: arc.primary,
         textShadowOffset: { width: 0, height: 0 },
         textShadowRadius: 24,
     },
     tagline: {
         fontFamily: "JetBrainsMono_400Regular",
         fontSize: 10,
-        color: C.outline,
+        color: arc.outline,
         letterSpacing: 4,
         marginTop: 12,
         textTransform: "uppercase",
@@ -327,10 +327,10 @@ const s = StyleSheet.create({
         paddingVertical: 18,
         borderRadius: 999,
         borderWidth: 2,
-        borderColor: C.primary,
+        borderColor: arc.primaryContainer,
         width: "70%",
         alignSelf: "center",
-        shadowColor: C.primary,
+        shadowColor: arc.primaryContainer,
         shadowOffset: { width: 0, height: 0 },
         shadowOpacity: 0.85,
         shadowRadius: 16,
@@ -341,7 +341,7 @@ const s = StyleSheet.create({
     soloBtnTitle: {
         fontFamily: "SpaceGrotesk_700Bold",
         fontSize: 18,
-        color: C.onSurface || "#ffffff",
+        color: arc.ink,
         letterSpacing: 1.5,
     },
 
@@ -352,10 +352,10 @@ const s = StyleSheet.create({
         paddingVertical: 18,
         borderRadius: 999,
         borderWidth: 2,
-        borderColor: C.secondary,
+        borderColor: arc.secondaryContainer,
         width: "70%",
         alignSelf: "center",
-        shadowColor: C.secondary,
+        shadowColor: arc.secondaryContainer,
         shadowOffset: { width: 0, height: 0 },
         shadowOpacity: 0.6,
         shadowRadius: 10,
@@ -366,7 +366,7 @@ const s = StyleSheet.create({
     multiBtnTitle: {
         fontFamily: "SpaceGrotesk_700Bold",
         fontSize: 18,
-        color: C.onSurface || "#ffffff",
+        color: arc.ink,
         letterSpacing: 1,
     },
 
@@ -395,7 +395,7 @@ const s = StyleSheet.create({
     ghostBtnTitle: {
         fontFamily: "SpaceGrotesk_700Bold",
         fontSize: 13,
-        color: C.onSurface || "#ffffff",
+        color: arc.ink,
         letterSpacing: 1.5,
     },
 
@@ -407,8 +407,8 @@ const s = StyleSheet.create({
         paddingHorizontal: 20,
         borderRadius: 999,
         borderWidth: 2,
-        borderColor: C.error,
-        shadowColor: C.error,
+        borderColor: arc.error,
+        shadowColor: arc.error,
         shadowOffset: { width: 0, height: 0 },
         shadowOpacity: 0.5,
         shadowRadius: 8,
@@ -420,7 +420,7 @@ const s = StyleSheet.create({
     exitBtnText: {
         fontFamily: "JetBrainsMono_500Medium",
         fontSize: 12,
-        color: C.onSurface || "#ffffff",
+        color: arc.ink,
         letterSpacing: 2,
         textTransform: "uppercase",
     },

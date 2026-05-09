@@ -31,12 +31,39 @@ export const arc = {
   tertiaryContainer: '#799d00',
   onTertiary: '#273500',
   onTertiaryContainer: '#212e00',
-  // Error
+  // Error (M3 light tonal — light salmon)
   error: '#ffb4ab',
   errorContainer: '#93000a',
   onError: '#690005',
   onErrorContainer: '#ffdad6',
+
+  // ── Neon brand palette (full saturation, gameplay/domain accents) ────────
+  // Used for card-type colors, primary CTAs, status accents.
+  // NOT M3 tonal — these are the canonical "arcade" hues.
+  neonPink:   '#FF1F8F',
+  neonCyan:   '#19F0DC',
+  neonLime:   '#C8FF1A',
+  neonOrange: '#FF7A00',
+  neonViolet: '#A07AFF',
+  neonGold:   '#FFD700',
+
+  // Destructive / danger — proper red (sign-out, delete)
+  danger: '#FF4444',
 } as const;
+
+// Hex → rgba helper. RN handles 8-digit hex (#RRGGBBAA) inconsistently on
+// some Android builds — appending alpha bytes (color + '1A') can render as
+// fully transparent. Use this for tinted overlays/backgrounds.
+export function alpha(hex: string, a: number): string {
+  const h = hex.replace('#', '');
+  const full = h.length === 3
+    ? h.split('').map(c => c + c).join('')
+    : h.slice(0, 6);
+  const r = parseInt(full.slice(0, 2), 16);
+  const g = parseInt(full.slice(2, 4), 16);
+  const b = parseInt(full.slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${a})`;
+}
 
 // Typography presets — fontFamily strings match loaded font names exactly.
 // Space Grotesk → headlines/body; JetBrains Mono → labels/stats
@@ -91,6 +118,8 @@ export const arcType = {
     letterSpacing: 1.0,
   },
 } as const;
+
+
 
 // Spacing — 4px base unit from design_arcade_neon.md
 export const arcSpace = {
