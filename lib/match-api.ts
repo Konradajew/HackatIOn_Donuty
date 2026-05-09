@@ -10,6 +10,7 @@ export type AnswerLogEntry = {
   q_title: string;
   q_options: string[];
   q_category: string;
+  q_explanation: string;
   correct_idx: number;
   picked_idx: number;
   was_correct: boolean;
@@ -48,6 +49,7 @@ export type Snapshot = {
   };
   opponent: {
     id: string | null;
+    nickname: string | null;
     hp: number;
     hand_size: number;
     remaining_cards_count: number;

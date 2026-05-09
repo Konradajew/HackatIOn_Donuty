@@ -213,6 +213,12 @@ export default function GameSummaryScreen() {
                   );
                 })}
               </View>
+              {(review.q_explanation?.trim().length ?? 0) > 0 && (
+                <View style={s.explanationBox}>
+                  <Text style={s.explanationLabel}>WHY?</Text>
+                  <Text style={s.explanationBody}>{review.q_explanation}</Text>
+                </View>
+              )}
               <Pressable style={s.reviewClose} onPress={() => setReview(null)}>
                 <Text style={s.reviewCloseText}>CLOSE</Text>
               </Pressable>
@@ -485,6 +491,23 @@ const s = StyleSheet.create({
   reviewMark: {
     fontFamily: 'SpaceGrotesk_700Bold',
     fontSize: 16,
+  },
+  explanationBox: {
+    backgroundColor: arc.surfaceHigh,
+    padding: 12,
+    gap: 4,
+  },
+  explanationLabel: {
+    fontFamily: 'JetBrainsMono_500Medium',
+    fontSize: 9,
+    color: arc.outline,
+    letterSpacing: 1.5,
+  },
+  explanationBody: {
+    fontFamily: 'SpaceGrotesk_400Regular',
+    fontSize: 13,
+    color: arc.ink,
+    lineHeight: 18,
   },
   reviewClose: {
     height: 48,

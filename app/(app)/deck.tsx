@@ -269,7 +269,7 @@ export default function DeckScreen() {
                                             <View style={{ alignItems: 'center', justifyContent: 'center', flex: 1 }}>
                                                 {Icon && <Icon width={Math.round(SLOT_W * 0.5)} height={Math.round(SLOT_W * 0.5)} />}
                                             </View>
-                                            <Text style={[s.slotType, { color, textAlign: 'center' }]}>{card.type}</Text>
+                                            <Text style={[s.slotType, { color, textAlign: 'center' }]}>{CARD_META[card.type as CardType]?.label ?? card.type}</Text>
                                         </>
                                     );
                                 })()}
@@ -288,7 +288,7 @@ export default function DeckScreen() {
                             const pct = (count / DECK_SIZE) * 100;
                             return (
                                 <View key={card.card_id} style={[s.propChip, { borderColor: col + '55' }]}>
-                                    <Text style={[s.propType, { color: col }]}>{card.type}</Text>
+                                    <Text style={[s.propType, { color: col }]}>{CARD_META[card.type as CardType]?.label ?? card.type}</Text>
                                     <View style={s.propBarBg}>
                                         <View style={[s.propBarFill, { width: `${pct}%` as any, backgroundColor: col }]} />
                                     </View>
@@ -334,7 +334,7 @@ export default function DeckScreen() {
                                     {Icon && <Icon width={Math.round(TYPE_W * 0.32)} height={Math.round(TYPE_W * 0.32)} />}
                                 </View>
                                 <Text style={[s.typeCardType, { color: isFull ? C.outline : col }]}>
-                                    {card.type}
+                                    {CARD_META[card.type as CardType]?.label ?? card.type}
                                 </Text>
                                 <Text style={s.typeCardCats}>
                                     {card.categories?.join('\n') ?? '—'}

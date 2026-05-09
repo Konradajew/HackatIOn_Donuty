@@ -169,7 +169,7 @@ function GameInner() {
   const playedType: CardType = playedCardId != null ? (cardTypes[playedCardId] ?? 'DMG') : selectedType;
   const playedCat: string = snapshot.current_question.category ?? '';
 
-  const oppNick = snapshot.opponent.id === '00000000-0000-0000-0000-000000000b07' ? 'BOT' : 'Opponent';
+  const oppNick = (snapshot.opponent.nickname ?? 'OPPONENT').toUpperCase();
 
   // Timer display
   const showPickTimer = myTurn && !questionActive && hand.length > 0;
@@ -280,6 +280,13 @@ function GameInner() {
               <View style={[s.statusChip, { backgroundColor: '#C1FF0022' }]}>
                 <Text style={[s.statusChipText, { color: '#C1FF00' }]}>
                   POISON ×{snapshot.you.status.ps}
+                </Text>
+              </View>
+            )}
+            {(snapshot.you.status.ba ?? 0) > 0 && (
+              <View style={[s.statusChip, { backgroundColor: '#FFD40022' }]}>
+                <Text style={[s.statusChipText, { color: '#FFD400' }]}>
+                  BLIND ×{snapshot.you.status.ba}
                 </Text>
               </View>
             )}
