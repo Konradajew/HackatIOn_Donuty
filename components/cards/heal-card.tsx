@@ -1,3 +1,4 @@
+import HealIcon from "@/assets/icons/heal.svg";
 import { BaseCard } from "./base-card";
 
 export const HealCard = () => {
@@ -5,9 +6,9 @@ export const HealCard = () => {
     <BaseCard
       type="HEAL"
       topValue="4"
-      centerIcon="🩹"
+      centerIcon={HealIcon}
       category="MED"
-      mainColor="#42EADD" // Cyjan/Turkus z mockupu
+      mainColor="#42EADD"
     />
   );
 };

@@ -1,10 +1,11 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
+import { SvgProps } from "react-native-svg";
 
 interface BaseCardProps {
   type: string; // np. DMG, HEAL
   topValue: string; // np. 4, 13
-  centerIcon: string; // np. M, C, S
+  centerIcon: React.ComponentType<SvgProps>; // SVG component
   category: string; // np. MATH, CHEM
   mainColor: string; // Kolor neonu
 }
@@ -12,12 +13,12 @@ interface BaseCardProps {
 export const BaseCard: React.FC<BaseCardProps> = ({
   type,
   topValue,
-  centerIcon,
+  centerIcon: CenterIcon,
   category,
   mainColor,
 }) => {
   return (
-    <View style={[styles.cardContainer, { borderColor: mainColor }]}>
+    <View style={[styles.cardContainer]}>
       {/* Górny pasek */}
       <View style={[styles.header, { backgroundColor: mainColor }]}>
         <Text style={styles.headerText}>{type}</Text>
@@ -25,15 +26,10 @@ export const BaseCard: React.FC<BaseCardProps> = ({
       </View>
 
       {/* Środek karty (tu można wstawić SVG dla pasków) */}
-      <View
-        style={[
-          styles.centerBox,
-          { borderColor: mainColor, backgroundColor: `${mainColor}20` },
-        ]}
-      >
-        <Text style={[styles.centerLetter, { color: mainColor }]}>
-          {centerIcon}
-        </Text>
+      <View style={styles.centerBox}>
+        <View style={{ width: 60, height: 60 }}>
+          <CenterIcon width="100%" height="100%" />
+        </View>
       </View>
 
       {/* Dolny tekst */}

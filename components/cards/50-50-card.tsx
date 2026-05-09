@@ -1,3 +1,4 @@
+import FiftyIcon from "@/assets/icons/50-50.svg";
 import { BaseCard } from "./base-card";
 
 export const FiftyFiftyCard = () => {
@@ -5,9 +6,9 @@ export const FiftyFiftyCard = () => {
     <BaseCard
       type="50/50"
       topValue="1"
-      centerIcon="½"
+      centerIcon={FiftyIcon}
       category="HELP"
-      mainColor="#9B5DE5" // Fioletowy (przykładowy)
+      mainColor="#9B5DE5"
     />
   );
 };

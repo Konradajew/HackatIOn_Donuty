@@ -1,3 +1,4 @@
+import TimeIcon from "@/assets/icons/time.svg";
 import { BaseCard } from "./base-card";
 
 export const TimeCard = () => {
@@ -5,9 +6,9 @@ export const TimeCard = () => {
     <BaseCard
       type="TIME"
       topValue="+10"
-      centerIcon="⏰"
+      centerIcon={TimeIcon}
       category="UTIL"
-      mainColor="#FCA311" // Pomarańczowy (przykładowy)
+      mainColor="#FCA311"
     />
   );
 };

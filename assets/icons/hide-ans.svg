@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Warstwa_1" data-name="Warstwa 1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 480 480">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #19f0dc;
+      }
+
+      .cls-2 {
+        filter: url(#outer-glow-8);
+      }
+    </style>
+    <filter id="outer-glow-8" x="-18" y="-18" width="516" height="516" filterUnits="userSpaceOnUse">
+      <feOffset dx="0" dy="0"/>
+      <feGaussianBlur result="blur" stdDeviation="9"/>
+      <feFlood flood-color="#14cddb" flood-opacity=".75"/>
+      <feComposite in2="blur" operator="in"/>
+      <feComposite in="SourceGraphic"/>
+    </filter>
+  </defs>
+  <g class="cls-2">
+    <path class="cls-1" d="M89.77,378.93c1.81-3.1,4.1-5.97,6.85-9.01h286.23s.04-99.79.04-99.79l10.71,6.83.11,101.98H89.77Z"/>
+    <polygon class="cls-1" points="75.44 91.37 75.44 355.05 64.08 368.71 64.01 82.59 85.47 82.43 98.2 91.14 75.44 91.37"/>
+    <rect class="cls-1" x="179.85" y="447.88" width="113.36" height="23.03"/>
+    <polygon class="cls-1" points="382.84 242.29 382.87 91.31 305.02 91.29 312.18 82.42 393.27 82.43 393.16 248.67 382.84 242.29"/>
+    <rect class="cls-1" x="347.64" y="26.53" width="46.13" height="42.68"/>
+    <polygon class="cls-1" points="273.55 91.29 141.46 91.3 128.3 82.45 280 82.43 273.55 91.29"/>
+    <rect class="cls-1" x="9" y="363" width="27.66" height="26.31"/>
+    <polygon class="cls-1" points="135.13 46.79 124.94 46.83 125.05 32.43 110.39 32.46 110.44 24.44 125.06 24.46 125.02 9.09 135.04 9.16 135.02 24.47 150 24.45 149.94 32.47 135.05 32.4 135.13 46.79"/>
+    <polygon class="cls-1" points="249.07 164.38 471 302.86 462.7 314.46 240.77 175.99 249.07 164.38"/>
+    <polygon class="cls-1" points="36.45 442.97 23.54 434.91 41 410.65 141.49 274.84 288.63 80.92 320.86 39.02 332.33 46.64 238.31 170.32 69.09 397.93 36.45 442.97"/>
+    <polygon class="cls-1" points="35.44 28.17 227.07 151.52 217.89 163.96 26.26 40.61 35.44 28.17"/>
+  </g>
+</svg>

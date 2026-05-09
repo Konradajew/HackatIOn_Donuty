@@ -1,3 +1,4 @@
+import DmgIcon from "@/assets/icons/dmg.svg";
 import { BaseCard } from "./base-card";
 
 export const DmgCard = () => {
@@ -5,9 +6,9 @@ export const DmgCard = () => {
     <BaseCard
       type="DMG"
       topValue="4"
-      centerIcon="⚔️"
+      centerIcon={DmgIcon}
       category="MATH"
-      mainColor="#FF2A7A" // Różowy z mockupu
+      mainColor="#FF2A7A"
     />
   );
 };
