@@ -112,13 +112,10 @@ function DecorativeCard({ style }: { style?: object }) {
 }
 
 export default function HomeScreen() {
-  const { session } = useAuth();
+  const { profile, session } = useAuth();
   const router = useRouter();
-
-  const username =
-    session?.user?.user_metadata?.full_name?.toUpperCase() ??
-    session?.user?.email?.split("@")[0]?.toUpperCase() ??
-    "PLAYER";
+  const username = (profile?.nickname ??
+  session?.user?.email?.split("@")[0] ?? "PLAYER").toUpperCase();
 
   return (
     <View style={s.root}>
@@ -151,8 +148,8 @@ export default function HomeScreen() {
 
                 {/* ── PRZYCISKI ── */}
                 <View style={s.buttons}>
-                    <SoloPlayButton onPress={() => {}} />
-                    <MultiButton onPress={() => {}} />
+                    <SoloPlayButton onPress={() => router.push("/play/solo" as never)} />
+                    <MultiButton onPress={() => router.push("/lobby" as never)} />
 
                     {/* Dwa przyciski obok siebie */}
                     <View style={s.ghostRow}>

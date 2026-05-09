@@ -6,13 +6,13 @@ import { Link } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { supabase } from '@/lib/supabase';
 import { signInWithGoogle } from '@/lib/google-oauth';
-import { arc, arcSpace, arcType } from '@/lib/arcade-theme';
+import { ArcadeColors as C, ArcadeSpacing as S, ArcadeFonts as F } from "@/constants/theme";
 import { Chamfer, GoogleG } from '@/lib/arcade-shapes';
 
 function Chip({ label, color }: { label: string; color: string }) {
   return (
     <View style={[styles.chip, { borderColor: color + '55' }]}>
-      <Text style={[arcType.labelSm, { color, textTransform: 'uppercase', letterSpacing: 1 }]}>{label}</Text>
+      <Text style={[F.labelSm, { color, textTransform: 'uppercase', letterSpacing: 1 }]}>{label}</Text>
     </View>
   );
 }
@@ -39,18 +39,18 @@ function InputField({
   return (
     <View style={[styles.inputCard, { borderColor: accent + '66' }]}>
       <View style={styles.inputHeader}>
-        <Text style={[arcType.labelSm, { color: accent, textTransform: 'uppercase', letterSpacing: 2 }]}>{label}</Text>
+        <Text style={[F.labelSm, { color: accent, textTransform: 'uppercase', letterSpacing: 2 }]}>{label}</Text>
         {right}
       </View>
       <TextInput
-        style={[arcType.labelLg, styles.inputText]}
+        style={[F.labelLg, styles.inputText]}
         value={value}
         onChangeText={onChangeText}
         secureTextEntry={secure}
         keyboardType={keyboardType}
         autoComplete={autoComplete}
         autoCapitalize="none"
-        placeholderTextColor={arc.outline}
+        placeholderTextColor={C.outline}
         selectionColor={accent}
         cursorColor={accent}
       />
@@ -94,29 +94,29 @@ export default function SignIn() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.topRow}>
-          <Chip label="v0.9.2" color={arc.tertiary} />
-          <Chip label="◉ ONLINE" color={arc.secondaryContainer} />
+          <Chip label="v0.9.2" color={C.tertiaryDim} />
+          <Chip label="◉ ONLINE" color={C.secondaryBright} />
         </View>
 
         {/* Logo */}
         <View style={styles.logoBlock}>
-          <Text style={[styles.logoText, { color: arc.secondaryContainer, position: 'absolute', left: 6, top: 6 }]} aria-hidden>
+          <Text style={[styles.logoText, { color: C.secondaryBright, position: 'absolute', left: 6, top: 6 }]} aria-hidden>
             TRICARD
           </Text>
-          <Text style={[styles.logoText, { color: arc.primaryContainer, position: 'absolute', left: 3, top: 3 }]} aria-hidden>
+          <Text style={[styles.logoText, { color: C.primaryBright, position: 'absolute', left: 3, top: 3 }]} aria-hidden>
             TRICARD
           </Text>
-          <Text style={[styles.logoText, { color: arc.ink }]}>TRICARD</Text>
+          <Text style={[styles.logoText, { color: C.onSurface }]}>TRICARD</Text>
           <View style={styles.logoDiamond} />
         </View>
-        <Text style={[arcType.labelSm, styles.logoSub]}>SIGN · IN · TO · PLAY</Text>
+        <Text style={[F.labelSm, styles.logoSub]}>SIGN · IN · TO · PLAY</Text>
 
         <View style={styles.form}>
           <InputField
             label="EMAIL"
             value={email}
             onChangeText={setEmail}
-            accent={arc.secondaryContainer}
+            accent={C.secondaryBright}
             keyboardType="email-address"
             autoComplete="email"
           />
@@ -124,23 +124,23 @@ export default function SignIn() {
             label="PASSWORD"
             value={password}
             onChangeText={setPassword}
-            accent={arc.primaryContainer}
+            accent={C.primaryBright}
             secure={!showPass}
             right={
               <Pressable onPress={() => setShowPass(v => !v)}>
-                <Text style={[arcType.labelSm, styles.showPill]}>{showPass ? 'HIDE' : 'SHOW'}</Text>
+                <Text style={[F.labelSm, styles.showPill]}>{showPass ? 'HIDE' : 'SHOW'}</Text>
               </Pressable>
             }
           />
 
           <View style={styles.rememberRow}>
             <View style={styles.checkRow}>
-              <View style={[styles.checkbox, { borderColor: arc.secondaryContainer }]}>
-                <Text style={{ color: arc.secondaryContainer, fontSize: 9 }}>✓</Text>
+              <View style={[styles.checkbox, { borderColor: C.secondaryBright }]}>
+                <Text style={{ color: C.secondaryBright, fontSize: 9 }}>✓</Text>
               </View>
-              <Text style={[arcType.labelSm, { color: arc.outline, letterSpacing: 1 }]}>REMEMBER ME</Text>
+              <Text style={[F.labelSm, { color: C.outline, letterSpacing: 1 }]}>REMEMBER ME</Text>
             </View>
-            <Text style={[arcType.labelSm, { color: arc.tertiary, letterSpacing: 1 }]}>FORGOT?</Text>
+            <Text style={[F.labelSm, { color: C.tertiaryDim, letterSpacing: 1 }]}>FORGOT?</Text>
           </View>
 
           <Pressable
@@ -149,20 +149,20 @@ export default function SignIn() {
             style={({ pressed }) => pressed ? { opacity: 0.85 } : undefined}
           >
             <Chamfer
-              fill={arc.primaryContainer}
-              stroke={arc.primaryContainer}
+              fill={C.primaryBright}
+              stroke={C.primaryBright}
               strokeWidth={1.5}
-              glow={arc.primaryContainer}
+              glow={C.primaryBright}
               glowRadius={16}
               chamfer={[0, 8, 0, 8]}
               style={styles.primaryBtn}
             >
               <View style={styles.ctaInner}>
                 <View>
-                  <Text style={[styles.ctaTitle, { color: arc.bg }]}>
+                  <Text style={[styles.ctaTitle, { color: C.background }]}>
                     {loading ? 'SIGNING IN...' : 'SIGN IN'}
                   </Text>
-                  <Text style={[arcType.labelSm, { color: arc.bg, opacity: 0.7, letterSpacing: 1, marginTop: 2 }]}>
+                  <Text style={[F.labelSm, { color: C.background, opacity: 0.7, letterSpacing: 1, marginTop: 2 }]}>
                     resume your match log
                   </Text>
                 </View>
@@ -173,7 +173,7 @@ export default function SignIn() {
 
         <View style={styles.dividerRow}>
           <View style={styles.dividerLine} />
-          <Text style={[arcType.labelSm, { color: arc.outline, letterSpacing: 3, marginHorizontal: arcSpace.sm }]}>// OR</Text>
+          <Text style={[F.labelSm, { color: C.outline, letterSpacing: 3, marginHorizontal: S.sm }]}>OR</Text>
           <View style={styles.dividerLine} />
         </View>
 
@@ -183,17 +183,17 @@ export default function SignIn() {
           style={({ pressed }) => pressed ? { opacity: 0.85 } : undefined}
         >
           <Chamfer
-            fill={arc.surface}
-            stroke={arc.secondaryContainer}
+            fill={C.surface}
+            stroke={C.secondaryBright}
             strokeWidth={1.5}
             chamfer={[0, 8, 0, 8]}
           >
             <View style={styles.googleInner}>
               <View style={styles.googleLeft}>
                 <GoogleG size={20} />
-                <View style={{ marginLeft: arcSpace.sm }}>
-                  <Text style={[styles.ctaTitle, { color: arc.ink }]}>GOOGLE</Text>
-                  <Text style={[arcType.labelSm, { color: arc.outline, letterSpacing: 1, marginTop: 2 }]}>one-tap auth</Text>
+                <View style={{ marginLeft: S.sm }}>
+                  <Text style={[styles.ctaTitle, { color: C.onSurface }]}>GOOGLE</Text>
+                  <Text style={[F.labelSm, { color: C.outline, letterSpacing: 1, marginTop: 2 }]}>one-tap auth</Text>
                 </View>
               </View>
             </View>
@@ -205,10 +205,10 @@ export default function SignIn() {
         <View style={[styles.deco, styles.decoRight]} pointerEvents="none" />
 
         <View style={styles.footer}>
-          <Text style={[arcType.labelSm, { color: arc.outline, letterSpacing: 1 }]}>NEW PLAYER? </Text>
+          <Text style={[F.labelSm, { color: C.outline, letterSpacing: 1 }]}>NEW PLAYER? </Text>
           <Link href="/sign-up" asChild>
             <Pressable>
-              <Text style={[arcType.labelSm, { color: arc.tertiary, letterSpacing: 1 }]}>CREATE ACCOUNT ▸</Text>
+              <Text style={[F.labelSm, { color: C.tertiaryDim, letterSpacing: 1 }]}>CREATE ACCOUNT ▸</Text>
             </Pressable>
           </Link>
         </View>
@@ -220,27 +220,27 @@ export default function SignIn() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: arc.bg,
+    backgroundColor: C.background,
   },
   scroll: {
-    paddingHorizontal: arcSpace.md,
+    paddingHorizontal: S.md,
     paddingTop: 64,
-    paddingBottom: arcSpace.xl,
+    paddingBottom: S.xl,
   },
   topRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: arcSpace.lg,
+    marginBottom: S.lg,
   },
   chip: {
-    paddingHorizontal: arcSpace.sm + 2,
-    paddingVertical: arcSpace.xs + 1,
-    backgroundColor: arc.surface,
+    paddingHorizontal: S.sm + 2,
+    paddingVertical: S.xs + 1,
+    backgroundColor: C.surface,
     borderWidth: 1,
   },
   logoBlock: {
     alignSelf: 'center',
-    marginBottom: arcSpace.xs,
+    marginBottom: S.xs,
   },
   logoText: {
     fontFamily: 'SpaceGrotesk_700Bold',
@@ -254,52 +254,52 @@ const styles = StyleSheet.create({
     right: -12,
     width: 14,
     height: 14,
-    backgroundColor: arc.tertiary,
+    backgroundColor: C.tertiaryDim,
     transform: [{ rotate: '45deg' }],
   },
   logoSub: {
-    color: arc.outline,
+    color: C.outline,
     textAlign: 'center',
     letterSpacing: 4,
     textTransform: 'uppercase',
-    marginBottom: arcSpace.xl,
+    marginBottom: S.xl,
   },
   form: {
-    gap: arcSpace.sm,
+    gap: S.sm,
   },
   inputCard: {
-    backgroundColor: arc.surface,
+    backgroundColor: C.surface,
     borderWidth: 1,
-    padding: arcSpace.sm + 2,
+    padding: S.sm + 2,
   },
   inputHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: arcSpace.xs + 2,
+    marginBottom: S.xs + 2,
   },
   inputText: {
-    color: arc.ink,
+    color: C.onSurface,
     paddingVertical: 0,
   },
   showPill: {
-    color: arc.outline,
+    color: C.outline,
     letterSpacing: 1,
     borderWidth: 1,
-    borderColor: arc.surfaceHigh,
-    paddingHorizontal: arcSpace.xs + 2,
+    borderColor: C.surfaceContainerHigh,
+    paddingHorizontal: S.xs + 2,
     paddingVertical: 2,
   },
   rememberRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: arcSpace.xs,
+    marginTop: S.xs,
   },
   checkRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: arcSpace.xs + 2,
+    gap: S.xs + 2,
   },
   checkbox: {
     width: 14,
@@ -309,14 +309,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   primaryBtn: {
-    marginTop: arcSpace.xs,
+    marginTop: S.xs,
   },
   ctaInner: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: arcSpace.md + 2,
-    paddingVertical: arcSpace.md + 2,
+    paddingHorizontal: S.md + 2,
+    paddingVertical: S.md + 2,
   },
   ctaTitle: {
     fontFamily: 'SpaceGrotesk_700Bold',
@@ -332,19 +332,19 @@ const styles = StyleSheet.create({
   dividerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: arcSpace.md,
+    marginVertical: S.md,
   },
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: arc.surfaceHigh,
+    backgroundColor: C.surfaceContainerHigh,
   },
   googleInner: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: arcSpace.md,
-    paddingVertical: arcSpace.md + 2,
+    paddingHorizontal: S.md,
+    paddingVertical: S.md + 2,
   },
   googleLeft: {
     flexDirection: 'row',
@@ -360,18 +360,18 @@ const styles = StyleSheet.create({
   decoLeft: {
     left: -28,
     top: 220,
-    borderColor: arc.tertiary,
+    borderColor: C.tertiaryDim,
     transform: [{ rotate: '-18deg' }],
   },
   decoRight: {
     right: -28,
     top: 360,
-    borderColor: arc.secondaryContainer,
+    borderColor: C.secondaryBright,
     transform: [{ rotate: '16deg' }],
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: arcSpace.xl,
+    marginTop: S.xl,
   },
 });

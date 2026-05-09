@@ -6,8 +6,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { arc } from '@/lib/arcade-theme';
+import { ArcadeColors as C } from "@/constants/theme";
 import { useQuestions } from '@/lib/forum-store';
+import {useAuth} from "@/lib/auth-context";
 
 const CATEGORIES = ['MATH', 'SPCE', 'MED', 'MOV', 'TRVL', 'CHEM', 'BOOKS', 'ENG'];
 const ANSWER_LABELS = ['A', 'B', 'C', 'D'] as const;
@@ -26,7 +27,8 @@ export default function AddQuestionScreen() {
 
   const handleSubmit = () => {
     if (!question.trim()) return;
-    addQuestion({ cat: category, t: question.trim(), user: 'you', answers, correct, explanation: explanation.trim() });
+    const { profile } = useAuth();
+    addQuestion({ cat: category, t: question.trim(), user: profile?.nickname?.toLowerCase() ?? 'you', answers, correct, explanation: explanation.trim() });
     router.back();
   };
 
@@ -94,7 +96,7 @@ export default function AddQuestionScreen() {
               maxLength={100}
               multiline
               style={s.textInput}
-              placeholderTextColor={arc.outline}
+              placeholderTextColor={C.outline}
               placeholder="Type your question..."
             />
           </View>
@@ -106,11 +108,11 @@ export default function AddQuestionScreen() {
                 {row.map(label => {
                   const isCorrect = correct === label;
                   return (
-                    <View key={label} style={[s.answerCard, { borderColor: isCorrect ? arc.tertiary : arc.surfaceHigh }]}>
+                    <View key={label} style={[s.answerCard, { borderColor: isCorrect ? C.tertiaryDim : C.surfaceContainerHigh }]}>
                       <Pressable onPress={() => setCorrect(label)}>
                         <View style={s.answerHeaderRow}>
-                          <View style={[s.answerBadge, { backgroundColor: isCorrect ? arc.tertiary : arc.surfaceHigh }]}>
-                            <Text style={[s.answerBadgeText, { color: isCorrect ? arc.bg : arc.outline }]}>
+                          <View style={[s.answerBadge, { backgroundColor: isCorrect ? C.tertiaryDim : C.surfaceContainerHigh }]}>
+                            <Text style={[s.answerBadgeText, { color: isCorrect ? C.background : C.outline }]}>
                               {label}
                             </Text>
                           </View>
@@ -123,7 +125,7 @@ export default function AddQuestionScreen() {
                         value={answers[label]}
                         onChangeText={v => setAnswer(label, v)}
                         placeholder={`Answer ${label}`}
-                        placeholderTextColor={arc.outline}
+                        placeholderTextColor={C.outline}
                         style={s.answerInput}
                       />
                     </View>
@@ -142,7 +144,7 @@ export default function AddQuestionScreen() {
               maxLength={1000}
               multiline
               style={[s.textInput, s.textInputTall]}
-              placeholderTextColor={arc.outline}
+              placeholderTextColor={C.outline}
               placeholder="Explain the correct answer..."
             />
           </View>
@@ -167,10 +169,10 @@ export default function AddQuestionScreen() {
             {CATEGORIES.map(cat => (
               <Pressable
                 key={cat}
-                style={[s.modalItem, cat === category && { backgroundColor: `${arc.secondaryContainer}22` }]}
+                style={[s.modalItem, cat === category && { backgroundColor: `${C.secondaryBright}22` }]}
                 onPress={() => { setCategory(cat); setShowCatModal(false); }}
               >
-                <Text style={[s.modalItemText, { color: cat === category ? arc.secondaryContainer : arc.ink }]}>{cat}</Text>
+                <Text style={[s.modalItemText, { color: cat === category ? C.secondaryBright : C.onSurface }]}>{cat}</Text>
               </Pressable>
             ))}
           </View>
@@ -181,7 +183,7 @@ export default function AddQuestionScreen() {
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: arc.bg },
+  root: { flex: 1, backgroundColor: C.background },
   glowTop: { position: 'absolute', top: 0, left: 0, right: 0, height: 300 },
   glowBottom: { position: 'absolute', bottom: 0, right: 0, width: 260, height: 260 },
   safe: { flex: 1, paddingHorizontal: 16 },
@@ -196,28 +198,28 @@ const s = StyleSheet.create({
   backBtn: {
     width: 32,
     height: 32,
-    backgroundColor: arc.surface,
+    backgroundColor: C.surface,
     borderWidth: 1,
-    borderColor: arc.surfaceHigh,
+    borderColor: C.surfaceContainerHigh,
     alignItems: 'center',
     justifyContent: 'center',
   },
   backArrow: {
     fontFamily: 'SpaceGrotesk_700Bold',
     fontSize: 18,
-    color: arc.ink,
+    color: C.onSurface,
   },
   headerText: { flex: 1 },
   headerTitle: {
     fontFamily: 'SpaceGrotesk_700Bold',
     fontSize: 24,
-    color: arc.ink,
+    color: C.onSurface,
     letterSpacing: 2,
   },
   headerSub: {
     fontFamily: 'JetBrainsMono_500Medium',
     fontSize: 12,
-    color: arc.outline,
+    color: C.outline,
     letterSpacing: 1,
     marginTop: 2,
   },
@@ -231,7 +233,7 @@ const s = StyleSheet.create({
   draftText: {
     fontFamily: 'JetBrainsMono_500Medium',
     fontSize: 13,
-    color: arc.secondaryContainer,
+    color: C.secondaryBright,
   },
 
   scroll: { flex: 1 },
@@ -239,52 +241,52 @@ const s = StyleSheet.create({
 
   typeCard: {
     padding: 12,
-    backgroundColor: arc.surface,
+    backgroundColor: C.surface,
     borderWidth: 1,
-    borderColor: arc.surfaceHigh,
+    borderColor: C.surfaceContainerHigh,
     gap: 8,
   },
   fieldLabel: {
     fontFamily: 'JetBrainsMono_500Medium',
     fontSize: 11,
-    color: arc.outline,
+    color: C.outline,
     letterSpacing: 1,
   },
   tagsRow: { flexDirection: 'row', gap: 6, flexWrap: 'wrap' },
   dmgTag: {
     paddingVertical: 4,
     paddingHorizontal: 7,
-    backgroundColor: arc.primaryContainer,
+    backgroundColor: C.primaryBright,
   },
   dmgTagText: {
     fontFamily: 'JetBrainsMono_500Medium',
     fontSize: 12,
-    color: arc.bg,
+    color: C.background,
     letterSpacing: 1,
   },
   catTag: {
     paddingVertical: 4,
     paddingHorizontal: 7,
-    backgroundColor: arc.surfaceHigh,
+    backgroundColor: C.surfaceContainerHigh,
   },
   catTagText: {
     fontFamily: 'JetBrainsMono_500Medium',
     fontSize: 12,
-    color: arc.ink,
+    color: C.onSurface,
     letterSpacing: 1,
   },
 
   fieldContainer: {
-    backgroundColor: arc.surface,
+    backgroundColor: C.surface,
     borderWidth: 1,
-    borderColor: arc.surfaceHigh,
+    borderColor: C.surfaceContainerHigh,
     padding: 12,
     gap: 8,
   },
   textInput: {
     fontFamily: 'SpaceGrotesk_600SemiBold',
     fontSize: 15,
-    color: arc.ink,
+    color: C.onSurface,
     lineHeight: 22,
     minHeight: 40,
     padding: 0,
@@ -295,7 +297,7 @@ const s = StyleSheet.create({
   answersRow: { flexDirection: 'row', gap: 8 },
   answerCard: {
     flex: 1,
-    backgroundColor: arc.surface,
+    backgroundColor: C.surface,
     borderWidth: 1,
     padding: 10,
     gap: 6,
@@ -315,13 +317,13 @@ const s = StyleSheet.create({
   correctLabel: {
     fontFamily: 'JetBrainsMono_500Medium',
     fontSize: 11,
-    color: arc.tertiary,
+    color: C.tertiaryDim,
     letterSpacing: 0.5,
   },
   answerInput: {
     fontFamily: 'SpaceGrotesk_600SemiBold',
     fontSize: 14,
-    color: arc.ink,
+    color: C.onSurface,
     padding: 0,
     minHeight: 20,
   },
@@ -331,20 +333,20 @@ const s = StyleSheet.create({
     flex: 1,
     paddingVertical: 14,
     borderWidth: 1,
-    borderColor: arc.outline,
+    borderColor: C.outline,
     alignItems: 'center',
     justifyContent: 'center',
   },
   cancelText: {
     fontFamily: 'JetBrainsMono_500Medium',
     fontSize: 14,
-    color: arc.ink,
+    color: C.onSurface,
     letterSpacing: 2,
   },
   submitBtn: {
     flex: 2,
     paddingVertical: 14,
-    backgroundColor: arc.tertiary,
+    backgroundColor: C.tertiaryDim,
     alignItems: 'center',
     justifyContent: 'center',
     // @ts-ignore - boxShadow supported in RN 0.81 new arch
@@ -353,7 +355,7 @@ const s = StyleSheet.create({
   submitText: {
     fontFamily: 'JetBrainsMono_500Medium',
     fontSize: 16,
-    color: arc.bg,
+    color: C.background,
     letterSpacing: 2,
   },
 
@@ -365,21 +367,21 @@ const s = StyleSheet.create({
   },
   modalBox: {
     width: 220,
-    backgroundColor: arc.surface,
+    backgroundColor: C.surface,
     borderWidth: 1,
-    borderColor: arc.secondaryContainer,
+    borderColor: C.secondaryBright,
     padding: 8,
     gap: 2,
   },
   modalTitle: {
     fontFamily: 'JetBrainsMono_500Medium',
     fontSize: 12,
-    color: arc.secondaryContainer,
+    color: C.secondaryBright,
     letterSpacing: 2,
     textAlign: 'center',
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: arc.surfaceHigh,
+    borderBottomColor: C.surfaceContainerHigh,
     marginBottom: 4,
   },
   modalItem: {
