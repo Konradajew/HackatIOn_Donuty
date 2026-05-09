@@ -1,5 +1,6 @@
 import { Redirect, Stack } from 'expo-router';
 import { useAuth } from '@/lib/auth-context';
+import { QuestionsProvider } from '@/lib/forum-store';
 
 export default function AppLayout() {
   const { session, loading, profileLoading, nicknameReady } = useAuth();
@@ -9,8 +10,10 @@ export default function AppLayout() {
   if (!nicknameReady) return <Redirect href="/pick-nickname" />;
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="index" />
-    </Stack>
+    <QuestionsProvider>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="index" />
+      </Stack>
+    </QuestionsProvider>
   );
 }

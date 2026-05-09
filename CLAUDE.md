@@ -29,6 +29,7 @@ Always use `npm`, never `bun` or `bunx`.
 **State / Data:**
 - `lib/auth-context.tsx` — `AuthProvider` + `useAuth()`, exposes `{ session, profile, loading, profileLoading, profileError, nicknameReady, refreshProfile }`. Profile fetch is race-safe (stale fetches dropped via `profileFetchedForUserIdRef`). `loading=true` until both initial session AND profile fetch resolve
 - `lib/profile.ts` — `getProfile(userId)`, `isNicknameTaken(nick)`, `upsertNickname(userId, nick)`. Distinguishes "no profile row" from "fetch error"
+- `lib/forum-store.tsx` — `QuestionsProvider` + `useQuestions()`, all question/voting state is **client-side only** (not persisted to DB yet); tracks voted IDs in Sets to prevent double-voting
 - `lib/supabase.ts` — Supabase client (PKCE flow, AsyncStorage session persistence)
 - `lib/google-oauth.ts` — Google OAuth via `expo-web-browser`, handles iOS (sync) and Android (async deep-link) differences
 
@@ -91,6 +92,7 @@ The original white Nativewind screens have been replaced. All current auth + gam
 
 ## Key Conventions
 
+- **Forum questions** — new questions prepend to top of list in `forum-store.tsx` (`addQuestion` unshifts). Voting is two-step: difficulty rating (1–5) + YES/NO verdict, submitted together via `submitVote(id, { diff, verdict })`
 - **Nickname gate** — `nicknameReady = !!profile?.nickname`. Every layout checks `loading || profileLoading` before rendering any redirect to prevent flicker. `refreshProfile()` (from `useAuth`) is called after successful upsert; the gate re-evaluates automatically without `router.replace`
 - **Nickname uniqueness** — live availability via debounced `isNicknameTaken` (350ms). Final write (`upsertNickname`) is canonical; on `error.code === '23505'` the UI shows the rule as failed
 - **Deep link scheme** is `donuty://` — configured in `app.json` under `android.intentFilters`
