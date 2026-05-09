@@ -1,11 +1,11 @@
 import React from "react";
 import {
-    View,
-    Text,
-    TouchableOpacity,
-    StyleSheet,
-    Dimensions,
-    Platform,
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Dimensions,
+  Platform,
 } from "react-native";
 import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "expo-router";
@@ -18,11 +18,11 @@ const { width: SW } = Dimensions.get("window");
 const GUTTER = 16;
 
 function HudIconButton({
-                           icon,
-                           onPress,
-                       }: {
-    icon: React.ComponentProps<typeof Ionicons>["name"];
-    onPress?: () => void;
+  icon,
+  onPress,
+}: {
+  icon: React.ComponentProps<typeof Ionicons>["name"];
+  onPress?: () => void;
 }) {
     return (
         <TouchableOpacity style={s.iconBtn} onPress={onPress} activeOpacity={0.7}>
@@ -32,48 +32,48 @@ function HudIconButton({
 }
 
 function SoloPlayButton({ onPress }: { onPress: () => void }) {
-    return (
-        <TouchableOpacity style={s.soloBtn} onPress={onPress} activeOpacity={0.8}>
-            <Text style={s.soloBtnTitle}>PLAY SOLO</Text>
-        </TouchableOpacity>
-    );
+  return (
+    <TouchableOpacity style={s.soloBtn} onPress={onPress} activeOpacity={0.8}>
+      <Text style={s.soloBtnTitle}>PLAY SOLO</Text>
+    </TouchableOpacity>
+  );
 }
 
 function MultiButton({ onPress }: { onPress: () => void }) {
-    return (
-        <TouchableOpacity style={s.multiBtn} onPress={onPress} activeOpacity={0.8}>
-            <Text style={s.multiBtnTitle}>PLAY MULTIPLAYER</Text>
-        </TouchableOpacity>
-    );
+  return (
+    <TouchableOpacity style={s.multiBtn} onPress={onPress} activeOpacity={0.8}>
+      <Text style={s.multiBtnTitle}>PLAY MULTIPLAYER</Text>
+    </TouchableOpacity>
+  );
 }
 
 function GhostButton({
-                         label,
-                         icon,
-                         borderColor,
-                         iconColor,
-                         onPress,
-                     }: {
-    label: string;
-    icon: React.ComponentProps<typeof Ionicons>["name"];
-    borderColor: string;
-    iconColor: string;
-    onPress?: () => void;
+  label,
+  icon,
+  borderColor,
+  iconColor,
+  onPress,
+}: {
+  label: string;
+  icon: React.ComponentProps<typeof Ionicons>["name"];
+  borderColor: string;
+  iconColor: string;
+  onPress?: () => void;
 }) {
-    return (
-        <TouchableOpacity
-            style={[s.ghostBtn, { borderColor, shadowColor: borderColor }]}
-            onPress={onPress}
-            activeOpacity={0.8}
-        >
-            <View style={s.btnLabelGroupCentered}>
-                <Ionicons name={icon} size={16} color={iconColor} style={s.btnIcon} />
-                <Text style={s.ghostBtnTitle} numberOfLines={1}>
-                    {label}
-                </Text>
-            </View>
-        </TouchableOpacity>
-    );
+  return (
+    <TouchableOpacity
+      style={[s.ghostBtn, { borderColor, shadowColor: borderColor }]}
+      onPress={onPress}
+      activeOpacity={0.8}
+    >
+      <View style={s.btnLabelGroupCentered}>
+        <Ionicons name={icon} size={16} color={iconColor} style={s.btnIcon} />
+        <Text style={s.ghostBtnTitle} numberOfLines={1}>
+          {label}
+        </Text>
+      </View>
+    </TouchableOpacity>
+  );
 }
 
 function ExitButton({ onPress }: { onPress: () => void }) {
@@ -93,43 +93,43 @@ function ExitButton({ onPress }: { onPress: () => void }) {
 }
 
 function TricardLogo() {
-    return (
-        <View style={s.logoWrapper}>
-            <Text style={[s.logoBase, s.logoMain]}>TRICARD</Text>
-        </View>
-    );
+  return (
+    <View style={s.logoWrapper}>
+      <Text style={[s.logoBase, s.logoMain]}>TRICARD</Text>
+    </View>
+  );
 }
 
 function DecorativeCard({ style }: { style?: object }) {
-    return (
-        <View style={[s.decorCard, style]}>
-            <View style={s.decorLine} />
-            <View style={[s.decorLine, { top: 16 }]} />
-            <View style={[s.decorLine, { top: 32 }]} />
-            <View style={s.decorCorner} />
-        </View>
-    );
+  return (
+    <View style={[s.decorCard, style]}>
+      <View style={s.decorLine} />
+      <View style={[s.decorLine, { top: 16 }]} />
+      <View style={[s.decorLine, { top: 32 }]} />
+      <View style={s.decorCorner} />
+    </View>
+  );
 }
 
 export default function HomeScreen() {
-    const { session } = useAuth();
-    const router = useRouter();
+  const { session } = useAuth();
+  const router = useRouter();
 
-    const username =
-        session?.user?.user_metadata?.full_name?.toUpperCase() ??
-        session?.user?.email?.split("@")[0]?.toUpperCase() ??
-        "PLAYER";
+  const username =
+    session?.user?.user_metadata?.full_name?.toUpperCase() ??
+    session?.user?.email?.split("@")[0]?.toUpperCase() ??
+    "PLAYER";
 
-    return (
-        <View style={s.root}>
-            <View style={s.crtOverlay} pointerEvents="none" />
-            <SafeAreaView style={s.safe}>
-                {/* ── HUD ── */}
-                <View style={s.hud}>
-                    <View style={s.hudLeft}>
-                        <HudIconButton icon="settings-outline" />
-                        <HudIconButton icon="help-circle-outline" />
-                    </View>
+  return (
+    <View style={s.root}>
+      <View style={s.crtOverlay} pointerEvents="none" />
+      <SafeAreaView style={s.safe}>
+        {/* ── HUD ── */}
+        <View style={s.hud}>
+          <View style={s.hudLeft}>
+            <HudIconButton icon="settings-outline" />
+            <HudIconButton icon="help-circle-outline" />
+          </View>
 
                     <View style={s.hudRight}>
                         <View style={s.profileText}>
@@ -176,7 +176,7 @@ export default function HomeScreen() {
                 </View>
             </SafeAreaView>
         </View>
-    );
+  );
 }
 
 const s = StyleSheet.create({
@@ -194,16 +194,16 @@ const s = StyleSheet.create({
         paddingHorizontal: GUTTER,
     },
 
-    // ── HUD
-    hud: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        paddingTop: Platform.OS === "android" ? 16 : 4,
-        paddingBottom: 8,
-    },
-    hudLeft: { flexDirection: "row", gap: 8 },
-    hudRight: { flexDirection: "row", alignItems: "center", gap: 8 },
+  // ── HUD
+  hud: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingTop: Platform.OS === "android" ? 16 : 4,
+    paddingBottom: 8,
+  },
+  hudLeft: { flexDirection: "row", gap: 8 },
+  hudRight: { flexDirection: "row", alignItems: "center", gap: 8 },
 
     iconBtn: {
         width: 38,
@@ -237,15 +237,15 @@ const s = StyleSheet.create({
         color: "#000",
     },
 
-    // ── LOGO
-    logoSection: {
-        justifyContent: "center",
-        alignItems: "center",
-        position: "relative",
-        minHeight: 180,
-        marginTop: 50,
-        marginBottom: 50,
-    },
+  // ── LOGO
+  logoSection: {
+    justifyContent: "center",
+    alignItems: "center",
+    position: "relative",
+    minHeight: 180,
+    marginTop: 50,
+    marginBottom: 50,
+  },
 
     decorCard: {
         position: "absolute",
@@ -306,19 +306,19 @@ const s = StyleSheet.create({
         textTransform: "uppercase",
     },
 
-    // ── PRZYCISKI
-    buttons: {
-        paddingBottom: Platform.OS === "android" ? 20 : 8,
-        gap: 16,
-    },
-    btnLabelGroupCentered: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "center",
-    },
-    btnIcon: {
-        marginRight: 8,
-    },
+  // ── PRZYCISKI
+  buttons: {
+    paddingBottom: Platform.OS === "android" ? 20 : 8,
+    gap: 16,
+  },
+  btnLabelGroupCentered: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  btnIcon: {
+    marginRight: 8,
+  },
 
     // PLAY SOLO
     soloBtn: {
@@ -345,83 +345,83 @@ const s = StyleSheet.create({
         letterSpacing: 1.5,
     },
 
-    // PLAY MULTIPLAYER
-    multiBtn: {
-        backgroundColor: "transparent",
-        paddingHorizontal: 20,
-        paddingVertical: 18,
-        borderRadius: 999,
-        borderWidth: 2,
-        borderColor: C.secondary,
-        width: "70%",
-        alignSelf: "center",
-        shadowColor: C.secondary,
-        shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 0.6,
-        shadowRadius: 10,
-        elevation: 6,
-        alignItems: "center",
-        justifyContent: "center",
-    },
-    multiBtnTitle: {
-        fontFamily: "SpaceGrotesk_700Bold",
-        fontSize: 18,
-        color: C.onSurface || "#ffffff",
-        letterSpacing: 1,
-    },
+  // PLAY MULTIPLAYER
+  multiBtn: {
+    backgroundColor: "transparent",
+    paddingHorizontal: 20,
+    paddingVertical: 18,
+    borderRadius: 999,
+    borderWidth: 2,
+    borderColor: C.secondary,
+    width: "70%",
+    alignSelf: "center",
+    shadowColor: C.secondary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 10,
+    elevation: 6,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  multiBtnTitle: {
+    fontFamily: "SpaceGrotesk_700Bold",
+    fontSize: 18,
+    color: C.onSurface || "#ffffff",
+    letterSpacing: 1,
+  },
 
-    // KONTENER DLA FORUM I DECK
-    ghostRow: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignSelf: "center",
-        width: "70%",
-        gap: 12,
-    },
+  // KONTENER DLA FORUM I DECK
+  ghostRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignSelf: "center",
+    width: "70%",
+    gap: 12,
+  },
 
-    // GHOST (FORUM / DECK)
-    ghostBtn: {
-        flex: 1,
-        paddingVertical: 14,
-        borderWidth: 2,
-        borderRadius: 999,
-        shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 0.45,
-        shadowRadius: 8,
-        elevation: 4,
-        alignItems: "center",
-        justifyContent: "center",
-    },
-    ghostBtnTitle: {
-        fontFamily: "SpaceGrotesk_700Bold",
-        fontSize: 13,
-        color: C.onSurface || "#ffffff",
-        letterSpacing: 1.5,
-    },
+  // GHOST (FORUM / DECK)
+  ghostBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderWidth: 2,
+    borderRadius: 999,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.45,
+    shadowRadius: 8,
+    elevation: 4,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  ghostBtnTitle: {
+    fontFamily: "SpaceGrotesk_700Bold",
+    fontSize: 13,
+    color: C.onSurface || "#ffffff",
+    letterSpacing: 1.5,
+  },
 
-    // EXIT
-    exitBtn: {
-        alignSelf: "center",
-        width: "45%",
-        paddingVertical: 14,
-        paddingHorizontal: 20,
-        borderRadius: 999,
-        borderWidth: 2,
-        borderColor: C.error,
-        shadowColor: C.error,
-        shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 0.5,
-        shadowRadius: 8,
-        elevation: 4,
-        alignItems: "center",
-        justifyContent: "center",
-        marginTop: 8,
-    },
-    exitBtnText: {
-        fontFamily: "JetBrainsMono_500Medium",
-        fontSize: 12,
-        color: C.onSurface || "#ffffff",
-        letterSpacing: 2,
-        textTransform: "uppercase",
-    },
+  // EXIT
+  exitBtn: {
+    alignSelf: "center",
+    width: "45%",
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 999,
+    borderWidth: 2,
+    borderColor: C.error,
+    shadowColor: C.error,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 8,
+    elevation: 4,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 8,
+  },
+  exitBtnText: {
+    fontFamily: "JetBrainsMono_500Medium",
+    fontSize: 12,
+    color: C.onSurface || "#ffffff",
+    letterSpacing: 2,
+    textTransform: "uppercase",
+  },
 });

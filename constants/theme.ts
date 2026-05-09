@@ -1,8 +1,4 @@
-/**
- * Arcade Neon Design System
- * Source: design_arcade_neon.md
- */
-
+// Arcade Neon - color palette
 export const ArcadeColors = {
     // Surfaces
     background: "#13121c",
@@ -41,35 +37,76 @@ export const ArcadeColors = {
 
     // Error
     error: "#ff4444",
+    errorContainer: "#93000a",
+    onErrorContainer: "#ffdad6",
+    errorBright: "#ffb4ab",
 
     // Utility
     gold: "#FFD700",
+
+    // Aliases for existing colors from previous arc style
+    primaryContainer: "#ff4898",
+    secondaryContainer: "#19F0DC",
+    tertiaryContainer: "#a7d700",
+
 } as const;
 
 export const ArcadeFonts = {
     displayLg: {
         fontFamily: "SpaceGrotesk_700Bold",
         fontSize: 48,
-        letterSpacing: -1,
+        lineHeight: 53,
+        letterSpacing: -0.96,
     },
-    headlineLg: { fontFamily: "SpaceGrotesk_700Bold", fontSize: 32 },
-    headlineMd: { fontFamily: "SpaceGrotesk_600SemiBold", fontSize: 20 },
-    bodyLg: { fontFamily: "SpaceGrotesk_400Regular", fontSize: 18 },
-    bodyMd: { fontFamily: "SpaceGrotesk_400Regular", fontSize: 16 },
+
+    headlineLg: {
+        fontFamily: "SpaceGrotesk_700Bold",
+        fontSize: 32,
+        lineHeight: 38,
+    },
+
+    headlineLgMb: {
+        fontFamily: "SpaceGrotesk_700Bold",
+        fontSize: 24,
+        lineHeight: 29,
+    },
+
+    headlineMd: {
+        fontFamily: "SpaceGrotesk_600SemiBold",
+        fontSize: 20,
+        lineHeight: 26,
+    },
+
+    bodyLg: {
+        fontFamily: "SpaceGrotesk_400Regular",
+        fontSize: 18,
+        lineHeight: 27,
+    },
+
+    bodyMd: {
+        fontFamily: "SpaceGrotesk_400Regular",
+        fontSize: 16,
+        lineHeight: 24,
+    },
     labelLg: {
         fontFamily: "JetBrainsMono_500Medium",
         fontSize: 14,
-        letterSpacing: 1,
+        lineHeight: 17,
+        letterSpacing: 0.7,
     },
+
     labelMd: {
         fontFamily: "JetBrainsMono_500Medium",
         fontSize: 12,
-        letterSpacing: 1,
+        lineHeight: 14,
+        letterSpacing: 0.6,
     },
+
     labelSm: {
         fontFamily: "JetBrainsMono_400Regular",
         fontSize: 10,
-        letterSpacing: 2,
+        lineHeight: 12,
+        letterSpacing: 1,
     },
 } as const;
 
