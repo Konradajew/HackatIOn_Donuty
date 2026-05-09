@@ -48,6 +48,23 @@ export default function PickNickname() {
   const [backPending, setBackPending] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const checkAvailability = useCallback((value: string) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    const upper = value.toUpperCase();
+    if (!NICK_RE.test(upper) || upper.length < 3 || upper.length > 16) {
+      setTaken(null);
+      setChecking(false);
+      return;
+    }
+    setChecking(true);
+    setTaken(null);
+    debounceRef.current = setTimeout(async () => {
+      const isTaken = await isNicknameTaken(upper);
+      setTaken(isTaken);
+      setChecking(false);
+    }, 350);
+  }, []);
+
   // Guard redirects
   if (loading || profileLoading) return null;
   if (!session) return <Redirect href="/sign-in" />;
@@ -68,23 +85,6 @@ export default function PickNickname() {
         : 'idle';
 
   const allValid = ruleLength && ruleChars && ruleAvail === 'pass';
-
-  const checkAvailability = useCallback((value: string) => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    const upper = value.toUpperCase();
-    if (!NICK_RE.test(upper) || upper.length < 3 || upper.length > 16) {
-      setTaken(null);
-      setChecking(false);
-      return;
-    }
-    setChecking(true);
-    setTaken(null);
-    debounceRef.current = setTimeout(async () => {
-      const isTaken = await isNicknameTaken(upper);
-      setTaken(isTaken);
-      setChecking(false);
-    }, 350);
-  }, []);
 
   function handleChange(text: string) {
     const upper = text.toUpperCase();
@@ -246,7 +246,7 @@ export default function PickNickname() {
         {/* Suggestions */}
         <View style={styles.suggestionsSection}>
           <Text style={[F.labelSm, { color: C.outline, letterSpacing: 2, marginBottom: S.sm }]}>
-            // SUGGESTED HANDLES
+            {'// SUGGESTED HANDLES'}
           </Text>
           <View style={styles.suggestionsRow}>
             {SUGGESTIONS.map(s => (
