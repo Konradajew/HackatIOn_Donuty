@@ -1,30 +1,39 @@
 -- =============================================================================
 -- Donuty forum + voting — schema additions, RPCs, difficulty-scaled card effects
--- Run once in Supabase SQL Editor.
--- Re-runnable: IF NOT EXISTS guards + DROP FUNCTION IF EXISTS before every
--- CREATE OR REPLACE ensure clean re-runs.
--- Execute top-to-bottom.
+-- Run in Supabase SQL Editor (top-to-bottom).
+-- Re-runnable via DROP-then-CREATE: every object is explicitly dropped first.
+-- WARNING: re-running wipes all forum questions and votes (clean-slate design).
 -- =============================================================================
 
 
 -- =============================================================================
 -- SECTION A — Schema patches on public.questions (forum metadata + vote counters)
+-- Drop columns individually (CASCADE drops dependent indexes and the view).
 -- =============================================================================
 
+ALTER TABLE public.questions DROP COLUMN IF EXISTS author_id   CASCADE;
+ALTER TABLE public.questions DROP COLUMN IF EXISTS explanation CASCADE;
+ALTER TABLE public.questions DROP COLUMN IF EXISTS created_at  CASCADE;
+ALTER TABLE public.questions DROP COLUMN IF EXISTS yes_votes   CASCADE;
+ALTER TABLE public.questions DROP COLUMN IF EXISTS no_votes    CASCADE;
+ALTER TABLE public.questions DROP COLUMN IF EXISTS diff_sum    CASCADE;
+ALTER TABLE public.questions DROP COLUMN IF EXISTS diff_count  CASCADE;
+
 ALTER TABLE public.questions
-    ADD COLUMN IF NOT EXISTS author_id   uuid        REFERENCES public.profiles(id) ON DELETE SET NULL,
-    ADD COLUMN IF NOT EXISTS explanation text        NOT NULL DEFAULT '',
-    ADD COLUMN IF NOT EXISTS created_at  timestamptz NOT NULL DEFAULT now(),
-    ADD COLUMN IF NOT EXISTS yes_votes   integer     NOT NULL DEFAULT 0,
-    ADD COLUMN IF NOT EXISTS no_votes    integer     NOT NULL DEFAULT 0,
-    ADD COLUMN IF NOT EXISTS diff_sum    integer     NOT NULL DEFAULT 0,
-    ADD COLUMN IF NOT EXISTS diff_count  integer     NOT NULL DEFAULT 0;
+    ADD COLUMN author_id   uuid        REFERENCES public.profiles(id) ON DELETE SET NULL,
+    ADD COLUMN explanation text        NOT NULL DEFAULT '',
+    ADD COLUMN created_at  timestamptz NOT NULL DEFAULT now(),
+    ADD COLUMN yes_votes   integer     NOT NULL DEFAULT 0,
+    ADD COLUMN no_votes    integer     NOT NULL DEFAULT 0,
+    ADD COLUMN diff_sum    integer     NOT NULL DEFAULT 0,
+    ADD COLUMN diff_count  integer     NOT NULL DEFAULT 0;
 
--- Partial index — game layer only queries eligible questions.
-CREATE INDEX IF NOT EXISTS idx_questions_eligible
-    ON public.questions (category) WHERE yes_votes >= 50;
+DROP INDEX IF EXISTS idx_questions_eligible;
+CREATE INDEX idx_questions_eligible
+    ON public.questions (category) WHERE (yes_votes - no_votes) >= 50;
 
-CREATE INDEX IF NOT EXISTS idx_questions_created_at
+DROP INDEX IF EXISTS idx_questions_created_at;
+CREATE INDEX idx_questions_created_at
     ON public.questions (created_at DESC);
 
 
@@ -32,7 +41,8 @@ CREATE INDEX IF NOT EXISTS idx_questions_created_at
 -- SECTION B — question_votes table (one row per user/question, atomic submit)
 -- =============================================================================
 
-CREATE TABLE IF NOT EXISTS public.question_votes (
+DROP TABLE IF EXISTS public.question_votes CASCADE;
+CREATE TABLE public.question_votes (
     question_id integer     NOT NULL REFERENCES public.questions(q_id) ON DELETE CASCADE,
     user_id     uuid        NOT NULL REFERENCES public.profiles(id)    ON DELETE CASCADE,
     verdict     text        NOT NULL CHECK (verdict IN ('up', 'down')),
@@ -41,7 +51,8 @@ CREATE TABLE IF NOT EXISTS public.question_votes (
     PRIMARY KEY (question_id, user_id)
 );
 
-CREATE INDEX IF NOT EXISTS idx_question_votes_user ON public.question_votes (user_id);
+DROP INDEX IF EXISTS idx_question_votes_user;
+CREATE INDEX idx_question_votes_user ON public.question_votes (user_id);
 
 
 -- =============================================================================
@@ -68,7 +79,10 @@ CREATE POLICY votes_self_insert ON public.question_votes
 -- SECTION D — Trigger: maintain denormalised counters on public.questions
 -- =============================================================================
 
-CREATE OR REPLACE FUNCTION public.question_votes_after_insert()
+DROP TRIGGER IF EXISTS trg_question_votes_after_insert ON public.question_votes;
+DROP FUNCTION IF EXISTS public.question_votes_after_insert();
+
+CREATE FUNCTION public.question_votes_after_insert()
 RETURNS trigger
 LANGUAGE plpgsql SECURITY DEFINER
 SET search_path = public, pg_temp
@@ -84,7 +98,6 @@ BEGIN
 END;
 $$;
 
-DROP TRIGGER IF EXISTS trg_question_votes_after_insert ON public.question_votes;
 CREATE TRIGGER trg_question_votes_after_insert
     AFTER INSERT ON public.question_votes
     FOR EACH ROW EXECUTE FUNCTION public.question_votes_after_insert();
@@ -95,7 +108,7 @@ CREATE TRIGGER trg_question_votes_after_insert
 -- =============================================================================
 
 DROP FUNCTION IF EXISTS public.card_effect_multiplier(text, int);
-CREATE OR REPLACE FUNCTION public.card_effect_multiplier(p_card_type text, p_difficulty int)
+CREATE FUNCTION public.card_effect_multiplier(p_card_type text, p_difficulty int)
 RETURNS numeric
 LANGUAGE sql IMMUTABLE SECURITY DEFINER
 SET search_path = public, pg_temp
@@ -148,10 +161,12 @@ $$;
 
 -- =============================================================================
 -- SECTION F — View: eligible_questions
+-- A question becomes eligible when its net vote score (yes - no) >= 50.
 -- Must be created before the RPCs that SELECT from it.
 -- =============================================================================
 
-CREATE OR REPLACE VIEW public.eligible_questions AS
+DROP VIEW IF EXISTS public.eligible_questions;
+CREATE VIEW public.eligible_questions AS
     SELECT
         q.q_id,
         q.category,
@@ -165,7 +180,7 @@ CREATE OR REPLACE VIEW public.eligible_questions AS
              ELSE GREATEST(1, LEAST(5, ROUND(q.diff_sum::numeric / q.diff_count)::int))
         END AS difficulty
     FROM public.questions q
-    WHERE q.yes_votes >= 50;
+    WHERE (q.yes_votes - q.no_votes) >= 50;
 
 
 -- =============================================================================
@@ -173,7 +188,7 @@ CREATE OR REPLACE VIEW public.eligible_questions AS
 -- =============================================================================
 
 DROP FUNCTION IF EXISTS public.add_forum_question(text, text, text, text[], text);
-CREATE OR REPLACE FUNCTION public.add_forum_question(
+CREATE FUNCTION public.add_forum_question(
     p_category    text,
     p_title       text,
     p_correct     text,
@@ -216,7 +231,7 @@ $$;
 -- =============================================================================
 
 DROP FUNCTION IF EXISTS public.submit_forum_vote(integer, text, smallint);
-CREATE OR REPLACE FUNCTION public.submit_forum_vote(
+CREATE FUNCTION public.submit_forum_vote(
     p_question_id integer,
     p_verdict     text,
     p_difficulty  smallint
@@ -250,7 +265,7 @@ $$;
 -- =============================================================================
 
 DROP FUNCTION IF EXISTS public.list_forum_questions(int, int, integer);
-CREATE OR REPLACE FUNCTION public.list_forum_questions(
+CREATE FUNCTION public.list_forum_questions(
     p_limit  int     DEFAULT 100,
     p_offset int     DEFAULT 0,
     p_q_id   integer DEFAULT NULL
@@ -291,10 +306,11 @@ $$;
 -- SECTION E.5 — Public RPC: get_game_question
 -- Returns one random eligible question for the solo game demo.
 -- Client shuffles answers client-side (no anti-cheat needed for solo).
+-- Returns NULL if no eligible question exists for the requested category.
 -- =============================================================================
 
 DROP FUNCTION IF EXISTS public.get_game_question(text);
-CREATE OR REPLACE FUNCTION public.get_game_question(p_category text DEFAULT NULL)
+CREATE FUNCTION public.get_game_question(p_category text DEFAULT NULL)
 RETURNS jsonb
 LANGUAGE sql STABLE SECURITY DEFINER
 SET search_path = public, pg_temp
@@ -319,8 +335,9 @@ $$;
 -- Drops old 3-arg overload (int, text, boolean) and replaces with 4-arg version.
 -- =============================================================================
 
+DROP FUNCTION IF EXISTS public.apply_card_effect(int, text, boolean, int);
 DROP FUNCTION IF EXISTS public.apply_card_effect(int, text, boolean);
-CREATE OR REPLACE FUNCTION public.apply_card_effect(
+CREATE FUNCTION public.apply_card_effect(
     p_match_id     int,
     p_card_type    text,
     p_caster_is_p1 boolean,
@@ -438,7 +455,7 @@ $$;
 -- =============================================================================
 
 DROP FUNCTION IF EXISTS public.answer_question(int, int);
-CREATE OR REPLACE FUNCTION public.answer_question(p_match_id int, p_answer_index int)
+CREATE FUNCTION public.answer_question(p_match_id int, p_answer_index int)
 RETURNS jsonb
 LANGUAGE plpgsql VOLATILE SECURITY DEFINER
 SET search_path = public, pg_temp
@@ -481,7 +498,6 @@ BEGIN
     SELECT type INTO v_card_type FROM public.cards WHERE card_id = m.pending_card_id;
     IF v_card_type IS NULL THEN RAISE EXCEPTION 'pending_card_invalid' USING ERRCODE = 'P0001'; END IF;
 
-    -- Resolve question difficulty (defaults to 1 if question left eligible pool)
     SELECT difficulty INTO v_difficulty
       FROM public.eligible_questions
      WHERE q_id = m.current_question_id;
@@ -540,7 +556,7 @@ $$;
 -- =============================================================================
 
 DROP FUNCTION IF EXISTS public.play_card(int, int);
-CREATE OR REPLACE FUNCTION public.play_card(p_match_id int, p_card_id int)
+CREATE FUNCTION public.play_card(p_match_id int, p_card_id int)
 RETURNS jsonb
 LANGUAGE plpgsql VOLATILE SECURITY DEFINER
 SET search_path = public, pg_temp
@@ -593,7 +609,7 @@ BEGIN
     SELECT type INTO v_card_type FROM public.cards WHERE card_id = p_card_id;
     IF v_card_type IS NULL THEN RAISE EXCEPTION 'card_not_found' USING ERRCODE = 'P0001'; END IF;
 
-    -- Pick from eligible_questions (yes_votes >= 50); fallback to any eligible category.
+    -- Eligible = net score (yes_votes - no_votes) >= 50; try category first, then any.
     SELECT q_id, title, correct_answer, wrong_answers, category
       INTO v_q FROM public.eligible_questions WHERE category = v_cat ORDER BY random() LIMIT 1;
 
@@ -659,45 +675,27 @@ $$;
 
 
 -- =============================================================================
--- SECTION J — Seed: 4 demo questions from the original INITIAL store array
--- yes_votes = 200 so they are immediately eligible for the game.
+-- SECTION J — Seed: demo questions with default counters (no fake vote counts)
+-- Forum/game eligibility is earned by real user votes, not seeded data.
 -- =============================================================================
 
-DO $$
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM public.questions WHERE title = 'What is the smallest prime number greater than 100?') THEN
-        INSERT INTO public.questions (category, title, correct_answer, wrong_answers, explanation, yes_votes, no_votes, diff_sum, diff_count, created_at)
-        VALUES ('MATH', 'What is the smallest prime number greater than 100?',
-                '101', ARRAY['103','107','109'],
-                '101 is prime — divisible only by 1 and itself. 102 = 2·51, so 101 is the next prime after 97.',
-                200, 12, 800, 200, now() - interval '2 days');
-    END IF;
+INSERT INTO public.questions (category, title, correct_answer, wrong_answers, explanation)
+VALUES
+    ('MATH', 'What is the smallest prime number greater than 100?',
+     '101', ARRAY['103','107','109'],
+     '101 is prime — divisible only by 1 and itself. 102 = 2·51, so 101 is the next prime after 97.'),
 
-    IF NOT EXISTS (SELECT 1 FROM public.questions WHERE title = 'Which planet has the highest surface temperature?') THEN
-        INSERT INTO public.questions (category, title, correct_answer, wrong_answers, explanation, yes_votes, no_votes, diff_sum, diff_count, created_at)
-        VALUES ('SPCE', 'Which planet has the highest surface temperature?',
-                'Venus', ARRAY['Mercury','Mars','Jupiter'],
-                'Venus reaches ~465°C due to runaway greenhouse effect — hotter than Mercury despite being farther from the Sun.',
-                198, 47, 950, 200, now() - interval '1 day');
-    END IF;
+    ('SPCE', 'Which planet has the highest surface temperature?',
+     'Venus', ARRAY['Mercury','Mars','Jupiter'],
+     'Venus reaches ~465°C due to a runaway greenhouse effect — hotter than Mercury despite being farther from the Sun.'),
 
-    IF NOT EXISTS (SELECT 1 FROM public.questions WHERE title = 'What is the largest organ in the human body?') THEN
-        INSERT INTO public.questions (category, title, correct_answer, wrong_answers, explanation, yes_votes, no_votes, diff_sum, diff_count, created_at)
-        VALUES ('MED', 'What is the largest organ in the human body?',
-                'Skin', ARRAY['Liver','Brain','Lungs'],
-                'Skin covers ~1.5–2 m² and weighs ~3.5 kg in adults — larger than any internal organ.',
-                89, 4, 300, 150, now() - interval '3 hours');
-    END IF;
+    ('MED', 'What is the largest organ in the human body?',
+     'Skin', ARRAY['Liver','Brain','Lungs'],
+     'Skin covers ~1.5–2 m² and weighs ~3.5 kg in adults — larger than any internal organ.'),
 
-    IF NOT EXISTS (SELECT 1 FROM public.questions WHERE title = 'Who directed the 2010 film "Inception"?') THEN
-        INSERT INTO public.questions (category, title, correct_answer, wrong_answers, explanation, yes_votes, no_votes, diff_sum, diff_count, created_at)
-        VALUES ('MOV', 'Who directed the 2010 film "Inception"?',
-                'Christopher Nolan', ARRAY['Steven Spielberg','Denis Villeneuve','James Cameron'],
-                'Christopher Nolan wrote and directed Inception (2010), starring Leonardo DiCaprio.',
-                156, 23, 600, 175, now() - interval '5 hours');
-    END IF;
-END;
-$$;
+    ('MOV', 'Who directed the 2010 film "Inception"?',
+     'Christopher Nolan', ARRAY['Steven Spielberg','Denis Villeneuve','James Cameron'],
+     'Christopher Nolan wrote and directed Inception (2010), starring Leonardo DiCaprio.');
 
 
 -- =============================================================================

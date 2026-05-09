@@ -34,6 +34,7 @@ export default function GameScreen() {
   const [playerHp, setPlayerHp]           = useState(84);
   const [round, setRound]                 = useState(4);
   const [currentQuestion, setCurrentQuestion] = useState<GameQuestion | null>(null);
+  const [noQuestionCat, setNoQuestionCat]     = useState<string | null>(null);
   const [lastPlay, setLastPlay] = useState<{
     type: CardType; cat: string; val: number; correct: boolean; scaledVal: number;
   } | null>({ type: 'DMG', cat: 'MATH', val: 6, correct: true, scaledVal: 6 });
@@ -42,6 +43,11 @@ export default function GameScreen() {
 
   const handlePlayCard = useCallback(async () => {
     const q = await getGameQuestion(card.cat);
+    if (!q) {
+      setNoQuestionCat(card.cat);
+      setTimeout(() => setNoQuestionCat(null), 3000);
+      return;
+    }
     setCurrentQuestion(q);
     setQuestionOpen(true);
   }, [card.cat]);
@@ -133,7 +139,14 @@ export default function GameScreen() {
 
         {/* Battlefield — last play */}
         <View style={s.battlefield}>
-          {lastPlay ? (
+          {noQuestionCat ? (
+            <>
+              <Text style={s.lastPlayLabel}>NO QUESTION AVAILABLE</Text>
+              <Text style={[s.noPlayText, { color: arc.outline, marginTop: 6 }]}>
+                {noQuestionCat} HAS NO APPROVED QUESTIONS YET
+              </Text>
+            </>
+          ) : lastPlay ? (
             <>
               <Text style={s.lastPlayLabel}>LAST PLAY</Text>
               <View style={s.lastPlayRow}>
