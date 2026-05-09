@@ -9,14 +9,6 @@ import { isNicknameTaken, upsertNickname } from '@/lib/profile';
 import { useAuth } from '@/lib/auth-context';
 import { arc, arcSpace, arcType } from '@/lib/arcade-theme';
 
-const SUGGESTIONS = [
-  { n: 'CRITHIT', c: arc.primaryContainer },
-  { n: 'V01D_KING', c: arc.secondaryContainer },
-  { n: 'SYN7AX', c: arc.tertiary },
-  { n: 'GG_WP', c: arc.secondaryContainer },
-  { n: 'ACE_4', c: arc.primaryContainer },
-];
-
 const NICK_RE = /^[A-Z0-9_]*$/;
 
 type RuleState = 'pass' | 'fail' | 'pending' | 'idle';
@@ -91,11 +83,6 @@ export default function PickNickname() {
     const upper = text.toUpperCase();
     setNick(upper);
     checkAvailability(upper);
-  }
-
-  function fillSuggestion(suggestion: string) {
-    setNick(suggestion);
-    checkAvailability(suggestion);
   }
 
   async function handleSubmit() {
@@ -243,24 +230,6 @@ export default function PickNickname() {
           <RuleRow label="HANDLE NOT TAKEN" state={ruleAvail} />
         </View>
 
-        {/* Suggestions */}
-        <View style={styles.suggestionsSection}>
-          <Text style={[arcType.labelSm, { color: arc.outline, letterSpacing: 2, marginBottom: arcSpace.sm }]}>
-            // SUGGESTED HANDLES
-          </Text>
-          <View style={styles.suggestionsRow}>
-            {SUGGESTIONS.map(s => (
-              <Pressable
-                key={s.n}
-                style={[styles.suggestionChip, { borderColor: s.c + '55' }]}
-                onPress={() => fillSuggestion(s.n)}
-              >
-                <Text style={[arcType.labelMd, { color: s.c, letterSpacing: 1 }]}>{s.n}</Text>
-              </Pressable>
-            ))}
-          </View>
-        </View>
-
         {/* Bottom CTAs */}
         <View style={styles.bottomRow}>
           <Pressable
@@ -406,7 +375,7 @@ const styles = StyleSheet.create({
     borderColor: arc.surfaceHigh,
     padding: arcSpace.sm + 2,
     gap: arcSpace.xs + 2,
-    marginBottom: arcSpace.md,
+    marginBottom: arcSpace.xl,
   },
   ruleRow: {
     flexDirection: 'row',
@@ -420,20 +389,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'transparent',
-  },
-  suggestionsSection: {
-    marginBottom: arcSpace.xl,
-  },
-  suggestionsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: arcSpace.xs + 2,
-  },
-  suggestionChip: {
-    paddingHorizontal: arcSpace.sm + 2,
-    paddingVertical: arcSpace.xs + 1,
-    backgroundColor: arc.surface,
-    borderWidth: 1,
   },
   bottomRow: {
     flexDirection: 'row',
