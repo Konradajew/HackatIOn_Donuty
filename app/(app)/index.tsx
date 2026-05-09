@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -15,6 +15,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { ArcadeColors as C } from "@/constants/theme";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useMatchmaking } from "@/lib/use-matchmaking";
+import { CardHelpModal } from "@/components/arcade/CardHelpModal";
 
 const { width: SW } = Dimensions.get("window");
 const GUTTER = 16;
@@ -114,6 +115,7 @@ export default function HomeScreen() {
   const { profile, session } = useAuth();
   const router = useRouter();
   const { state, matchId, error, quickMatch, practiceVsBot, cancel } = useMatchmaking();
+  const [helpOpen, setHelpOpen] = useState(false);
 
   useEffect(() => {
     if (state === 'matched' && matchId != null) {
@@ -134,7 +136,7 @@ export default function HomeScreen() {
         <View style={s.hud}>
           <View style={s.hudLeft}>
             <HudIconButton icon="settings-outline" />
-            <HudIconButton icon="help-circle-outline" />
+            <HudIconButton icon="help-circle-outline" onPress={() => setHelpOpen(true)} />
           </View>
           <View style={s.hudRight}>
             <View style={s.profileText}>
@@ -200,6 +202,7 @@ export default function HomeScreen() {
           )}
         </View>
       </SafeAreaView>
+      <CardHelpModal visible={helpOpen} onClose={() => setHelpOpen(false)} />
     </View>
   );
 }

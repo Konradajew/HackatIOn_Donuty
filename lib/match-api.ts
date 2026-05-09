@@ -34,6 +34,7 @@ export type Snapshot = {
     title: string | null;
     options: string[] | null;
     category: string | null;
+    difficulty: number | null;
     blackout_idx: number | null;
     disabled_idxs: number[] | null;
   };

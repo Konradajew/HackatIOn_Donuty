@@ -43,6 +43,9 @@ function GameInner() {
     } catch {}
   }, [snapshot, uid, selectedSlotIdx, play]);
 
+  const handlePlayCardRef = useRef(handlePlayCard);
+  useEffect(() => { handlePlayCardRef.current = handlePlayCard; }, [handlePlayCard]);
+
   const handleAnswer = useCallback(async (idx: number) => {
     try { await answer(idx); } catch {}
   }, [answer]);
@@ -114,13 +117,14 @@ function GameInner() {
       setPickTimeLeft(remaining);
       if (remaining <= 0 && !pickAutoFiredRef.current) {
         pickAutoFiredRef.current = true;
-        handlePlayCard();
+        handlePlayCardRef.current();
       }
     };
     tick();
     pickTimerRef.current = setInterval(tick, 200);
     return () => { if (pickTimerRef.current) clearInterval(pickTimerRef.current); };
-  }, [myTurnForTimer, questionActiveForTimer, handLengthForTimer, handlePlayCard]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [myTurnForTimer, questionActiveForTimer, handLengthForTimer]);
 
   if (loading) {
     return (
@@ -360,6 +364,7 @@ function GameInner() {
         answers={snapshot.current_question.options ?? []}
         timerSec={timeLeft}
         durationSec={15}
+        difficulty={snapshot.current_question.difficulty ?? 1}
         result={lastResult}
         blackoutIdx={snapshot.current_question.blackout_idx}
         disabledIdxs={snapshot.current_question.disabled_idxs}

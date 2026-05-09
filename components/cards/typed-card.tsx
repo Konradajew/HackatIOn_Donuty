@@ -16,7 +16,7 @@ export const CARD_META: Record<CardType, { color: string; label: string }> = {
   TIME_BUFF:   { color: '#ff9d00', label: 'TIME'   },
 };
 
-const ICON_MAP: Record<CardType, React.ComponentType<any>> = {
+export const ICON_MAP: Record<CardType, React.ComponentType<any>> = {
   DMG:         DmgIcon,
   HEAL:        HealIcon,
   POISON:      PoisonIcon,

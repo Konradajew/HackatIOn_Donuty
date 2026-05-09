@@ -60,7 +60,7 @@ export const BaseCard: React.FC<BaseCardProps> = ({
           { borderColor: category ? categoryColor : "transparent", borderWidth: category ? 1 : 0 },
         ]}
       >
-        <View style={{ width: Math.round(width * 0.55), height: Math.round(width * 0.55) }}>
+        <View style={{ width: Math.round(width * 0.45), height: Math.round(width * 0.45) }}>
           <CenterIcon width="100%" height="100%" />
         </View>
       </View>

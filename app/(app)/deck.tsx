@@ -14,19 +14,11 @@ import { router } from "expo-router";
 
 import { ArcadeColors as C } from '@/constants/theme';
 import { styles as s } from './deck.styles';
-import { listMyDecks, upsertDeck, setActiveDeck } from '@/lib/match-api';
+import { listMyDecks, upsertDeck, setActiveDeck, type CardType } from '@/lib/match-api';
+import { ICON_MAP, CARD_META } from '@/components/cards/typed-card';
 
 const { width: SW } = Dimensions.get('window');
 
-const TYPE_COLOR: Record<string, string> = {
-    DMG:           '#FF1F8F',
-    HEAL:          '#C8FF1A',
-    POISON:        '#a100ff',
-    DMG_BLOCK:     '#fff87a',
-    HEAL_REMOVE:   '#19F0DC',
-    TIME_BUFF:     '#009dff',
-};
-const tc = (type?: string | null) => (type && TYPE_COLOR[type]) || C.outlineVariant;
 
 const TOTAL_DECKS = 5;
 const DECK_SIZE   = 10;
@@ -262,7 +254,7 @@ export default function DeckScreen() {
                     {Array.from({ length: DECK_SIZE }, (_, i) => {
                         const card_id = currentDeck[i];
                         const card    = card_id !== undefined ? byId[card_id] : null;
-                        const color   = tc(card?.type);
+                        const color   = card ? (CARD_META[card.type as CardType]?.color ?? C.outlineVariant) : C.outlineVariant;
                         return (
                             <TouchableOpacity
                                 key={i}
@@ -270,12 +262,17 @@ export default function DeckScreen() {
                                 onPress={() => card && removeSlot(i)}
                                 activeOpacity={card ? 0.65 : 1}
                             >
-                                {card && (
-                                    <>
-                                        <Text style={[s.slotType, { color }]}>{card.type}</Text>
-                                        <View style={[s.slotBar, { backgroundColor: color + '22' }]} />
-                                    </>
-                                )}
+                                {card && (() => {
+                                    const Icon = ICON_MAP[card.type as CardType];
+                                    return (
+                                        <>
+                                            <View style={{ alignItems: 'center', justifyContent: 'center', flex: 1 }}>
+                                                {Icon && <Icon width={Math.round(SLOT_W * 0.5)} height={Math.round(SLOT_W * 0.5)} />}
+                                            </View>
+                                            <Text style={[s.slotType, { color, textAlign: 'center' }]}>{card.type}</Text>
+                                        </>
+                                    );
+                                })()}
                             </TouchableOpacity>
                         );
                     })}
@@ -287,7 +284,7 @@ export default function DeckScreen() {
                         {cardTypes.map(card => {
                             const count = countById[card.card_id] ?? 0;
                             if (count === 0) return null;
-                            const col = tc(card.type);
+                            const col = CARD_META[card.type as CardType]?.color ?? C.outlineVariant;
                             const pct = (count / DECK_SIZE) * 100;
                             return (
                                 <View key={card.card_id} style={[s.propChip, { borderColor: col + '55' }]}>
@@ -313,8 +310,9 @@ export default function DeckScreen() {
 
                 <View style={s.typesGrid}>
                     {cardTypes.map(card => {
-                        const col   = tc(card.type);
+                        const col   = CARD_META[card.type as CardType]?.color ?? C.outlineVariant;
                         const count = countById[card.card_id] ?? 0;
+                        const Icon  = ICON_MAP[card.type as CardType];
                         return (
                             <TouchableOpacity
                                 key={card.card_id}
@@ -332,6 +330,9 @@ export default function DeckScreen() {
                                         <Text style={s.badgeText}>{count}</Text>
                                     </View>
                                 )}
+                                <View style={{ alignItems: 'center' }}>
+                                    {Icon && <Icon width={Math.round(TYPE_W * 0.32)} height={Math.round(TYPE_W * 0.32)} />}
+                                </View>
                                 <Text style={[s.typeCardType, { color: isFull ? C.outline : col }]}>
                                     {card.type}
                                 </Text>
