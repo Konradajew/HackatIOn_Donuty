@@ -72,7 +72,7 @@ export function CardHelpModal({ visible, onClose }: CardHelpModalProps) {
             })}
 
             <Text style={s.footer}>
-              {'Correct answer → effect applies  ·  Wrong / timeout → −5 HP\nStar rating = community average from forum voters'}
+              {'Correct answer → effect applies\nWrong / timeout → −5 HP\nStar rating = community average from forum voters'}
             </Text>
           </ScrollView>
         </View>

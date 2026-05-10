@@ -96,7 +96,7 @@ export default function QuestionDetail() {
           {/* Question text */}
           <View style={s.questionCard}>
             <Text style={s.questionText}>{q.t}</Text>
-            <Text style={s.authorText}>@{q.user} · 2h</Text>
+            <Text style={s.authorText}>@{q.user ?? 'Admin'}</Text>
           </View>
 
           {/* Answers grid */}
@@ -265,7 +265,7 @@ const s = StyleSheet.create({
   headerTitle: {
     fontFamily: 'SpaceGrotesk_700Bold',
     fontSize: 20,
-    color: C.surfaceContainerHigh,
+    color: C.onSurface,
     letterSpacing: 2,
     flex: 1,
   },
@@ -283,7 +283,7 @@ const s = StyleSheet.create({
   questionText: {
     fontFamily: 'SpaceGrotesk_700Bold',
     fontSize: 22,
-    color: C.surfaceContainerHigh,
+    color: C.onSurface,
     lineHeight: 30,
   },
   authorText: {
@@ -322,7 +322,7 @@ const s = StyleSheet.create({
   answerText: {
     fontFamily: 'SpaceGrotesk_600SemiBold',
     fontSize: 14,
-    color: C.surfaceContainerHigh,
+    color: C.onSurface,
     lineHeight: 20,
   },
 
@@ -371,7 +371,7 @@ const s = StyleSheet.create({
   explanationText: {
     fontFamily: 'SpaceGrotesk_600SemiBold',
     fontSize: 15,
-    color: C.surfaceContainerHigh,
+    color: C.onSurface,
     lineHeight: 22,
   },
 
