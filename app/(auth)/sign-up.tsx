@@ -124,7 +124,7 @@ export default function SignUp() {
             <DecorativeCard style={s.decorLeft} />
             <DecorativeCard style={s.decorRight} />
             <TricardLogo />
-            <Text style={s.tagline}>NEW · PLAYER · INIT</Text>
+            <Text style={s.tagline}>SIGN · UP · TO · PLAY</Text>
           </View>
 
           <ScrollView
