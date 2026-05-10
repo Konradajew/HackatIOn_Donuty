@@ -9,8 +9,8 @@ const DESCRIPTIONS: Record<CardType, string> = {
   DMG:         'Deal direct damage to your opponent\'s HP.',
   HEAL:        'Restore your own HP.',
   POISON:      'Apply poison stacks. Each stack deals 3 HP at the start of each of your turns.',
-  DMG_BLOCK:   'Blind one of your opponent\'s answers next turn AND deal a small HP hit.',
-  HEAL_REMOVE: 'Give yourself a 50/50 hint next turn (hides 2 wrong options) and restore a little HP.',
+  DMG_BLOCK:   'Blind one of your opponent\'s answers for furture turns AND deal a small HP hit.',
+  HEAL_REMOVE: 'Give yourself a 50/50 hint next turns (hides 2 wrong options) and restore a little HP.',
   TIME_BUFF:   'Get extra seconds on your next question timer, deal a small hit, and heal yourself.',
 };
 

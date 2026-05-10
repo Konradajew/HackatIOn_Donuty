@@ -173,7 +173,7 @@ export default function HomeScreen() {
           ) : isBotStarting ? (
             <>
               <ActivityIndicator color={C.tertiaryDim} style={{ marginBottom: 8 }} />
-              <Text style={[s.statusText, { color: C.tertiaryDim }]}>URUCHAMIAM BOTKA...</Text>
+              <Text style={[s.statusText, { color: C.tertiaryDim }]}>URUCHAMIAM KUBIBOTKA...</Text>
             </>
           ) : (
             <>
