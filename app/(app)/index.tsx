@@ -13,7 +13,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -81,9 +81,14 @@ function GhostButton({
 
 function LogOutButton({ onPress }: { onPress: () => void }) {
   return (
-    <TouchableOpacity style={s.logOutBtn} onPress={onPress} activeOpacity={0.8}>
+    <TouchableOpacity style={s.exitBtn} onPress={onPress} activeOpacity={0.8}>
       <View style={s.btnLabelGroupCentered}>
-        <Ionicons name="power-outline" size={16} color={C.error} style={s.btnIcon} />
+        <Ionicons
+          name="power-outline"
+          size={16}
+          color={C.error}
+          style={s.btnIcon}
+        />
         <Text style={s.exitBtnText}>LOG OUT</Text>
       </View>
     </TouchableOpacity>
@@ -484,7 +489,7 @@ const s = StyleSheet.create({
     letterSpacing: 1.5,
   },
 
-  // EXIT
+  // EXIT (LOG OUT)
   exitBtn: {
     alignSelf: "center",
     width: "45%",
@@ -503,32 +508,6 @@ const s = StyleSheet.create({
     marginTop: 8,
   },
   exitBtnText: {
-    fontFamily: "JetBrainsMono_500Medium",
-    fontSize: 12,
-    color: C.onSurface,
-    letterSpacing: 2,
-    textTransform: "uppercase",
-  },
-
-  // LOG OUT
-  logOutBtn: {
-    alignSelf: "center",
-    width: "45%",
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 999,
-    borderWidth: 2,
-    borderColor: C.outlineVariant,
-    shadowColor: C.outlineVariant,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 2,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 8,
-  },
-  logOutBtnText: {
     fontFamily: "JetBrainsMono_500Medium",
     fontSize: 12,
     color: C.onSurface,
