@@ -17,20 +17,29 @@ import { ArcadeColors as C } from '@/constants/theme';
 import { listMyDecks, upsertDeck, setActiveDeck, type CardType } from '@/lib/match-api';
 import { ICON_MAP, CARD_META } from '@/components/cards/typed-card';
 
-const { width: SW } = Dimensions.get('window');
+const { width: SW, height: SH } = Dimensions.get('window');
+
+const BASE_W = 375;
+const SCALE_FACTOR = Math.min(Math.max(SW / BASE_W, 0.82), 1.3);
+const scale = (size: number) => Math.round(size * SCALE_FACTOR);
+
+const IS_SMALL = SW < 360;
+const IS_NARROW = SW < 380;
 
 const TOTAL_DECKS = 5;
 const DECK_SIZE   = 10;
 const SLOT_COLS   = 5;
-const PAD         = 12;
-const SLOT_GAP    = 5;
+const PAD         = IS_SMALL ? 8 : 12;
+const SLOT_GAP    = IS_SMALL ? 4 : 5;
 const SLOT_W = (SW - PAD * 2 - SLOT_GAP * (SLOT_COLS - 1)) / SLOT_COLS;
 const SLOT_H = SLOT_W * 1.4;
 
 const TYPE_COLS = 3;
-const TYPE_GAP  = 8;
+const TYPE_GAP  = IS_SMALL ? 6 : 8;
 const TYPE_W    = (SW - PAD * 2 - TYPE_GAP * (TYPE_COLS - 1)) / TYPE_COLS;
-const TYPE_H    = TYPE_W * 0.85;
+const TYPE_H    = Math.max(TYPE_W * 0.95, scale(96));
+
+const PROPORTIONS_MAX_H = Math.round(SH * 0.16);
 
 type CardTypeRow = {
     card_id: number;
@@ -151,23 +160,42 @@ export default function DeckScreen() {
     return (
         <SafeAreaView style={s.container} edges={['top']}>
 
-            {/* ── Header ── */}
+            {/* Header */}
             <View style={s.header}>
-                <View style={s.headerRight}>
+                <View style={s.headerSide}>
                     <TouchableOpacity style={s.backBtn} activeOpacity={0.8} onPress={() => router.back()}>
                         <Text style={s.backBtnText}>←</Text>
                     </TouchableOpacity>
                 </View>
-                <View>
-                    <Text style={s.title}>DECK BUILDER</Text>
-                    <Text style={[s.subtitle, filled === DECK_SIZE && { color: C.tertiaryDim }]}>
+                <View style={s.headerCenter}>
+                    <Text
+                        style={s.title}
+                        numberOfLines={1}
+                        adjustsFontSizeToFit
+                        minimumFontScale={0.6}
+                    >
+                        DECK BUILDER
+                    </Text>
+                    <Text
+                        style={[s.subtitle, filled === DECK_SIZE && { color: C.tertiaryDim }]}
+                        numberOfLines={1}
+                        adjustsFontSizeToFit
+                        minimumFontScale={0.7}
+                    >
                         {filled} / {DECK_SIZE} CARDS
                     </Text>
                 </View>
-                <View style={s.headerRight}>
+                <View style={[s.headerSide, s.headerRight]}>
                     {filled > 0 && (
                         <TouchableOpacity onPress={clearDeck} style={s.clearBtn} activeOpacity={0.7}>
-                            <Text style={s.clearBtnText}>CLEAR</Text>
+                            <Text
+                                style={s.clearBtnText}
+                                numberOfLines={1}
+                                adjustsFontSizeToFit
+                                minimumFontScale={0.7}
+                            >
+                                CLEAR
+                            </Text>
                         </TouchableOpacity>
                     )}
                     <TouchableOpacity
@@ -178,13 +206,20 @@ export default function DeckScreen() {
                     >
                         {saving
                             ? <ActivityIndicator size="small" color="#000" />
-                            : <Text style={s.saveBtnText}>SAVE</Text>
+                            : <Text
+                                style={s.saveBtnText}
+                                numberOfLines={1}
+                                adjustsFontSizeToFit
+                                minimumFontScale={0.7}
+                              >
+                                SAVE
+                              </Text>
                         }
                     </TouchableOpacity>
                 </View>
             </View>
 
-            {/* ── Deck tabs ── */}
+            {/* Deck tabs */}
             <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
@@ -205,7 +240,12 @@ export default function DeckScreen() {
                             ]}
                             activeOpacity={0.8}
                         >
-                            <Text style={[s.tabTitle, active && s.tabTitleActive, isUsed && { color: C.tertiaryDim }]}>
+                            <Text
+                                style={[s.tabTitle, active && s.tabTitleActive, isUsed && { color: C.tertiaryDim }]}
+                                numberOfLines={1}
+                                adjustsFontSizeToFit
+                                minimumFontScale={0.7}
+                            >
                                 {isUsed ? '★ ' : ''}DECK {i + 1}
                             </Text>
                             <Text style={[s.tabSub, active && s.tabSubActive]}>
@@ -218,7 +258,7 @@ export default function DeckScreen() {
 
             <ScrollView showsVerticalScrollIndicator={false}>
 
-                {/* ── "Use this deck" action bar ── */}
+                {/* "Use this deck" action bar */}
                 {deckIds[activeDeck] !== null && (
                     <View style={{ flexDirection: 'row', paddingHorizontal: PAD, paddingTop: 10, gap: 8 }}>
                         <TouchableOpacity
@@ -246,7 +286,7 @@ export default function DeckScreen() {
                     </View>
                 )}
 
-                {/* ── Sloty decku ── */}
+                {/* Sloty decku */}
                 <View style={s.sectionRow}>
                     <Text style={s.sectionText}>CURRENT DECK · TAP TO REMOVE</Text>
                 </View>
@@ -270,7 +310,14 @@ export default function DeckScreen() {
                                             <View style={{ alignItems: 'center', justifyContent: 'center', flex: 1 }}>
                                                 {Icon && <Icon width={Math.round(SLOT_W * 0.5)} height={Math.round(SLOT_W * 0.5)} />}
                                             </View>
-                                            <Text style={[s.slotType, { color, textAlign: 'center' }]}>{CARD_META[card.type as CardType]?.label ?? card.type}</Text>
+                                            <Text
+                                                style={[s.slotType, { color, textAlign: 'center' }]}
+                                                numberOfLines={1}
+                                                adjustsFontSizeToFit
+                                                minimumFontScale={0.6}
+                                            >
+                                                {CARD_META[card.type as CardType]?.label ?? card.type}
+                                            </Text>
                                         </>
                                     );
                                 })()}
@@ -279,9 +326,14 @@ export default function DeckScreen() {
                     })}
                 </View>
 
-                {/* ── Proporcje typów ── */}
+                {/* Proporcje typów */}
                 {filled > 0 && (
-                    <View style={s.proportionsRow}>
+                    <ScrollView
+                        style={s.proportionsWrap}
+                        contentContainerStyle={s.proportionsRow}
+                        showsVerticalScrollIndicator={false}
+                        nestedScrollEnabled
+                    >
                         {cardTypes.map(card => {
                             const count = countById[card.card_id] ?? 0;
                             if (count === 0) return null;
@@ -289,20 +341,27 @@ export default function DeckScreen() {
                             const pct = (count / DECK_SIZE) * 100;
                             return (
                                 <View key={card.card_id} style={[s.propChip, { borderColor: col + '55' }]}>
-                                    <Text style={[s.propType, { color: col }]}>{CARD_META[card.type as CardType]?.label ?? card.type}</Text>
+                                    <Text
+                                        style={[s.propType, { color: col }]}
+                                        numberOfLines={1}
+                                        adjustsFontSizeToFit
+                                        minimumFontScale={0.7}
+                                    >
+                                        {CARD_META[card.type as CardType]?.label ?? card.type}
+                                    </Text>
                                     <View style={s.propBarBg}>
                                         <View style={[s.propBarFill, { width: `${pct}%` as any, backgroundColor: col }]} />
                                     </View>
-                                    <Text style={[s.propCount, { color: col }]}>{count}</Text>
+                                    <Text style={[s.propCount, { color: col }]} numberOfLines={1}>{count}</Text>
                                 </View>
                             );
                         })}
-                    </View>
+                    </ScrollView>
                 )}
 
                 <View style={s.divider} />
 
-                {/* ── Wybór typów ── */}
+                {/* Wybór typów */}
                 <View style={s.sectionRow}>
                     <Text style={s.sectionText}>
                         {isFull ? 'DECK FULL · TAP SLOT ABOVE TO REMOVE' : 'CHOOSE TYPE · TAP TO ADD'}
@@ -334,10 +393,21 @@ export default function DeckScreen() {
                                 <View style={{ alignItems: 'center' }}>
                                     {Icon && <Icon width={Math.round(TYPE_W * 0.32)} height={Math.round(TYPE_W * 0.32)} />}
                                 </View>
-                                <Text style={[s.typeCardType, { color: isFull ? C.outline : col }]}>
+                                <Text
+                                    style={[s.typeCardType, { color: isFull ? C.outline : col }]}
+                                    numberOfLines={1}
+                                    adjustsFontSizeToFit
+                                    minimumFontScale={0.5}
+                                >
                                     {CARD_META[card.type as CardType]?.label ?? card.type}
                                 </Text>
-                                <Text style={s.typeCardCats}>
+                                <Text
+                                    style={s.typeCardCats}
+                                    numberOfLines={3}
+                                    adjustsFontSizeToFit
+                                    minimumFontScale={0.6}
+                                    ellipsizeMode="tail"
+                                >
                                     {card.categories?.join('\n') ?? '—'}
                                 </Text>
                             </TouchableOpacity>
@@ -358,34 +428,54 @@ const s = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingHorizontal: 14,
+        paddingHorizontal: IS_SMALL ? 8 : 14,
         paddingVertical: 10,
         borderBottomWidth: 1,
         borderBottomColor: C.outlineVariant,
         backgroundColor: C.surfaceContainerLow,
+        gap: 6,
     },
-    title:    { color: C.onSurface, fontFamily: 'JetBrainsMono_500Medium', fontSize: 17, fontWeight: '700', letterSpacing: 2 },
-    subtitle: { color: C.outline,  fontFamily: 'JetBrainsMono_500Medium', fontSize: 10, letterSpacing: 1,  marginTop: 2 },
+    headerSide:   { flexShrink: 0 },
+    headerCenter: { flex: 1, minWidth: 0, alignItems: 'center', paddingHorizontal: 4 },
+    title:    {
+        color: C.onSurface,
+        fontFamily: 'JetBrainsMono_500Medium',
+        fontSize: scale(IS_NARROW ? 14 : 17),
+        fontWeight: '700',
+        letterSpacing: IS_NARROW ? 1.2 : 2,
+        textAlign: 'center',
+    },
+    subtitle: {
+        color: C.outline,
+        fontFamily: 'JetBrainsMono_500Medium',
+        fontSize: scale(10),
+        letterSpacing: 1,
+        marginTop: 2,
+        textAlign: 'center',
+    },
 
-    headerRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    headerRight: { flexDirection: 'row', alignItems: 'center', gap: IS_SMALL ? 4 : 8 },
     clearBtn: {
-        paddingHorizontal: 12,
+        paddingHorizontal: IS_SMALL ? 8 : 12,
         paddingVertical: 8,
         borderWidth: 1,
         borderColor: C.outlineVariant,
     },
-    clearBtnText: { color: C.outline, fontFamily: 'JetBrainsMono_500Medium', fontSize: 10, fontWeight: '600', letterSpacing: 1 },
+    clearBtnText: { color: C.outline, fontFamily: 'JetBrainsMono_500Medium', fontSize: scale(10), fontWeight: '600', letterSpacing: 1 },
     saveBtn: {
         backgroundColor: C.tertiary,
-        paddingHorizontal: 18,
+        paddingHorizontal: IS_SMALL ? 12 : 18,
         paddingVertical: 8,
+        minWidth: scale(54),
+        alignItems: 'center',
+        justifyContent: 'center',
         shadowColor: C.tertiary,
         shadowOffset: { width: 0, height: 0 },
         shadowOpacity: 0.55,
         shadowRadius: 10,
         elevation: 8,
     },
-    saveBtnText: { color: '#000', fontFamily: 'JetBrainsMono_500Medium', fontSize: 12, fontWeight: '700', letterSpacing: 2 },
+    saveBtnText: { color: '#000', fontFamily: 'JetBrainsMono_500Medium', fontSize: scale(12), fontWeight: '700', letterSpacing: IS_NARROW ? 1.2 : 2 },
 
 
     backBtn: {
@@ -423,9 +513,9 @@ const s = StyleSheet.create({
         shadowRadius: 8,
         elevation: 8,
     },
-    tabTitle:       { color: C.outline,    fontFamily: 'JetBrainsMono_500Medium', fontSize: 9, fontWeight: '700', letterSpacing: 1.5 },
+    tabTitle:       { color: C.outline,    fontFamily: 'JetBrainsMono_500Medium', fontSize: scale(11), fontWeight: '700', letterSpacing: 1.5 },
     tabTitleActive: { color: C.secondary },
-    tabSub:         { color: C.outlineVariant, fontFamily: 'JetBrainsMono_500Medium', fontSize: 8, letterSpacing: 0.5, marginTop: 2 },
+    tabSub:         { color: C.outlineVariant, fontFamily: 'JetBrainsMono_500Medium', fontSize: scale(9), letterSpacing: 0.5, marginTop: 2 },
     tabSubActive:   { color: C.secondary + 'aa' },
 
     sectionRow:  { paddingHorizontal: PAD, paddingTop: 10, paddingBottom: 6 },
@@ -443,15 +533,18 @@ const s = StyleSheet.create({
         height: SLOT_H,
         borderWidth: 1,
         backgroundColor: C.surface,
-        padding: 5,
+        padding: 4,
         justifyContent: 'space-between',
         overflow: 'hidden',
     },
-    slotType: { fontFamily: 'JetBrainsMono_500Medium', fontSize: 7,  fontWeight: '700', letterSpacing: 1 },
+    slotType: { fontFamily: 'JetBrainsMono_500Medium', fontSize: scale(7),  fontWeight: '700', letterSpacing: 0.8 },
     slotBar:  { flex: 1, marginVertical: 3 },
-    slotCat:  { fontFamily: 'JetBrainsMono_500Medium', fontSize: 6,  letterSpacing: 0.5 },
+    slotCat:  { fontFamily: 'JetBrainsMono_500Medium', fontSize: scale(6),  letterSpacing: 0.5 },
 
     // Proporcje
+    proportionsWrap: {
+        maxHeight: PROPORTIONS_MAX_H,
+    },
     proportionsRow: {
         paddingHorizontal: PAD,
         paddingTop: 10,
@@ -466,10 +559,10 @@ const s = StyleSheet.create({
         borderWidth: 1,
         backgroundColor: C.surface,
     },
-    propType:  { fontFamily: 'JetBrainsMono_500Medium', fontSize: 9, fontWeight: '700', letterSpacing: 1, width: 64 },
-    propBarBg: { flex: 1, height: 4, backgroundColor: C.outlineVariant },
+    propType:  { fontFamily: 'JetBrainsMono_500Medium', fontSize: scale(9), fontWeight: '700', letterSpacing: 1, width: scale(64) },
+    propBarBg: { flex: 1, height: 4, backgroundColor: C.outlineVariant, minWidth: 20 },
     propBarFill: { height: 4 },
-    propCount: { fontFamily: 'JetBrainsMono_500Medium', fontSize: 11, fontWeight: '700', width: 20, textAlign: 'right' },
+    propCount: { fontFamily: 'JetBrainsMono_500Medium', fontSize: scale(11), fontWeight: '700', width: scale(22), textAlign: 'right' },
 
     divider: {
         height: 1,
@@ -492,23 +585,30 @@ const s = StyleSheet.create({
         height: TYPE_H,
         borderWidth: 1,
         backgroundColor: C.surface,
-        padding: 10,
+        paddingHorizontal: IS_SMALL ? 6 : 10,
+        paddingVertical: IS_SMALL ? 8 : 10,
         justifyContent: 'space-between',
+        overflow: 'hidden',
     },
     typeCardDisabled: { opacity: 0.45 },
     typeCardType: {
         fontFamily: 'JetBrainsMono_500Medium',
-        fontSize: 14,
+        fontSize: scale(IS_NARROW ? 12 : 14),
         fontWeight: '700',
-        letterSpacing: 2,
+        letterSpacing: IS_NARROW ? 1.2 : 2,
+        textAlign: 'center',
+        includeFontPadding: false,
     },
     typeCardCats: {
         color: C.outline,
         fontFamily: 'JetBrainsMono_500Medium',
-        fontSize: 7,
-        letterSpacing: 0.5,
-        lineHeight: 11,
+        fontSize: scale(IS_NARROW ? 7 : 8),
+        letterSpacing: 0.3,
+        lineHeight: scale(IS_NARROW ? 9 : 11),
+        textAlign: 'center',
+        includeFontPadding: false,
     },
+
 
     // Badge z liczbą
     badge: {
