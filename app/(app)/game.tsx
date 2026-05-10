@@ -24,13 +24,18 @@ import {
   StyleSheet,
   Text,
   View,
+    useWindowDimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import DonutIcon from '@/assets/icons/donut.svg';
 
 function GameInner() {
   const router = useRouter();
   const { session } = useAuth();
   const uid = session?.user.id ?? '';
+
+  const { width: winW, height: winH } = useWindowDimensions();
+  const donutSize = Math.min(winW * 0.75, winH * 0.5);
 
   const { snapshot, cardTypes, loading, error, play, answer, questionDeadline, lastResult, busy } = useMatch();
 
@@ -496,13 +501,7 @@ function GameInner() {
 
         {/* Battlefield */}
         <View style={s.battlefield}>
-          <Text style={s.noPlayText}>
-            {questionActive
-              ? "— ANSWER THE QUESTION —"
-              : myTurn
-                ? "— PLAY A CARD —"
-                : "— WAITING —"}
-          </Text>
+            <DonutIcon width={donutSize} height={donutSize} />
         </View>
 
         {/* Player HP */}

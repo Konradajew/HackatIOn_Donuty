@@ -280,7 +280,7 @@ export function QuestionSheet({
               </Text>
             </Pressable>
             <Text style={s.submitHint}>
-              ANSWER LOCKS IN {durationSec}s · WRONG = LOSE CARD
+              ANSWER LOCKS IN {durationSec}s · WRONG = LOSE 5 HP
             </Text>
           </View>
         </View>
