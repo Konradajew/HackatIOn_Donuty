@@ -9,13 +9,6 @@ import { isNicknameTaken, upsertNickname } from '@/lib/profile';
 import { useAuth } from '@/lib/auth-context';
 import { ArcadeColors as C, ArcadeSpacing as S, ArcadeFonts as F } from "@/constants/theme";
 
-const SUGGESTIONS = [
-  { n: 'CRITHIT', c: C.primaryBright },
-  { n: 'V01D_KING', c: C.secondaryBright },
-  { n: 'SYN7AX', c: C.tertiaryDim },
-  { n: 'GG_WP', c: C.secondaryBright },
-  { n: 'ACE_4', c: C.primaryBright },
-];
 const NICK_RE = /^[A-Z0-9_]*$/;
 
 type RuleState = 'pass' | 'fail' | 'pending' | 'idle';
@@ -25,17 +18,17 @@ function RuleRow({ label, state }: { label: string; state: RuleState }) {
   const checking = state === 'pending';
   const color = pass ? C.tertiaryDim : state === 'idle' ? C.outline : C.error;
   return (
-    <View style={styles.ruleRow}>
-      <View style={[styles.ruleCheck, { borderColor: color }]}>
-        {checking
-          ? <ActivityIndicator size={8} color={C.secondaryBright} />
-          : pass
-            ? <Text style={{ color: C.background, fontSize: 9 }}>✓</Text>
-            : null
-        }
+      <View style={styles.ruleRow}>
+        <View style={[styles.ruleCheck, { borderColor: color }]}>
+          {checking
+              ? <ActivityIndicator size={8} color={C.secondaryBright} />
+              : pass
+                  ? <Text style={{ color: C.background, fontSize: 9 }}>✓</Text>
+                  : null
+          }
+        </View>
+        <Text style={[F.labelSm, { color, letterSpacing: 1 }]}>{label}</Text>
       </View>
-      <Text style={[F.labelSm, { color, letterSpacing: 1 }]}>{label}</Text>
-    </View>
   );
 }
 
@@ -77,12 +70,12 @@ export default function PickNickname() {
   const ruleLength = upperNick.length >= 3 && upperNick.length <= 16;
   const ruleChars = NICK_RE.test(upperNick);
   const ruleAvail: RuleState = checking
-    ? 'pending'
-    : taken === false
-      ? 'pass'
-      : taken === true
-        ? 'fail'
-        : 'idle';
+      ? 'pending'
+      : taken === false
+          ? 'pass'
+          : taken === true
+              ? 'fail'
+              : 'idle';
 
   const allValid = ruleLength && ruleChars && ruleAvail === 'pass';
 
@@ -130,170 +123,103 @@ export default function PickNickname() {
   const initial = upperNick.length > 0 ? upperNick[0] : '?';
 
   return (
-    <View style={styles.root}>
-      <LinearGradient
-        colors={['rgba(255,72,152,0.06)', 'transparent', 'rgba(167,215,0,0.05)']}
-        start={{ x: 0.5, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFillObject}
-        pointerEvents="none"
-      />
+      <View style={styles.root}>
+        <LinearGradient
+            colors={['rgba(255,72,152,0.06)', 'transparent', 'rgba(167,215,0,0.05)']}
+            start={{ x: 0.5, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={StyleSheet.absoluteFillObject}
+            pointerEvents="none"
+        />
 
-      <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={styles.scroll}
-        keyboardShouldPersistTaps="handled"
-      >
-        {/* Header row */}
-        <View style={styles.headerRow}>
-          <Pressable
-            style={[styles.backBtn, backPending && { opacity: 0.5 }]}
-            onPress={handleBack}
-            disabled={backPending}
-          >
-            <Text style={[F.labelMd, { color: C.onSurface }]}>←</Text>
-          </Pressable>
-          <View style={{ flex: 1, marginLeft: S.sm }}>
-            <Text style={[F.headlineMd, { color: C.onSurface, letterSpacing: 2, textTransform: 'uppercase' }]}>
-              Pick Handle
-            </Text>
-            <Text style={[F.labelSm, { color: C.outline, letterSpacing: 1, marginTop: 2 }]}>
-              STEP 02 / 03 · NEW PLAYER
-            </Text>
+        <ScrollView
+            style={{ flex: 1 }}
+            contentContainerStyle={styles.scroll}
+            keyboardShouldPersistTaps="handled"
+        >
+          {/* Header row */}
+          <View style={styles.headerRow}>
+            <Pressable
+                style={[styles.backBtn, backPending && { opacity: 0.5 }]}
+                onPress={handleBack}
+                disabled={backPending}
+            >
+              <Text style={[F.labelMd, { color: C.onSurface }]}>←</Text>
+            </Pressable>
+            <View style={{ flex: 1, marginLeft: S.sm }}>
+              <Text style={[F.headlineMd, { color: C.onSurface, letterSpacing: 2, textTransform: 'uppercase' }]}>
+                Choose nickname
+              </Text>
+            </View>
           </View>
-          <View style={[styles.xpBadge, { borderColor: C.tertiaryDim + '55', backgroundColor: C.tertiaryDim + '11' }]}>
-            <Text style={[F.labelSm, { color: C.tertiaryDim, letterSpacing: 1 }]}>+15 XP</Text>
-          </View>
-        </View>
 
-        {/* Progress bar */}
-        <View style={styles.progressTrack}>
-          <View style={styles.progressFill}>
-            <LinearGradient
-              colors={[C.secondaryBright, C.secondaryBright + 'cc']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={StyleSheet.absoluteFillObject}
+          {/* Profile-fetch error retry */}
+          {profileError && (
+              <Pressable style={styles.retryPill} onPress={refreshProfile}>
+                <Text style={[F.labelSm, { color: C.error, letterSpacing: 1 }]}>⚠ FETCH ERROR — TAP TO RETRY</Text>
+              </Pressable>
+          )}
+
+          {/* Big input */}
+          <View style={styles.inputBox}>
+            <View style={styles.inputTopRow}>
+              <Text style={[F.labelSm, { color: C.tertiaryDim, letterSpacing: 2 }]}>YOUR HANDLE</Text>
+              <Text style={[F.labelSm, { color: C.outline, letterSpacing: 1 }]}>{upperNick.length} / 16</Text>
+            </View>
+            <TextInput
+                style={[F.headlineLgMb, styles.inputText]}
+                value={upperNick}
+                onChangeText={handleChange}
+                autoCapitalize="characters"
+                autoCorrect={false}
+                maxLength={16}
+                placeholderTextColor={C.outline}
+                placeholder="TYPE HERE"
+                selectionColor={C.tertiaryDim}
+                cursorColor={C.tertiaryDim}
             />
           </View>
-          <View style={[styles.progressNotch, { left: '33%' }]} />
-          <View style={[styles.progressNotch, { left: '66%' }]} />
-        </View>
 
-        {/* Avatar preview */}
-        <View style={styles.avatarCard}>
-          <LinearGradient
-            colors={[C.primaryBright, C.secondaryBright]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.avatarBox}
-          >
-            <Text style={[F.headlineMd, { color: C.background }]}>{initial}</Text>
-          </LinearGradient>
-          <View style={{ flex: 1 }}>
-            <Text
-              style={[
-                F.headlineMd,
-                { color: upperNick.length > 0 ? C.onSurface : C.outline, letterSpacing: 1 },
-              ]}
-              numberOfLines={1}
+          {/* Validation rules */}
+          <View style={styles.rulesPanel}>
+            <RuleRow label="3 — 16 CHARS" state={upperNick.length === 0 ? 'idle' : ruleLength ? 'pass' : 'fail'} />
+            <RuleRow label="A-Z, 0-9, _ ALLOWED" state={upperNick.length === 0 ? 'idle' : ruleChars ? 'pass' : 'fail'} />
+            <RuleRow label="HANDLE NOT TAKEN" state={ruleAvail} />
+          </View>
+
+          {/* Bottom CTAs */}
+          <View style={styles.bottomRow}>
+            <Pressable
+                style={[styles.backBtnBottom, backPending && { opacity: 0.5 }]}
+                onPress={handleBack}
+                disabled={backPending}
             >
-              {upperNick.length > 0 ? upperNick : 'PICK ONE'}
-            </Text>
-            <Text style={[F.labelSm, { color: C.outline, letterSpacing: 1, marginTop: 2 }]}>
-              LV.01 · 0 XP · ROOKIE
-            </Text>
+              <Text style={[F.labelMd, { color: C.onSurface, letterSpacing: 2 }]}>
+                {backPending ? '...' : '← BACK'}
+              </Text>
+            </Pressable>
+            <Pressable
+                style={[
+                  styles.submitBtn,
+                  (!allValid || submitting) && styles.submitBtnDisabled,
+                ]}
+                onPress={handleSubmit}
+                disabled={!allValid || submitting}
+            >
+              {submitting
+                  ? <ActivityIndicator color={C.onTertiary} size="small" />
+                  : (
+                      <>
+                        <Text style={[F.labelMd, { color: C.onTertiary, letterSpacing: 2, marginLeft: S.xs }]}>
+                          CONFIRM
+                        </Text>
+                      </>
+                  )
+              }
+            </Pressable>
           </View>
-          <View style={[styles.freePill, { borderColor: C.tertiaryDim + '55', backgroundColor: C.tertiaryDim + '11' }]}>
-            <Text style={[F.labelSm, { color: C.tertiaryDim, letterSpacing: 1 }]}>◉ FREE</Text>
-          </View>
-        </View>
-
-        {/* Profile-fetch error retry */}
-        {profileError && (
-          <Pressable style={styles.retryPill} onPress={refreshProfile}>
-            <Text style={[F.labelSm, { color: C.error, letterSpacing: 1 }]}>⚠ FETCH ERROR — TAP TO RETRY</Text>
-          </Pressable>
-        )}
-
-        {/* Big input */}
-        <View style={styles.inputBox}>
-          <View style={styles.inputTopRow}>
-            <Text style={[F.labelSm, { color: C.tertiaryDim, letterSpacing: 2 }]}>YOUR HANDLE</Text>
-            <Text style={[F.labelSm, { color: C.outline, letterSpacing: 1 }]}>{upperNick.length} / 16</Text>
-          </View>
-          <TextInput
-            style={[F.headlineLgMb, styles.inputText]}
-            value={upperNick}
-            onChangeText={handleChange}
-            autoCapitalize="characters"
-            autoCorrect={false}
-            maxLength={16}
-            placeholderTextColor={C.outline}
-            placeholder="TYPE HERE"
-            selectionColor={C.tertiaryDim}
-            cursorColor={C.tertiaryDim}
-          />
-        </View>
-
-        {/* Validation rules */}
-        <View style={styles.rulesPanel}>
-          <RuleRow label="3 — 16 CHARS" state={upperNick.length === 0 ? 'idle' : ruleLength ? 'pass' : 'fail'} />
-          <RuleRow label="A-Z, 0-9, _ ALLOWED" state={upperNick.length === 0 ? 'idle' : ruleChars ? 'pass' : 'fail'} />
-          <RuleRow label="HANDLE NOT TAKEN" state={ruleAvail} />
-        </View>
-
-        {/* Suggestions */}
-        <View style={styles.suggestionsSection}>
-          <Text style={[F.labelSm, { color: C.outline, letterSpacing: 2, marginBottom: S.sm }]}>
-            {'// SUGGESTED HANDLES'}
-          </Text>
-          <View style={styles.suggestionsRow}>
-            {SUGGESTIONS.map(s => (
-              <Pressable
-                key={s.n}
-                style={[styles.suggestionChip, { borderColor: s.c + '55' }]}
-                onPress={() => fillSuggestion(s.n)}
-              >
-                <Text style={[F.labelMd, { color: s.c, letterSpacing: 1 }]}>{s.n}</Text>
-              </Pressable>
-            ))}
-          </View>
-        </View>
-
-        {/* Bottom CTAs */}
-        <View style={styles.bottomRow}>
-          <Pressable
-            style={[styles.backBtnBottom, backPending && { opacity: 0.5 }]}
-            onPress={handleBack}
-            disabled={backPending}
-          >
-            <Text style={[F.labelMd, { color: C.onSurface, letterSpacing: 2 }]}>
-              {backPending ? '...' : '← BACK'}
-            </Text>
-          </Pressable>
-          <Pressable
-            style={[
-              styles.submitBtn,
-              (!allValid || submitting) && styles.submitBtnDisabled,
-            ]}
-            onPress={handleSubmit}
-            disabled={!allValid || submitting}
-          >
-            {submitting
-              ? <ActivityIndicator color={C.onTertiary} size="small" />
-              : (
-                <>
-                  <Text style={[F.labelMd, { color: C.onTertiary, letterSpacing: 2, marginLeft: S.xs }]}>
-                    ENTER GAME
-                  </Text>
-                </>
-              )
-            }
-          </Pressable>
-        </View>
-      </ScrollView>
-    </View>
+        </ScrollView>
+      </View>
   );
 }
 
@@ -321,56 +247,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  xpBadge: {
-    paddingHorizontal: S.sm,
-    paddingVertical: S.xs,
-    borderWidth: 1,
-  },
-  progressTrack: {
-    height: 10,
-    backgroundColor: C.surfaceContainerHigh,
-    marginBottom: S.md,
-    overflow: 'hidden',
-    position: 'relative',
-  },
-  progressFill: {
-    width: '66%',
-    height: '100%',
-    overflow: 'hidden',
-    shadowColor: C.secondaryBright,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.6,
-    shadowRadius: 6,
-  },
-  progressNotch: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    width: 1,
-    backgroundColor: C.background,
-    opacity: 0.6,
-  },
-  avatarCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: C.surface,
-    borderWidth: 1,
-    borderColor: C.surfaceContainerHigh,
-    padding: S.sm + 4,
-    marginBottom: S.md,
-    gap: S.sm + 4,
-  },
-  avatarBox: {
-    width: 56,
-    height: 56,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  freePill: {
-    paddingHorizontal: S.sm,
-    paddingVertical: S.xs,
-    borderWidth: 1,
-  },
   retryPill: {
     backgroundColor: C.errorContainer,
     borderWidth: 1,
@@ -384,7 +260,8 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: C.tertiaryDim,
     padding: S.sm + 4,
-    marginBottom: S.sm,
+    marginTop: S.xl,
+    marginBottom: S.lg,
     shadowColor: C.tertiaryDim,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.35,
@@ -404,9 +281,9 @@ const styles = StyleSheet.create({
     backgroundColor: C.surface,
     borderWidth: 1,
     borderColor: C.surfaceContainerHigh,
-    padding: S.sm + 2,
-    gap: S.xs + 2,
-    marginBottom: S.md,
+    padding: S.md + 2,
+    gap: S.sm + 2,
+    marginBottom: S.lg,
   },
   ruleRow: {
     flexDirection: 'row',
@@ -420,20 +297,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'transparent',
-  },
-  suggestionsSection: {
-    marginBottom: S.xl,
-  },
-  suggestionsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: S.xs + 2,
-  },
-  suggestionChip: {
-    paddingHorizontal: S.sm + 2,
-    paddingVertical: S.xs + 1,
-    backgroundColor: C.surface,
-    borderWidth: 1,
   },
   bottomRow: {
     flexDirection: 'row',
