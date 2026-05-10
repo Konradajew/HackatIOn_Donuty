@@ -107,7 +107,7 @@ export default function ForumScreen() {
             <TextInput
               value={search}
               onChangeText={setSearch}
-              placeholder="search 4,219 questions..."
+              placeholder="Search..."
               placeholderTextColor={C.outline}
               style={s.searchField}
               returnKeyType="search"
