@@ -213,7 +213,7 @@ Kluczowa przewaga to **flywheel społecznościowy**: im więcej graczy, tym wię
 ---
 
 ### MIRO
-[MIRO](href=https://miro.com/welcomeonboard/WDhHWTZTSGVkZHJCNFdnL0d3a2Z4K0RQMW9PQ0NLZHI0V3lDS2I5NnlQL3JjQS9QUTZQTGN1WVowUWpKMHVYMURQZEFCZTl1byt5aXBuT20zRklMWkJnU2ZtZVNEVk0xWVk2SldCdWZEU1BCZVVpeXVDRG1xQjhjUFFkM01lK1NnbHpza3F6REdEcmNpNEFOMmJXWXBBPT0hdjE=?share_link_id=52117812906)
+[MIRO z Mockupami oraz innymi rzeczami, nad którymi pracowaliśmy](https://miro.com/welcomeonboard/WDhHWTZTSGVkZHJCNFdnL0d3a2Z4K0RQMW9PQ0NLZHI0V3lDS2I5NnlQL3JjQS9QUTZQTGN1WVowUWpKMHVYMURQZEFCZTl1byt5aXBuT20zRklMWkJnU2ZtZVNEVk0xWVk2SldCdWZEU1BCZVVpeXVDRG1xQjhjUFFkM01lK1NnbHpza3F6REdEcmNpNEFOMmJXWXBBPT0hdjE=?share_link_id=52117812906)
 ---
 
 ## Podsumowanie
