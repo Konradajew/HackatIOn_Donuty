@@ -89,13 +89,11 @@ The key advantage is a **community flywheel**: more players means more forum que
 ## 7. Design process
 
 ### Mockups:
-![Home](screenshots/01_Home.png)
-![Battle](screenshots/02_Battle.png)
-![Battle_Popups](screenshots/03_Battle_Popups.png)
-![Summary](screenshots/04_Summary.png)
-![Forum](screenshots/05_Forum.png)
-![Add_Question](screenshots/06_Add_Question.png)
-![Deck_Builder](screenshots/07_Deck_Builder.png)
+| | | |
+|---|---|---|
+| <img src="screenshots/01_Home.png" width="220"> | <img src="screenshots/02_Battle.png" width="220"> | <img src="screenshots/03_Battle_Popups.png" width="220"> |
+| <img src="screenshots/04_Summary.png" width="220"> | <img src="screenshots/05_Forum.png" width="220"> | <img src="screenshots/06_Add_Question.png" width="220"> |
+| <img src="screenshots/07_Deck_Builder.png" width="220"> |
 
 ### Brainstorm:
 ![Brainstorm](screenshots/board1.jpg)
@@ -201,13 +199,11 @@ Kluczowa przewaga to **flywheel społecznościowy**: im więcej graczy, tym wię
 ## 7. Proces projektowy
 
 ### Mockupy:
-![Home](screenshots/01_Home.png)
-![Battle](screenshots/02_Battle.png)
-![Battle_Popups](screenshots/03_Battle_Popups.png)
-![Summary](screenshots/04_Summary.png)
-![Forum](screenshots/05_Forum.png)
-![Add_Question](screenshots/06_Add_Question.png)
-![Deck_Builder](screenshots/07_Deck_Builder.png)
+| | | |
+|---|---|---|
+| <img src="screenshots/01_Home.png" width="220"> | <img src="screenshots/02_Battle.png" width="220"> | <img src="screenshots/03_Battle_Popups.png" width="220"> |
+| <img src="screenshots/04_Summary.png" width="220"> | <img src="screenshots/05_Forum.png" width="220"> | <img src="screenshots/06_Add_Question.png" width="220"> |
+| <img src="screenshots/07_Deck_Builder.png" width="220"> |
 
 ### Burza mózgów:
 ![Brainstorm](screenshots/board1.jpg)

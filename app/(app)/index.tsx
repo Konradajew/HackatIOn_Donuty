@@ -165,15 +165,15 @@ export default function HomeScreen() {
           {isSearching ? (
             <>
               <ActivityIndicator color={C.secondaryBright} style={{ marginBottom: 8 }} />
-              <Text style={s.statusText}>SZUKAM PRZECIWNIKA...</Text>
+              <Text style={s.statusText}>SEARCHING FOR OPPONENT...</Text>
               <TouchableOpacity style={s.cancelMatchBtn} onPress={cancel}>
-                <Text style={s.cancelMatchText}>ANULUJ</Text>
+                <Text style={s.cancelMatchText}>CANCEL</Text>
               </TouchableOpacity>
             </>
           ) : isBotStarting ? (
             <>
               <ActivityIndicator color={C.tertiaryDim} style={{ marginBottom: 8 }} />
-              <Text style={[s.statusText, { color: C.tertiaryDim }]}>URUCHAMIAM KUBIBOTKA...</Text>
+              <Text style={[s.statusText, { color: C.tertiaryDim }]}>STARTING KUBIBOT...</Text>
             </>
           ) : (
             <>
