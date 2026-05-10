@@ -152,6 +152,9 @@ export function MatchProvider({
         s.opponent.id === BOT_UUID &&
         s.whose_turn === BOT_UUID
       ) {
+        const botDelayMs = 2800;
+        freezeUntilRef.current = Date.now() + botDelayMs;
+        await new Promise<void>(r => setTimeout(r, botDelayMs));
         const bs = await botTakeTurn(matchId);
         applySnapshot(bs);
       }
