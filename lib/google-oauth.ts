@@ -24,7 +24,7 @@ export async function signInWithGoogle(): Promise<{ error?: string }> {
   // Android. Race against onAuthStateChange so the caller's loading state clears
   // as soon as the session is established, without waiting for the user to back
   // out of the Custom Tab.
-  let unsubscribe: (() => void) | null = null;
+  let unsubscribe: () => void = () => {};
   const authPromise = new Promise<'auth'>((resolve) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       const newUserId = session?.user.id ?? null;
@@ -70,6 +70,6 @@ export async function signInWithGoogle(): Promise<{ error?: string }> {
     }
     return {};
   } finally {
-    unsubscribe?.();
+    unsubscribe();
   }
 }
