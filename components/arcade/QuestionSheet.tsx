@@ -2,7 +2,15 @@ import { TypedCard } from "@/components/cards/typed-card";
 import { arc } from "@/lib/arcade-theme";
 import type { CardType } from "@/lib/match-api";
 import { useState } from "react";
-import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
+} from "react-native";
 
 const HINT: Record<CardType, string> = {
   DMG: "Answer to damage your opponent",
@@ -45,6 +53,12 @@ export function QuestionSheet({
   disabledIdxs,
 }: QuestionSheetProps) {
   const [selected, setSelected] = useState<number | null>(null);
+  const { width: screenW, height: screenH } = useWindowDimensions();
+
+  // Responsive scaling based on screen size
+  const scale = Math.min(screenW, screenH) / 375; // 375 is base iPhone size
+  const isSmallScreen = screenH < 700;
+
   const progress = Math.max(0, Math.min(1, timerSec / durationSec));
 
   const handleSubmit = () => {
@@ -68,189 +82,255 @@ export function QuestionSheet({
     >
       <View style={s.root}>
         <Pressable style={s.backdrop} onPress={handleClose} />
-        <View style={s.sheet}>
+        <View style={[s.sheet, { maxHeight: screenH * 0.9 }]}>
           <View style={s.handle} />
 
-          {/* Card meta + timer */}
-          <View style={s.metaRow}>
-            <TypedCard type={card.type} cat={card.cat} width={75} selected />
-            <View style={s.metaText}>
-              <View style={s.chipRow}>
-                <View
-                  style={[
-                    s.chip,
-                    { backgroundColor: arc.primaryContainer + "22" },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      s.chipText,
-                      { color: arc.primaryContainer },
-                      { fontSize: 15 },
-                    ]}
-                  >
-                    {card.cat}
-                  </Text>
-                </View>
-                <Text style={[s.stars, { fontSize: 18 }]}>
-                  {"★".repeat(difficulty)}
-                  {"☆".repeat(5 - difficulty)}
-                </Text>
-              </View>
-              <Text style={[s.hintText, { fontSize: 13 }]} numberOfLines={2}>
-                {HINT[card.type]}
-              </Text>
-            </View>
-            <View style={[s.timerBox, { width: 70, height: 70 }]}>
-              <Text style={s.timerNum}>
-                {String(timerSec).padStart(2, "0")}
-              </Text>
-              <Text style={s.timerLabel}>SEC</Text>
-            </View>
-          </View>
-
-          {/* Progress strip */}
-          <View style={s.progressTrack}>
-            <View
-              style={[
-                s.progressFill,
-                {
-                  width: `${progress * 100}%`,
-                  shadowColor: arc.secondaryContainer,
-                  shadowOpacity: 0.6,
-                  shadowRadius: 4,
-                  shadowOffset: { width: 0, height: 0 },
-                },
-              ]}
-            />
-          </View>
-
-          {/* Question */}
-          <Text style={s.questionText}>{question}</Text>
-
-          {/* Answers */}
-          <View style={s.answers}>
-            {answers.map((ans, i) => {
-              const isSel = selected === i;
-              const isCorrectResult =
-                result != null && i === result.correct_idx;
-              const isWrongPick =
-                result != null &&
-                i === result.picked_idx &&
-                i !== result.correct_idx;
-              const isBlackedOut = result == null && blackoutIdx === i;
-              const isDisabled = result == null && !!disabledIdxs?.includes(i);
-
-              return (
-                <Pressable
-                  key={i}
-                  style={[
-                    s.answerRow,
-                    isDisabled && s.answerRowDisabled,
-                    isSel &&
-                      !result &&
-                      !isDisabled && {
-                        backgroundColor: arc.secondaryContainer + "18",
-                        borderColor: arc.secondaryContainer,
-                        borderWidth: 1.5,
-                        shadowColor: arc.secondaryContainer,
-                        shadowOpacity: 0.35,
-                        shadowRadius: 8,
-                        shadowOffset: { width: 0, height: 0 },
-                        elevation: 4,
-                      },
-                    isCorrectResult && {
-                      backgroundColor: arc.tertiary + "22",
-                      borderColor: arc.tertiary,
-                      borderWidth: 1.5,
-                    },
-                    isWrongPick && {
-                      backgroundColor: arc.primaryContainer + "22",
-                      borderColor: arc.primaryContainer,
-                      borderWidth: 1.5,
-                    },
-                  ]}
-                  onPress={() =>
-                    result == null && !isDisabled && setSelected(i)
-                  }
-                  disabled={result != null || isDisabled}
-                >
+          <ScrollView
+            style={s.scrollContent}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={s.scrollContentContainer}
+          >
+            {/* Card meta + timer */}
+            <View style={[s.metaRow, { gap: 8 * scale }]}>
+              <TypedCard
+                type={card.type}
+                cat={card.cat}
+                width={Math.max(60, 75 * scale)}
+                selected
+              />
+              <View style={s.metaText}>
+                <View style={s.chipRow}>
                   <View
                     style={[
-                      s.answerLabel,
-                      isCorrectResult
-                        ? { backgroundColor: arc.tertiary }
-                        : isWrongPick
-                          ? { backgroundColor: arc.primaryContainer }
-                          : isSel && !isDisabled
-                            ? { backgroundColor: arc.secondaryContainer }
-                            : {
-                                backgroundColor: arc.surfaceHigh,
-                                borderWidth: 1,
-                                borderColor: arc.surfaceHigh,
-                              },
+                      s.chip,
+                      { backgroundColor: arc.primaryContainer + "22" },
                     ]}
                   >
                     <Text
                       style={[
-                        s.answerLabelText,
+                        s.chipText,
                         {
-                          color:
-                            isCorrectResult ||
-                            isWrongPick ||
-                            (isSel && !isDisabled)
-                              ? arc.bg
-                              : arc.outline,
+                          color: arc.primaryContainer,
+                          fontSize: Math.max(9, 12 * scale),
                         },
                       ]}
                     >
-                      {LABELS[i]}
+                      {card.cat}
                     </Text>
                   </View>
+                  <Text
+                    style={[s.stars, { fontSize: Math.max(10, 12 * scale) }]}
+                  >
+                    {"★".repeat(difficulty)}
+                    {"☆".repeat(5 - difficulty)}
+                  </Text>
+                </View>
+                <Text
+                  style={[s.hintText, { fontSize: Math.max(11, 12 * scale) }]}
+                  numberOfLines={2}
+                >
+                  {HINT[card.type]}
+                </Text>
+              </View>
+              <View
+                style={[s.timerBox, { width: 50 * scale, height: 50 * scale }]}
+              >
+                <Text
+                  style={[s.timerNum, { fontSize: Math.max(14, 18 * scale) }]}
+                >
+                  {String(timerSec).padStart(2, "0")}
+                </Text>
+                <Text
+                  style={[s.timerLabel, { fontSize: Math.max(7, 8 * scale) }]}
+                >
+                  SEC
+                </Text>
+              </View>
+            </View>
 
-                  {isBlackedOut ? (
-                    <View style={s.blackoutBar} />
-                  ) : (
-                    <Text
+            {/* Progress strip */}
+            <View style={s.progressTrack}>
+              <View
+                style={[
+                  s.progressFill,
+                  {
+                    width: `${progress * 100}%`,
+                    shadowColor: arc.secondaryContainer,
+                    shadowOpacity: 0.6,
+                    shadowRadius: 4,
+                    shadowOffset: { width: 0, height: 0 },
+                  },
+                ]}
+              />
+            </View>
+
+            {/* Question */}
+            <Text
+              style={[
+                s.questionText,
+                {
+                  fontSize: Math.max(18, 24 * scale),
+                  marginBottom: 12 * scale,
+                },
+              ]}
+            >
+              {question}
+            </Text>
+
+            {/* Answers */}
+            <View style={[s.answers, { gap: 6 * scale }]}>
+              {answers.map((ans, i) => {
+                const isSel = selected === i;
+                const isCorrectResult =
+                  result != null && i === result.correct_idx;
+                const isWrongPick =
+                  result != null &&
+                  i === result.picked_idx &&
+                  i !== result.correct_idx;
+                const isBlackedOut = result == null && blackoutIdx === i;
+                const isDisabled =
+                  result == null && !!disabledIdxs?.includes(i);
+
+                return (
+                  <Pressable
+                    key={i}
+                    style={[
+                      s.answerRow,
+                      {
+                        minHeight: Math.max(56, 64 * scale),
+                        paddingHorizontal: 10 * scale,
+                        gap: 10 * scale,
+                      },
+                      isDisabled && s.answerRowDisabled,
+                      isSel &&
+                        !result &&
+                        !isDisabled && {
+                          backgroundColor: arc.secondaryContainer + "18",
+                          borderColor: arc.secondaryContainer,
+                          borderWidth: 1.5,
+                          shadowColor: arc.secondaryContainer,
+                          shadowOpacity: 0.35,
+                          shadowRadius: 8,
+                          shadowOffset: { width: 0, height: 0 },
+                          elevation: 4,
+                        },
+                      isCorrectResult && {
+                        backgroundColor: arc.tertiary + "22",
+                        borderColor: arc.tertiary,
+                        borderWidth: 1.5,
+                      },
+                      isWrongPick && {
+                        backgroundColor: arc.primaryContainer + "22",
+                        borderColor: arc.primaryContainer,
+                        borderWidth: 1.5,
+                      },
+                    ]}
+                    onPress={() =>
+                      result == null && !isDisabled && setSelected(i)
+                    }
+                    disabled={result != null || isDisabled}
+                  >
+                    <View
                       style={[
-                        s.answerText,
-                        isDisabled && { color: arc.outline },
+                        s.answerLabel,
+                        { width: 32 * scale, height: 32 * scale },
+                        isCorrectResult
+                          ? { backgroundColor: arc.tertiary }
+                          : isWrongPick
+                            ? { backgroundColor: arc.primaryContainer }
+                            : isSel && !isDisabled
+                              ? { backgroundColor: arc.secondaryContainer }
+                              : {
+                                  backgroundColor: arc.surfaceHigh,
+                                  borderWidth: 1,
+                                  borderColor: arc.surfaceHigh,
+                                },
                       ]}
-                      numberOfLines={2}
                     >
-                      {ans}
-                    </Text>
-                  )}
+                      <Text
+                        style={[
+                          s.answerLabelText,
+                          {
+                            fontSize: Math.max(11, 14 * scale),
+                            color:
+                              isCorrectResult ||
+                              isWrongPick ||
+                              (isSel && !isDisabled)
+                                ? arc.bg
+                                : arc.outline,
+                          },
+                        ]}
+                      >
+                        {LABELS[i]}
+                      </Text>
+                    </View>
 
-                  {isCorrectResult && (
-                    <Text style={[s.checkMark, { color: arc.tertiary }]}>
-                      ✓
-                    </Text>
-                  )}
-                  {isWrongPick && (
-                    <Text
-                      style={[s.checkMark, { color: arc.primaryContainer }]}
-                    >
-                      ✗
-                    </Text>
-                  )}
-                  {!result && isSel && !isDisabled && (
-                    <Text
-                      style={[s.checkMark, { color: arc.secondaryContainer }]}
-                    >
-                      ✓
-                    </Text>
-                  )}
-                </Pressable>
-              );
-            })}
-          </View>
+                    {isBlackedOut ? (
+                      <View style={s.blackoutBar} />
+                    ) : (
+                      <Text
+                        style={[
+                          s.answerText,
+                          { fontSize: Math.max(14, 18 * scale) },
+                          isDisabled && { color: arc.outline },
+                        ]}
+                        numberOfLines={2}
+                      >
+                        {ans}
+                      </Text>
+                    )}
+
+                    {isCorrectResult && (
+                      <Text
+                        style={[
+                          s.checkMark,
+                          {
+                            fontSize: Math.max(14, 18 * scale),
+                            color: arc.tertiary,
+                          },
+                        ]}
+                      >
+                        ✓
+                      </Text>
+                    )}
+                    {isWrongPick && (
+                      <Text
+                        style={[
+                          s.checkMark,
+                          {
+                            fontSize: Math.max(14, 18 * scale),
+                            color: arc.primaryContainer,
+                          },
+                        ]}
+                      >
+                        ✗
+                      </Text>
+                    )}
+                    {!result && isSel && !isDisabled && (
+                      <Text
+                        style={[
+                          s.checkMark,
+                          {
+                            fontSize: Math.max(14, 18 * scale),
+                            color: arc.secondaryContainer,
+                          },
+                        ]}
+                      >
+                        ✓
+                      </Text>
+                    )}
+                  </Pressable>
+                );
+              })}
+            </View>
+          </ScrollView>
 
           {/* Submit */}
-          <View style={s.submitArea}>
+          <View style={[s.submitArea, { paddingHorizontal: 16 * scale }]}>
             <Pressable
               style={[
                 s.submitBtn,
+                { height: 50 * scale },
                 selected !== null && result == null
                   ? {
                       backgroundColor: arc.secondaryContainer,
@@ -269,6 +349,7 @@ export function QuestionSheet({
                 style={[
                   s.submitText,
                   {
+                    fontSize: Math.max(14, 18 * scale),
                     color:
                       selected !== null && result == null
                         ? arc.bg
@@ -279,7 +360,7 @@ export function QuestionSheet({
                 Lock in answer →
               </Text>
             </Pressable>
-            <Text style={s.submitHint}>
+            <Text style={[s.submitHint, { fontSize: Math.max(9, 11 * scale) }]}>
               ANSWER LOCKS IN {durationSec}s · WRONG = LOSE 5 HP
             </Text>
           </View>
@@ -307,6 +388,14 @@ const s = StyleSheet.create({
     paddingTop: 14,
     paddingHorizontal: 20,
     paddingBottom: 0,
+    flexDirection: "column",
+    flex: 1,
+  },
+  scrollContent: {
+    flex: 1,
+  },
+  scrollContentContainer: {
+    paddingBottom: 16,
   },
   handle: {
     width: 40,
@@ -351,8 +440,6 @@ const s = StyleSheet.create({
     lineHeight: 17,
   },
   timerBox: {
-    width: 54,
-    height: 54,
     backgroundColor: arc.surfaceHigh,
     borderWidth: 2,
     borderColor: arc.secondaryContainer,
@@ -366,13 +453,11 @@ const s = StyleSheet.create({
   },
   timerNum: {
     fontFamily: "JetBrainsMono_500Medium",
-    fontSize: 18,
     color: arc.secondaryContainer,
     lineHeight: 20,
   },
   timerLabel: {
     fontFamily: "JetBrainsMono_500Medium",
-    fontSize: 8,
     color: arc.outline,
     letterSpacing: 1,
   },
@@ -387,43 +472,33 @@ const s = StyleSheet.create({
   },
   questionText: {
     fontFamily: "SpaceGrotesk_700Bold",
-    fontSize: 24,
     color: arc.ink,
     letterSpacing: -0.5,
     lineHeight: 30,
-    marginBottom: 20,
   },
   answers: {
-    gap: 10,
     marginBottom: 4,
   },
   answerRow: {
-    minHeight: 64,
-    paddingHorizontal: 14,
     backgroundColor: arc.surfaceHigh,
     borderWidth: 1,
     borderColor: arc.surfaceHigh,
     flexDirection: "row",
     alignItems: "center",
-    gap: 14,
   },
   answerRowDisabled: {
     opacity: 0.35,
   },
   answerLabel: {
-    width: 36,
-    height: 36,
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
   },
   answerLabelText: {
     fontFamily: "JetBrainsMono_500Medium",
-    fontSize: 14,
   },
   answerText: {
     fontFamily: "SpaceGrotesk_400Regular",
-    fontSize: 18,
     color: arc.ink,
     flex: 1,
   },
@@ -435,7 +510,6 @@ const s = StyleSheet.create({
   },
   checkMark: {
     fontFamily: "SpaceGrotesk_400Regular",
-    fontSize: 18,
   },
   submitArea: {
     paddingVertical: 16,
@@ -443,18 +517,15 @@ const s = StyleSheet.create({
     gap: 10,
   },
   submitBtn: {
-    height: 60,
     alignItems: "center",
     justifyContent: "center",
   },
   submitText: {
     fontFamily: "SpaceGrotesk_700Bold",
-    fontSize: 18,
     letterSpacing: 0.5,
   },
   submitHint: {
     fontFamily: "JetBrainsMono_500Medium",
-    fontSize: 11,
     color: arc.outline,
     textAlign: "center",
     letterSpacing: 1,
