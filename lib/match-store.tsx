@@ -37,6 +37,7 @@ type MatchCtx = {
   answer: (answerIndex: number) => Promise<void>;
   questionDeadline: number | null;
   lastResult: { correct_idx: number; picked_idx: number; was_correct: boolean } | null;
+  busy: boolean;
 };
 
 const Ctx = createContext<MatchCtx | null>(null);
@@ -54,6 +55,8 @@ export function MatchProvider({
   const [error, setError] = useState<string | null>(null);
   const [lastResult, setLastResult] = useState<{ correct_idx: number; picked_idx: number; was_correct: boolean } | null>(null);
   const answeringRef = useRef(false);
+  const playingRef = useRef(false);
+  const [busy, setBusy] = useState(false);
   const lastQIdRef = useRef<number | null>(null);
   const freezeUntilRef = useRef<number>(0);
   const [questionStartedClientMs, setQuestionStartedClientMs] = useState<number | null>(null);
@@ -107,18 +110,30 @@ export function MatchProvider({
   }, [matchId]);
 
   const play = async (slotIdx: number) => {
+    if (playingRef.current || answeringRef.current) return;
+    playingRef.current = true;
+    setBusy(true);
     try {
       const s = await playCard(matchId, slotIdx);
       applySnapshot(s);
     } catch (e: unknown) {
-      setError(errMsg(e));
+      const msg = errMsg(e);
+      if (msg.includes('question_already_pending')) {
+        try { await refresh(); } catch {}
+        return;
+      }
+      setError(msg);
       throw e;
+    } finally {
+      playingRef.current = false;
+      setBusy(false);
     }
   };
 
   const answer = async (answerIndex: number) => {
-    if (answeringRef.current) return;
+    if (answeringRef.current || playingRef.current) return;
     answeringRef.current = true;
+    setBusy(true);
     try {
       const s = await answerQuestion(matchId, answerIndex);
       if (s.last_answer) {
@@ -145,6 +160,7 @@ export function MatchProvider({
       throw e;
     } finally {
       answeringRef.current = false;
+      setBusy(false);
     }
   };
 
@@ -162,7 +178,7 @@ export function MatchProvider({
 
   return (
     <Ctx.Provider
-      value={{ snapshot, cardTypes, loading, error, refresh, play, answer, questionDeadline, lastResult }}
+      value={{ snapshot, cardTypes, loading, error, refresh, play, answer, questionDeadline, lastResult, busy }}
     >
       {children}
     </Ctx.Provider>
