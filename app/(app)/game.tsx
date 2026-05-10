@@ -13,7 +13,7 @@ import {
   useMatch,
 } from "@/lib/match-store";
 import { LinearGradient } from "expo-linear-gradient";
-import { Redirect, useLocalSearchParams, useRouter } from "expo-router";
+import { Redirect, useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -32,6 +32,7 @@ import DonutIcon from '@/assets/icons/donut.svg';
 
 function GameInner() {
   const router = useRouter();
+  const navigation = useNavigation();
   const { session } = useAuth();
   const uid = session?.user.id ?? '';
 
@@ -85,7 +86,7 @@ function GameInner() {
     try { await answer(idx); } catch {}
   }, [answer]);
 
-  const handleConcede = () => {
+  const handleConcede = useCallback(() => {
     if (!snapshot) {
       router.replace("/");
       return;
@@ -103,7 +104,20 @@ function GameInner() {
         },
       },
     ]);
-  };
+  }, [snapshot, router]);
+
+  // Intercept system back navigation (Android hardware back, iOS swipe-back,
+  // header back) and route it through the same surrender prompt as the × button.
+  // Programmatic exits via router.replace produce REPLACE actions, not GO_BACK,
+  // so they pass through unchanged.
+  useEffect(() => {
+    const unsub = navigation.addListener('beforeRemove', (e: any) => {
+      if (e?.data?.action?.type !== 'GO_BACK') return;
+      e.preventDefault();
+      handleConcede();
+    });
+    return unsub;
+  }, [navigation, handleConcede]);
 
   // Question countdown timer
   useEffect(() => {
