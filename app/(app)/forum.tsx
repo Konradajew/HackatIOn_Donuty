@@ -1,11 +1,10 @@
-import { useState } from 'react';
-import { View, Text, ScrollView, Pressable, TextInput, StyleSheet } from 'react-native';
+import { memo, useCallback, useState } from 'react';
+import { ActivityIndicator, FlatList, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { ArcadeColors as C } from "@/constants/theme";
-import { RefreshControl } from 'react-native';
 import { useQuestions, avgDifficulty, type Question } from '@/lib/forum-store';
 
 const CHIPS: { l: string; cat: string | null }[] = [
@@ -30,12 +29,13 @@ const CHIPS: { l: string; cat: string | null }[] = [
   { l: 'FACTS',     cat: 'useless_facts' },
 ];
 
-function QuestionCard({ q, onPress }: { q: Question; onPress: () => void }) {
+const QuestionCard = memo(function QuestionCard({ q }: { q: Question }) {
+  const router = useRouter();
   const avg = avgDifficulty(q);
   const score = q.up - q.down;
   const scoreColor = score > 0 ? C.tertiaryDim : score < 0 ? C.error : C.outline;
   return (
-    <Pressable style={s.card} onPress={onPress}>
+    <Pressable style={s.card} onPress={() => router.push(`/question/${q.id}` as never)}>
       <View style={s.voteCol}>
         <Text style={[s.mono, { color: scoreColor, fontSize: 10 }]}>
           {score > 0 ? '▲' : score < 0 ? '▼' : '•'}
@@ -67,34 +67,34 @@ function QuestionCard({ q, onPress }: { q: Question; onPress: () => void }) {
       </View>
     </Pressable>
   );
-}
+});
 
 export default function ForumScreen() {
   const router = useRouter();
-  const { questions, loading, refresh } = useQuestions();
-  const [selectedChip, setSelectedChip] = useState<string>('ALL');
-  const [search, setSearch] = useState<string>('');
-  const [sortMode, setSortMode] = useState<'TOP' | 'NEW'>('TOP');
+  const {
+    questions, loading, isFetchingMore, hasMore,
+    category, searchInput, sortMode,
+    setCategory, setSearch, setSortMode,
+    loadMore, refresh,
+  } = useQuestions();
 
-  const toggleSort = () => setSortMode(m => m === 'TOP' ? 'NEW' : 'TOP');
-
-  const activeChip = CHIPS.find(c => c.l === selectedChip)!;
-  const filtered = questions.filter(q => {
-    if (activeChip.cat && q.cat !== activeChip.cat) return false;
-    const term = search.trim().toLowerCase();
-    if (term && !q.t.toLowerCase().includes(term) && !q.user.toLowerCase().includes(term)) return false;
-    return true;
-  });
-
-  const sorted = sortMode === 'TOP'
-    ? [...filtered].sort((a, b) => b.up - a.up)
-    : filtered;
+  const selectedChipLabel = CHIPS.find(c => c.cat === category)?.l ?? 'ALL';
+  const toggleSort = () => setSortMode(sortMode === 'TOP' ? 'NEW' : 'TOP');
 
   const [refreshing, setRefreshing] = useState(false);
   const handleRefresh = async () => {
     setRefreshing(true);
-    try { await refresh(); } finally { setRefreshing(false);
-    }
+    try { await refresh(); } finally { setRefreshing(false); }
+  };
+
+  const renderItem = useCallback(
+    ({ item }: { item: Question }) => <QuestionCard q={item} />,
+    [],
+  );
+  const keyExtractor = useCallback((q: Question) => q.id, []);
+
+  const handleEndReached = () => {
+    if (!loading && hasMore && !isFetchingMore) loadMore();
   };
 
   return (
@@ -127,7 +127,7 @@ export default function ForumScreen() {
           <View style={s.searchInput}>
             <Text style={{ color: C.outline, fontSize: 15 }}>⊕</Text>
             <TextInput
-              value={search}
+              value={searchInput}
               onChangeText={setSearch}
               placeholder="Search..."
               placeholderTextColor={C.outline}
@@ -148,53 +148,65 @@ export default function ForumScreen() {
           style={s.chipsScroll}
           contentContainerStyle={s.chipsContent}
         >
-          {CHIPS.map(c => (
-            <Pressable
-              key={c.l}
-              onPress={() => setSelectedChip(c.l)}
-              style={[
-                s.chip,
-                c.l === selectedChip
-                  ? { backgroundColor: C.secondaryBright, borderColor: C.secondaryBright }
-                  : { backgroundColor: C.surface, borderColor: C.surfaceContainerHigh },
-              ]}
-            >
-              <Text style={[s.chipText, { color: c.l === selectedChip ? C.background : C.outline }]}>{c.l}</Text>
-            </Pressable>
-          ))}
+          {CHIPS.map(c => {
+            const selected = c.l === selectedChipLabel;
+            return (
+              <Pressable
+                key={c.l}
+                onPress={() => setCategory(c.cat)}
+                style={[
+                  s.chip,
+                  selected
+                    ? { backgroundColor: C.secondaryBright, borderColor: C.secondaryBright }
+                    : { backgroundColor: C.surface, borderColor: C.surfaceContainerHigh },
+                ]}
+              >
+                <Text style={[s.chipText, { color: selected ? C.background : C.outline }]}>{c.l}</Text>
+              </Pressable>
+            );
+          })}
         </ScrollView>
 
-        <ScrollView
-            style={s.questionList}
-            contentContainerStyle={{ gap: 10, paddingBottom: 20 }}
-            showsVerticalScrollIndicator={false}
-            refreshControl={
-              <RefreshControl
-                  refreshing={refreshing}
-                  onRefresh={handleRefresh}
-                  tintColor={C.secondaryBright}
-                  colors={[C.secondaryBright]}
-              />
-            }
-        >
-          {loading ? (
-            <Text style={s.emptyText}>LOADING...</Text>
-          ) : sorted.length === 0 ? (
-            <Text style={s.emptyText}>NO QUESTIONS</Text>
-          ) : (
-            sorted.map(q => (
-              <QuestionCard
-                key={q.id}
-                q={q}
-                onPress={() => router.push(`/question/${q.id}` as never)}
-              />
-            ))
-          )}
-        </ScrollView>
+        <FlatList
+          data={questions}
+          keyExtractor={keyExtractor}
+          renderItem={renderItem}
+          style={s.questionList}
+          contentContainerStyle={
+            questions.length === 0
+              ? s.emptyContainer
+              : { gap: 10, paddingBottom: 20 }
+          }
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor={C.secondaryBright}
+              colors={[C.secondaryBright]}
+            />
+          }
+          onEndReached={handleEndReached}
+          onEndReachedThreshold={0.5}
+          initialNumToRender={10}
+          maxToRenderPerBatch={10}
+          windowSize={10}
+          removeClippedSubviews
+          ListEmptyComponent={
+            loading
+              ? <Text style={s.emptyText}>LOADING...</Text>
+              : <Text style={s.emptyText}>NO QUESTIONS</Text>
+          }
+          ListFooterComponent={
+            isFetchingMore
+              ? <ActivityIndicator style={s.footerSpinner} color={C.secondaryBright} />
+              : null
+          }
+        />
 
-      <Pressable style={s.fab} onPress={() => router.push('/add-question' as never)}>
-        <Text style={s.fabIcon}>+</Text>
-      </Pressable>
+        <Pressable style={s.fab} onPress={() => router.push('/add-question' as never)}>
+          <Text style={s.fabIcon}>+</Text>
+        </Pressable>
       </SafeAreaView>
     </View>
   );
@@ -303,6 +315,10 @@ const s = StyleSheet.create({
   questionList: {
     flex: 1,
   },
+  emptyContainer: {
+    flexGrow: 1,
+    paddingTop: 40,
+  },
   emptyText: {
     fontFamily: 'JetBrainsMono_500Medium',
     fontSize: 12,
@@ -310,6 +326,9 @@ const s = StyleSheet.create({
     textAlign: 'center',
     paddingTop: 40,
     letterSpacing: 2,
+  },
+  footerSpinner: {
+    paddingVertical: 16,
   },
   card: {
     backgroundColor: C.surface,

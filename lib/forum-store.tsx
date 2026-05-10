@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState, ReactNode } from 'react';
 import * as api from './forum-api';
 import type { ForumQuestionRaw } from './forum-api';
 
@@ -17,6 +17,9 @@ export type Question = {
   down: number;
   diffAvg: number | null;
 };
+
+const PAGE_SIZE = 10;
+const SEARCH_DEBOUNCE_MS = 350;
 
 function rowToQuestion(r: ForumQuestionRaw): Question {
   return {
@@ -39,7 +42,6 @@ function rowToQuestion(r: ForumQuestionRaw): Question {
   };
 }
 
-// Backward-compat helper — returns int 0-5 (same as old Math.round behaviour)
 export const avgDifficulty = (q: Question): number =>
   q.diffAvg === null ? 0 : Math.round(q.diffAvg);
 
@@ -52,55 +54,177 @@ type AddQuestionInput = {
   explanation: string;
 };
 
+export type SortMode = 'NEW' | 'TOP';
+
 type Ctx = {
   questions: Question[];
   loading: boolean;
+  isFetchingMore: boolean;
+  hasMore: boolean;
+
+  category: string | null;
+  searchInput: string;
+  sortMode: SortMode;
+
+  setCategory: (cat: string | null) => void;
+  setSearch: (term: string) => void;
+  setSortMode: (mode: SortMode) => void;
+
+  loadMore: () => Promise<void>;
+  refresh: () => Promise<void>;
+
   addQuestion: (q: AddQuestionInput) => Promise<void>;
   submitVote: (id: string, params: { diff: number; verdict: 'up' | 'down' }) => Promise<void>;
   hasVotedYesNo: (id: string) => boolean;
   hasVotedDifficulty: (id: string) => boolean;
-  refresh: () => Promise<void>;
 };
 
 const QuestionsContext = createContext<Ctx | null>(null);
 
 export function QuestionsProvider({ children }: { children: ReactNode }) {
-  const [questions, setQuestions] = useState<Question[]>([]);
-  const [loading, setLoading]     = useState(true);
+  const [questions, setQuestions]             = useState<Question[]>([]);
+  const [loading, setLoading]                 = useState(true);
+  const [isFetchingMore, setIsFetchingMore]   = useState(false);
+  const [hasMore, setHasMore]                 = useState(true);
+
+  const [category, setCategory]               = useState<string | null>(null);
+  const [searchInput, setSearchInput]         = useState<string>('');
+  const [searchApplied, setSearchApplied]     = useState<string>('');
+  const [sortMode, setSortMode]               = useState<SortMode>('NEW');
+
   const [votedYesNo, setVotedYesNo]           = useState<Set<string>>(new Set());
   const [votedDifficulty, setVotedDifficulty] = useState<Set<string>>(new Set());
 
-  const load = async () => {
+  // Bumped before every fetch; results from a stale seq are dropped on arrival.
+  const requestSeqRef = useRef(0);
+
+  // Debounce search input → applied search term used in fetches.
+  useEffect(() => {
+    if (searchInput === searchApplied) return;
+    const t = setTimeout(() => setSearchApplied(searchInput), SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(t);
+  }, [searchInput, searchApplied]);
+
+  const filtersKey = `${category ?? ''}|${searchApplied}|${sortMode}`;
+
+  const mergeVoted = (rows: ForumQuestionRaw[]) => {
+    const incoming = rows.filter(r => r.voted_by_me).map(r => String(r.q_id));
+    if (incoming.length === 0) return;
+    setVotedYesNo(prev => {
+      const next = new Set(prev);
+      incoming.forEach(id => next.add(id));
+      return next;
+    });
+    setVotedDifficulty(prev => {
+      const next = new Set(prev);
+      incoming.forEach(id => next.add(id));
+      return next;
+    });
+  };
+
+  // Reset + initial load whenever filters change.
+  useEffect(() => {
+    const seq = ++requestSeqRef.current;
+    setLoading(true);
+    setHasMore(true);
+    setIsFetchingMore(false);
+
+    (async () => {
+      try {
+        const rows = await api.listQuestions({
+          limit:    PAGE_SIZE,
+          offset:   0,
+          category,
+          search:   searchApplied || null,
+          sortMode,
+        });
+        if (seq !== requestSeqRef.current) return;
+
+        setQuestions(rows.map(rowToQuestion));
+        setHasMore(rows.length === PAGE_SIZE);
+
+        const voted = new Set(rows.filter(r => r.voted_by_me).map(r => String(r.q_id)));
+        setVotedYesNo(voted);
+        setVotedDifficulty(new Set(voted));
+      } catch (e) {
+        if (seq === requestSeqRef.current) console.warn('forum-store load failed:', e);
+      } finally {
+        if (seq === requestSeqRef.current) setLoading(false);
+      }
+    })();
+  }, [filtersKey]);
+
+  const loadMore = useCallback(async () => {
+    if (loading || isFetchingMore || !hasMore) return;
+
+    const seq = ++requestSeqRef.current;
+    const filtersAtStart = filtersKey;
+    const offset = questions.length;
+    setIsFetchingMore(true);
+
     try {
-      const rows = await api.listQuestions();
+      const rows = await api.listQuestions({
+        limit:    PAGE_SIZE,
+        offset,
+        category,
+        search:   searchApplied || null,
+        sortMode,
+      });
+      if (seq !== requestSeqRef.current || filtersAtStart !== filtersKey) return;
+
+      const mapped = rows.map(rowToQuestion);
+      setQuestions(prev => {
+        const existing = new Set(prev.map(q => q.id));
+        const fresh = mapped.filter(q => !existing.has(q.id));
+        return [...prev, ...fresh];
+      });
+      setHasMore(rows.length === PAGE_SIZE);
+      mergeVoted(rows);
+    } catch (e) {
+      if (seq === requestSeqRef.current) console.warn('forum-store loadMore failed:', e);
+    } finally {
+      if (seq === requestSeqRef.current) setIsFetchingMore(false);
+    }
+  }, [loading, isFetchingMore, hasMore, questions.length, category, searchApplied, sortMode, filtersKey]);
+
+  const refresh = useCallback(async () => {
+    const seq = ++requestSeqRef.current;
+    setLoading(true);
+    setHasMore(true);
+    setIsFetchingMore(false);
+    try {
+      const rows = await api.listQuestions({
+        limit:    PAGE_SIZE,
+        offset:   0,
+        category,
+        search:   searchApplied || null,
+        sortMode,
+      });
+      if (seq !== requestSeqRef.current) return;
       setQuestions(rows.map(rowToQuestion));
-      // Seed voted Sets from server-side voted_by_me flag
+      setHasMore(rows.length === PAGE_SIZE);
       const voted = new Set(rows.filter(r => r.voted_by_me).map(r => String(r.q_id)));
       setVotedYesNo(voted);
       setVotedDifficulty(new Set(voted));
     } catch (e) {
-      console.warn('forum-store load failed:', e);
+      if (seq === requestSeqRef.current) console.warn('forum-store refresh failed:', e);
     } finally {
-      setLoading(false);
+      if (seq === requestSeqRef.current) setLoading(false);
     }
-  };
+  }, [category, searchApplied, sortMode]);
 
-  useEffect(() => { load(); }, []);
-
-  const refresh = () => load();
-
-  const addQuestion = async (q: AddQuestionInput) => {
+  const addQuestion = useCallback(async (q: AddQuestionInput) => {
     const correctText  = q.answers[q.correct];
     const wrongAnswers = (['A', 'B', 'C', 'D'] as AnswerKey[])
       .filter(k => k !== q.correct)
       .map(k => q.answers[k]);
 
     const qId = await api.addQuestion({
-      category:    q.cat,
-      title:       q.t,
+      category:      q.cat,
+      title:         q.t,
       correctAnswer: correctText,
       wrongAnswers,
-      explanation: q.explanation,
+      explanation:   q.explanation,
     });
 
     const optimistic: Question = {
@@ -117,15 +241,14 @@ export function QuestionsProvider({ children }: { children: ReactNode }) {
       diffAvg:     null,
     };
     setQuestions(prev => [optimistic, ...prev]);
-  };
+  }, []);
 
-  const submitVote = async (id: string, { diff, verdict }: { diff: number; verdict: 'up' | 'down' }) => {
+  const submitVote = useCallback(async (id: string, { diff, verdict }: { diff: number; verdict: 'up' | 'down' }) => {
     if (votedYesNo.has(id)) return;
 
     const q = questions.find(x => x.id === id);
     if (!q) return;
 
-    // Optimistic update
     setQuestions(prev => prev.map(x => x.id !== id ? x : {
       ...x,
       up:      verdict === 'up'   ? x.up + 1   : x.up,
@@ -138,13 +261,20 @@ export function QuestionsProvider({ children }: { children: ReactNode }) {
     setVotedDifficulty(prev => new Set(prev).add(id));
 
     await api.submitVote(q.q_id, verdict, diff);
-  };
+  }, [votedYesNo, questions]);
 
-  const hasVotedYesNo      = (id: string) => votedYesNo.has(id);
-  const hasVotedDifficulty = (id: string) => votedDifficulty.has(id);
+  const setSearch          = useCallback((term: string) => setSearchInput(term), []);
+  const hasVotedYesNo      = useCallback((id: string) => votedYesNo.has(id),      [votedYesNo]);
+  const hasVotedDifficulty = useCallback((id: string) => votedDifficulty.has(id), [votedDifficulty]);
 
   return (
-    <QuestionsContext.Provider value={{ questions, loading, addQuestion, submitVote, hasVotedYesNo, hasVotedDifficulty, refresh }}>
+    <QuestionsContext.Provider value={{
+      questions, loading, isFetchingMore, hasMore,
+      category, searchInput, sortMode,
+      setCategory, setSearch, setSortMode,
+      loadMore, refresh,
+      addQuestion, submitVote, hasVotedYesNo, hasVotedDifficulty,
+    }}>
       {children}
     </QuestionsContext.Provider>
   );
