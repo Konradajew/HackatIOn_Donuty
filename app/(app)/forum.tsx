@@ -36,19 +36,15 @@ function QuestionCard({ q, onPress }: { q: Question; onPress: () => void }) {
   return (
     <Pressable style={s.card} onPress={onPress}>
       <View style={s.voteCol}>
-        {/* Wyświetlamy małą strzałkę sugerującą kierunek lub kropkę dla 0 */}
         <Text style={[s.mono, { color: scoreColor, fontSize: 10 }]}>
           {score > 0 ? '▲' : score < 0 ? '▼' : '•'}
         </Text>
-
-        {/* Wyświetlamy samą różnicę (wartość bezwzględna, jeśli chcesz same liczby,
-            lub po prostu {score} jeśli chcesz widzieć minus przed liczbą) */}
         <Text style={[
           s.mono,
           {
             color: scoreColor,
             fontSize: 16,
-            fontFamily: 'JetBrainsMono_700Bold' // Pogrubiony font dla wyniku
+            fontFamily: 'JetBrainsMono_700Bold'
           }
         ]}>
           {score}
@@ -177,11 +173,11 @@ export default function ForumScreen() {
             ))
           )}
         </ScrollView>
-      </SafeAreaView>
 
       <Pressable style={s.fab} onPress={() => router.push('/add-question' as never)}>
         <Text style={s.fabIcon}>+</Text>
       </Pressable>
+      </SafeAreaView>
     </View>
   );
 }
@@ -338,8 +334,8 @@ const s = StyleSheet.create({
   },
   fab: {
     position: 'absolute',
-    bottom: 30,
-    right: 20,
+    bottom: 60,
+    right: 25,
     width: 56,
     height: 56,
     backgroundColor: C.primaryBright,
