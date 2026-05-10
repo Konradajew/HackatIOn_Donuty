@@ -98,7 +98,7 @@ export function QuestionSheet({
                 width={Math.max(60, 75 * scale)}
                 selected
               />
-              <View style={s.metaText}>
+              <View style={[s.metaText]}>
                 <View style={s.chipRow}>
                   <View
                     style={[
@@ -418,6 +418,7 @@ const s = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
+    flexWrap: "wrap",
   },
   chip: {
     paddingHorizontal: 6,
