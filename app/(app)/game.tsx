@@ -19,7 +19,7 @@ function GameInner() {
   const { session } = useAuth();
   const uid = session?.user.id ?? '';
 
-  const { snapshot, cardTypes, loading, error, play, answer, questionDeadline, lastResult } = useMatch();
+  const { snapshot, cardTypes, loading, error, play, answer, questionDeadline, lastResult, busy } = useMatch();
 
   const [selectedSlotIdx, setSelectedSlotIdx] = useState<number | null>(null);
   const [timeLeft, setTimeLeft] = useState(15);
@@ -35,16 +35,19 @@ function GameInner() {
     const isMyTurn = snapshot.whose_turn === uid;
     const isQuestionActive = snapshot.current_question.q_id != null;
     const currentHand = snapshot.you.hand;
-    if (currentHand.length === 0 || !isMyTurn || isQuestionActive) return;
+    if (currentHand.length === 0 || !isMyTurn || isQuestionActive || busy) return;
     const idx = selectedSlotIdx != null && selectedSlotIdx < currentHand.length ? selectedSlotIdx : 0;
     try {
       await play(idx);
       setSelectedSlotIdx(0);
     } catch {}
-  }, [snapshot, uid, selectedSlotIdx, play]);
+  }, [snapshot, uid, selectedSlotIdx, play, busy]);
 
   const handlePlayCardRef = useRef(handlePlayCard);
   useEffect(() => { handlePlayCardRef.current = handlePlayCard; }, [handlePlayCard]);
+
+  const busyRef = useRef(busy);
+  useEffect(() => { busyRef.current = busy; }, [busy]);
 
   const handleAnswer = useCallback(async (idx: number) => {
     try { await answer(idx); } catch {}
@@ -115,7 +118,7 @@ function GameInner() {
     const tick = () => {
       const remaining = Math.max(0, 15 - Math.floor((Date.now() - start) / 1000));
       setPickTimeLeft(remaining);
-      if (remaining <= 0 && !pickAutoFiredRef.current) {
+      if (remaining <= 0 && !pickAutoFiredRef.current && !busyRef.current) {
         pickAutoFiredRef.current = true;
         handlePlayCardRef.current();
       }
@@ -353,7 +356,7 @@ function GameInner() {
               },
             ]}
             onPress={handlePlayCard}
-            disabled={!myTurn || questionActive || validSelectedIdx == null}
+            disabled={!myTurn || questionActive || validSelectedIdx == null || busy}
           >
             <Text style={[s.playBtnText, { color: myTurn && !questionActive ? arc.bg : arc.outline }]}>
               {myTurn && !questionActive ? 'Play card ↗' : questionActive ? 'Answering...' : 'Wait for your turn'}
