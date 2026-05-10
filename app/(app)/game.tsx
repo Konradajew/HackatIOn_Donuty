@@ -1,3 +1,4 @@
+import { CardFireOverlay } from "@/components/arcade/CardFireOverlay";
 import { DefeatOverlay } from "@/components/arcade/DefeatOverlay";
 import { QuestionSheet } from "@/components/arcade/QuestionSheet";
 import { VictoryOverlay } from "@/components/arcade/VictoryOverlay";
@@ -37,7 +38,7 @@ function GameInner() {
   const { width: winW, height: winH } = useWindowDimensions();
   const donutSize = Math.min(winW * 0.75, winH * 0.5);
 
-  const { snapshot, cardTypes, loading, error, play, answer, questionDeadline, lastResult, busy } = useMatch();
+  const { snapshot, cardTypes, loading, error, play, answer, questionDeadline, lastResult, lastPlayedCardType, busy } = useMatch();
 
   const [selectedSlotIdx, setSelectedSlotIdx] = useState<number | null>(null);
   const [timeLeft, setTimeLeft] = useState(15);
@@ -53,6 +54,13 @@ function GameInner() {
   const healGlowOpacity = useRef(new Animated.Value(0)).current;
   const shakeAnim = useRef(new Animated.Value(0)).current;
   const prevHpRef = useRef<number | null>(null);
+
+  // Card-fire animation trigger (fires after QuestionSheet has slid away)
+  const [cardFireTrigger, setCardFireTrigger] = useState(0);
+  const [firedCardType, setFiredCardType] = useState<CardType | null>(null);
+  const pendingFireTypeRef = useRef<CardType | null>(null);
+  const prevLastResultRef = useRef<typeof lastResult>(null);
+  const fireTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handlePlayCard = useCallback(async () => {
     if (!snapshot) return;
@@ -209,6 +217,41 @@ function GameInner() {
 
     prevHpRef.current = currentHp;
   }, [snapshot?.you.hp, snapshot]);
+
+  // Card-fire animation: capture cardType while result is shown,
+  // then fire animation only after QuestionSheet has finished sliding away.
+  useEffect(() => {
+    const prev = prevLastResultRef.current;
+    prevLastResultRef.current = lastResult;
+
+    // Capture phase: result just appeared, was correct
+    if (
+      lastResult != null &&
+      lastResult !== prev &&
+      lastResult.was_correct &&
+      lastPlayedCardType
+    ) {
+      pendingFireTypeRef.current = lastPlayedCardType;
+    }
+
+    // Fire phase: result was cleared (sheet starts sliding away)
+    if (lastResult == null && prev != null && pendingFireTypeRef.current) {
+      const t = pendingFireTypeRef.current;
+      pendingFireTypeRef.current = null;
+      if (fireTimeoutRef.current) clearTimeout(fireTimeoutRef.current);
+      // Wait for QuestionSheet's slide-out (~300ms) before firing.
+      fireTimeoutRef.current = setTimeout(() => {
+        setFiredCardType(t);
+        setCardFireTrigger(Date.now());
+      }, 350);
+    }
+  }, [lastResult, lastPlayedCardType]);
+
+  useEffect(() => {
+    return () => {
+      if (fireTimeoutRef.current) clearTimeout(fireTimeoutRef.current);
+    };
+  }, []);
 
   // Card-pick timer — only active on player's turn, no active question
   const myTurnForTimer = snapshot?.whose_turn === uid;
@@ -681,6 +724,8 @@ function GameInner() {
         onContinue={() => navigateSummary("draw")}
         stats={{ cards: "—" }}
       />
+
+      <CardFireOverlay cardType={firedCardType} trigger={cardFireTrigger} />
     </View>
   );
 }

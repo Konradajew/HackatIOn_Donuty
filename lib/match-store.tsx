@@ -37,6 +37,7 @@ type MatchCtx = {
   answer: (answerIndex: number) => Promise<void>;
   questionDeadline: number | null;
   lastResult: { correct_idx: number; picked_idx: number; was_correct: boolean } | null;
+  lastPlayedCardType: CardType | null;
   busy: boolean;
 };
 
@@ -54,6 +55,8 @@ export function MatchProvider({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastResult, setLastResult] = useState<{ correct_idx: number; picked_idx: number; was_correct: boolean } | null>(null);
+  const [lastPlayedCardType, setLastPlayedCardType] = useState<CardType | null>(null);
+  const lastPlayedCardTypeRef = useRef<CardType | null>(null);
   const answeringRef = useRef(false);
   const playingRef = useRef(false);
   const [busy, setBusy] = useState(false);
@@ -115,6 +118,11 @@ export function MatchProvider({
     setBusy(true);
     try {
       const s = await playCard(matchId, slotIdx);
+      if (s.pending_card_id != null) {
+        const t = cardTypes[s.pending_card_id] ?? null;
+        lastPlayedCardTypeRef.current = t;
+        setLastPlayedCardType(t);
+      }
       applySnapshot(s);
     } catch (e: unknown) {
       const msg = errMsg(e);
@@ -145,6 +153,8 @@ export function MatchProvider({
         freezeUntilRef.current = Date.now() + 1200;
         await new Promise<void>(r => setTimeout(r, 1200));
         setLastResult(null);
+        lastPlayedCardTypeRef.current = null;
+        setLastPlayedCardType(null);
       }
       applySnapshot(s);
       if (
@@ -181,7 +191,7 @@ export function MatchProvider({
 
   return (
     <Ctx.Provider
-      value={{ snapshot, cardTypes, loading, error, refresh, play, answer, questionDeadline, lastResult, busy }}
+      value={{ snapshot, cardTypes, loading, error, refresh, play, answer, questionDeadline, lastResult, lastPlayedCardType, busy }}
     >
       {children}
     </Ctx.Provider>
