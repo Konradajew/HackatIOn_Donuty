@@ -1,21 +1,21 @@
+import { CardHelpModal } from "@/components/arcade/CardHelpModal";
+import { ArcadeColors as C } from "@/constants/theme";
+import { useAuth } from "@/lib/auth-context";
+import { supabase } from "@/lib/supabase";
+import { useMatchmaking } from "@/lib/use-matchmaking";
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
+  ActivityIndicator,
   Dimensions,
   Platform,
-  ActivityIndicator,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from "react-native";
-import { useAuth } from "@/lib/auth-context";
-import { useRouter } from "expo-router";
-import { supabase } from "@/lib/supabase";
-import { Ionicons } from "@expo/vector-icons";
-import { ArcadeColors as C } from "@/constants/theme";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useMatchmaking } from "@/lib/use-matchmaking";
-import { CardHelpModal } from "@/components/arcade/CardHelpModal";
 
 const { width: SW } = Dimensions.get("window");
 const GUTTER = 16;
@@ -79,9 +79,9 @@ function GhostButton({
   );
 }
 
-function ExitButton({ onPress }: { onPress: () => void }) {
+function LogOutButton({ onPress }: { onPress: () => void }) {
   return (
-    <TouchableOpacity style={s.exitBtn} onPress={onPress} activeOpacity={0.8}>
+    <TouchableOpacity style={s.logOutBtn} onPress={onPress} activeOpacity={0.8}>
       <View style={s.btnLabelGroupCentered}>
         <Ionicons name="power-outline" size={16} color={C.error} style={s.btnIcon} />
         <Text style={s.exitBtnText}>LOG OUT</Text>
@@ -93,8 +93,12 @@ function ExitButton({ onPress }: { onPress: () => void }) {
 function TricardLogo() {
   return (
     <View style={s.logoWrapper}>
-      <Text style={[s.logoBase, s.logoShadowBack]} aria-hidden>TRICARD</Text>
-      <Text style={[s.logoBase, s.logoShadowMid]} aria-hidden>TRICARD</Text>
+      <Text style={[s.logoBase, s.logoShadowBack]} aria-hidden>
+        TRICARD
+      </Text>
+      <Text style={[s.logoBase, s.logoShadowMid]} aria-hidden>
+        TRICARD
+      </Text>
       <Text style={[s.logoBase, s.logoMain]}>TRICARD</Text>
     </View>
   );
@@ -114,19 +118,26 @@ function DecorativeCard({ style }: { style?: object }) {
 export default function HomeScreen() {
   const { profile, session } = useAuth();
   const router = useRouter();
-  const { state, matchId, error, quickMatch, practiceVsBot, cancel } = useMatchmaking();
+  const { state, matchId, error, quickMatch, practiceVsBot, cancel } =
+    useMatchmaking();
   const [helpOpen, setHelpOpen] = useState(false);
 
   useEffect(() => {
-    if (state === 'matched' && matchId != null) {
-      router.replace({ pathname: '/game', params: { matchId: String(matchId) } } as never);
+    if (state === "matched" && matchId != null) {
+      router.replace({
+        pathname: "/game",
+        params: { matchId: String(matchId) },
+      } as never);
     }
   }, [state, matchId]);
 
-  const isSearching = state === 'requesting' || state === 'queued';
-  const isBotStarting = state === 'bot_starting';
-  const username = (profile?.nickname ??
-    session?.user?.email?.split("@")[0] ?? "PLAYER").toUpperCase();
+  const isSearching = state === "requesting" || state === "queued";
+  const isBotStarting = state === "bot_starting";
+  const username = (
+    profile?.nickname ??
+    session?.user?.email?.split("@")[0] ??
+    "PLAYER"
+  ).toUpperCase();
 
   return (
     <View style={s.root}>
@@ -136,7 +147,10 @@ export default function HomeScreen() {
         <View style={s.hud}>
           <View style={s.hudLeft}>
             <HudIconButton icon="settings-outline" />
-            <HudIconButton icon="help-circle-outline" onPress={() => setHelpOpen(true)} />
+            <HudIconButton
+              icon="help-circle-outline"
+              onPress={() => setHelpOpen(true)}
+            />
           </View>
           <View style={s.hudRight}>
             <View style={s.profileText}>
@@ -158,13 +172,14 @@ export default function HomeScreen() {
 
         {/* ── BUTTONS ── */}
         <View style={s.buttons}>
-          {error ? (
-            <Text style={s.errorText}>{error}</Text>
-          ) : null}
+          {error ? <Text style={s.errorText}>{error}</Text> : null}
 
           {isSearching ? (
             <>
-              <ActivityIndicator color={C.secondaryBright} style={{ marginBottom: 8 }} />
+              <ActivityIndicator
+                color={C.secondaryBright}
+                style={{ marginBottom: 8 }}
+              />
               <Text style={s.statusText}>SEARCHING FOR OPPONENT...</Text>
               <TouchableOpacity style={s.cancelMatchBtn} onPress={cancel}>
                 <Text style={s.cancelMatchText}>CANCEL</Text>
@@ -172,8 +187,13 @@ export default function HomeScreen() {
             </>
           ) : isBotStarting ? (
             <>
-              <ActivityIndicator color={C.tertiaryDim} style={{ marginBottom: 8 }} />
-              <Text style={[s.statusText, { color: C.tertiaryDim }]}>STARTING KUBIBOT...</Text>
+              <ActivityIndicator
+                color={C.tertiaryDim}
+                style={{ marginBottom: 8 }}
+              />
+              <Text style={[s.statusText, { color: C.tertiaryDim }]}>
+                STARTING KUBIBOT...
+              </Text>
             </>
           ) : (
             <>
@@ -197,7 +217,7 @@ export default function HomeScreen() {
                 />
               </View>
 
-              <ExitButton onPress={() => supabase.auth.signOut()} />
+              <LogOutButton onPress={() => supabase.auth.signOut()} />
             </>
           )}
         </View>
@@ -483,6 +503,32 @@ const s = StyleSheet.create({
     marginTop: 8,
   },
   exitBtnText: {
+    fontFamily: "JetBrainsMono_500Medium",
+    fontSize: 12,
+    color: C.onSurface,
+    letterSpacing: 2,
+    textTransform: "uppercase",
+  },
+
+  // LOG OUT
+  logOutBtn: {
+    alignSelf: "center",
+    width: "45%",
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 999,
+    borderWidth: 2,
+    borderColor: C.outlineVariant,
+    shadowColor: C.outlineVariant,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 8,
+  },
+  logOutBtnText: {
     fontFamily: "JetBrainsMono_500Medium",
     fontSize: 12,
     color: C.onSurface,
