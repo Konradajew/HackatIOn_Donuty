@@ -26,8 +26,23 @@ export type GameQuestion = {
   correctIndex: number;
 };
 
-export async function listQuestions(): Promise<ForumQuestionRaw[]> {
-  const { data, error } = await supabase.rpc('list_forum_questions');
+export type ListQuestionsParams = {
+  limit?:    number;
+  offset?:   number;
+  category?: string | null;
+  search?:   string | null;
+  sortMode?: 'NEW' | 'TOP';
+};
+
+export async function listQuestions(params: ListQuestionsParams = {}): Promise<ForumQuestionRaw[]> {
+  const search = params.search?.trim();
+  const { data, error } = await supabase.rpc('list_forum_questions', {
+    p_limit:     params.limit    ?? 10,
+    p_offset:    params.offset   ?? 0,
+    p_category:  params.category ?? null,
+    p_search:    search ? search : null,
+    p_sort_mode: params.sortMode ?? 'NEW',
+  });
   if (error) throw error;
   return (data as ForumQuestionRaw[]) ?? [];
 }
