@@ -1,7 +1,17 @@
 import { networkInterfaces, homedir } from 'os';
 import { spawn } from 'child_process';
+import { basename } from 'path';
 
 const tunnelMode = process.argv.includes('--tunnel');
+
+function slugifyDir(name) {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'donuty';
+}
+
+const projectSlug = slugifyDir(basename(process.cwd()));
+const containerName = process.env.DONUTY_CONTAINER_NAME || `${projectSlug}-dev-app`;
+const hostPort = process.env.DONUTY_HOST_PORT || '8081';
+const composeProjectName = process.env.COMPOSE_PROJECT_NAME || projectSlug;
 
 function detectLanIp() {
   if (process.env.HOST_IP) {
@@ -52,13 +62,20 @@ if (tunnelMode) {
   console.log('[start-docker] Upewnij się, że jesteś zalogowany w Expo: npx expo login\n');
 }
 
-const child = spawn('docker', ['compose', 'up', '--build'], {
+console.log(`[start-docker] compose project: ${composeProjectName}`);
+console.log(`[start-docker] container name: ${containerName}`);
+console.log(`[start-docker] host port: ${hostPort} -> 8081\n`);
+
+const child = spawn('docker', ['compose', '-p', composeProjectName, 'up', '--build'], {
   stdio: 'inherit',
   env: {
     ...process.env,
     REACT_NATIVE_PACKAGER_HOSTNAME: ip,
     EXPO_START_FLAGS: tunnelMode ? '--tunnel' : '--lan',
     EXPO_HOME_DIR: homedir(),
+    COMPOSE_PROJECT_NAME: composeProjectName,
+    DONUTY_CONTAINER_NAME: containerName,
+    DONUTY_HOST_PORT: hostPort,
   },
 });
 

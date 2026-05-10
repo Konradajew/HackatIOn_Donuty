@@ -3,9 +3,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.dev
-    container_name: donuty-dev-app
+    container_name: ${DONUTY_CONTAINER_NAME:-donuty-dev-app}
     ports:
-      - "8081:8081"
+      - "${DONUTY_HOST_PORT:-8081}:8081"
     env_file:
       - .env
     command: ["npx", "expo", "start", "${EXPO_START_FLAGS:---lan}"]
