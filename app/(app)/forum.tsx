@@ -31,13 +31,28 @@ const CHIPS: { l: string; cat: string | null }[] = [
 
 function QuestionCard({ q, onPress }: { q: Question; onPress: () => void }) {
   const avg = avgDifficulty(q);
+  const score = q.up - q.down;
+  const scoreColor = score > 0 ? C.tertiaryDim : score < 0 ? C.error : C.outline;
   return (
     <Pressable style={s.card} onPress={onPress}>
       <View style={s.voteCol}>
-        <Text style={[s.mono, { color: C.tertiaryDim, fontSize: 14 }]}>▲</Text>
-        <Text style={[s.mono, { color: C.onSurface, fontSize: 14, fontFamily: 'JetBrainsMono_500Medium' }]}>{q.up}</Text>
-        <Text style={[s.mono, { color: C.outline, fontSize: 12 }]}>{q.down}</Text>
-        <Text style={[s.mono, { color: C.error, fontSize: 14 }]}>▼</Text>
+        {/* Wyświetlamy małą strzałkę sugerującą kierunek lub kropkę dla 0 */}
+        <Text style={[s.mono, { color: scoreColor, fontSize: 10 }]}>
+          {score > 0 ? '▲' : score < 0 ? '▼' : '•'}
+        </Text>
+
+        {/* Wyświetlamy samą różnicę (wartość bezwzględna, jeśli chcesz same liczby,
+            lub po prostu {score} jeśli chcesz widzieć minus przed liczbą) */}
+        <Text style={[
+          s.mono,
+          {
+            color: scoreColor,
+            fontSize: 16,
+            fontFamily: 'JetBrainsMono_700Bold' // Pogrubiony font dla wyniku
+          }
+        ]}>
+          {score}
+        </Text>
       </View>
       <View style={s.cardBody}>
         <View style={s.metaRow}>

@@ -170,7 +170,7 @@ export default function AddQuestionScreen() {
                             </Text>
                           </View>
                           {isCorrect && (
-                            <Text style={s.correctLabel}correct</Text>
+                            <Text style={s.correctLabel}>correct</Text>
                           )}
                         </View>
                       </Pressable>
