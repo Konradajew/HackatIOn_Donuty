@@ -31,13 +31,24 @@ const CHIPS: { l: string; cat: string | null }[] = [
 
 function QuestionCard({ q, onPress }: { q: Question; onPress: () => void }) {
   const avg = avgDifficulty(q);
+  const score = q.up - q.down;
+  const scoreColor = score > 0 ? C.tertiaryDim : score < 0 ? C.error : C.outline;
   return (
     <Pressable style={s.card} onPress={onPress}>
       <View style={s.voteCol}>
-        <Text style={[s.mono, { color: C.tertiaryDim, fontSize: 14 }]}>▲</Text>
-        <Text style={[s.mono, { color: C.onSurface, fontSize: 14, fontFamily: 'JetBrainsMono_500Medium' }]}>{q.up}</Text>
-        <Text style={[s.mono, { color: C.outline, fontSize: 12 }]}>{q.down}</Text>
-        <Text style={[s.mono, { color: C.error, fontSize: 14 }]}>▼</Text>
+        <Text style={[s.mono, { color: scoreColor, fontSize: 10 }]}>
+          {score > 0 ? '▲' : score < 0 ? '▼' : '•'}
+        </Text>
+        <Text style={[
+          s.mono,
+          {
+            color: scoreColor,
+            fontSize: 16,
+            fontFamily: 'JetBrainsMono_700Bold'
+          }
+        ]}>
+          {score}
+        </Text>
       </View>
       <View style={s.cardBody}>
         <View style={s.metaRow}>
@@ -107,7 +118,7 @@ export default function ForumScreen() {
             <TextInput
               value={search}
               onChangeText={setSearch}
-              placeholder="search 4,219 questions..."
+              placeholder="Search..."
               placeholderTextColor={C.outline}
               style={s.searchField}
               returnKeyType="search"
@@ -162,11 +173,11 @@ export default function ForumScreen() {
             ))
           )}
         </ScrollView>
-      </SafeAreaView>
 
       <Pressable style={s.fab} onPress={() => router.push('/add-question' as never)}>
         <Text style={s.fabIcon}>+</Text>
       </Pressable>
+      </SafeAreaView>
     </View>
   );
 }
@@ -323,8 +334,8 @@ const s = StyleSheet.create({
   },
   fab: {
     position: 'absolute',
-    bottom: 30,
-    right: 20,
+    bottom: 60,
+    right: 25,
     width: 56,
     height: 56,
     backgroundColor: C.primaryBright,

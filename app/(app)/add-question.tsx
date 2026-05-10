@@ -118,10 +118,6 @@ export default function AddQuestionScreen() {
           </Pressable>
           <View style={s.headerText}>
             <Text style={s.headerTitle}>NEW QUESTION</Text>
-            <Text style={s.headerSub}>+15 XP ON APPROVAL</Text>
-          </View>
-          <View style={s.draftBadge}>
-            <Text style={s.draftText}>DRAFT</Text>
           </View>
         </View>
 
@@ -146,11 +142,11 @@ export default function AddQuestionScreen() {
 
           {/* Question field */}
           <View style={s.fieldContainer}>
-            <Text style={s.fieldLabel}>QUESTION · max 100 chars</Text>
+            <Text style={s.fieldLabel}>QUESTION</Text>
             <TextInput
               value={question}
               onChangeText={setQuestion}
-              maxLength={100}
+              maxLength={1000}
               multiline
               style={s.textInput}
               placeholderTextColor={C.outline}
@@ -174,7 +170,7 @@ export default function AddQuestionScreen() {
                             </Text>
                           </View>
                           {isCorrect && (
-                            <Text style={s.correctLabel}>✓ correct</Text>
+                            <Text style={s.correctLabel}>correct</Text>
                           )}
                         </View>
                       </Pressable>
@@ -194,7 +190,7 @@ export default function AddQuestionScreen() {
 
           {/* Explanation field */}
           <View style={s.fieldContainer}>
-            <Text style={s.fieldLabel}>EXPLANATION · max 1000 chars</Text>
+            <Text style={s.fieldLabel}>EXPLANATION</Text>
             <TextInput
               value={explanation}
               onChangeText={setExplanation}
@@ -286,18 +282,6 @@ const s = StyleSheet.create({
     color: C.outline,
     letterSpacing: 1,
     marginTop: 2,
-  },
-  draftBadge: {
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(0,235,215,0.33)',
-    backgroundColor: 'rgba(0,235,215,0.07)',
-  },
-  draftText: {
-    fontFamily: 'JetBrainsMono_500Medium',
-    fontSize: 13,
-    color: C.secondaryBright,
   },
 
   scroll: { flex: 1 },
