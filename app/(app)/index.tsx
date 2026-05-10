@@ -84,7 +84,7 @@ function ExitButton({ onPress }: { onPress: () => void }) {
     <TouchableOpacity style={s.exitBtn} onPress={onPress} activeOpacity={0.8}>
       <View style={s.btnLabelGroupCentered}>
         <Ionicons name="power-outline" size={16} color={C.error} style={s.btnIcon} />
-        <Text style={s.exitBtnText}>EXIT</Text>
+        <Text style={s.exitBtnText}>LOG OUT</Text>
       </View>
     </TouchableOpacity>
   );
