@@ -30,7 +30,12 @@ export const BaseCard: React.FC<BaseCardProps> = ({
     <View
       style={[
         styles.cardContainer,
-        { width, height, borderColor: mainColor, borderWidth: selected ? 2 : 1 },
+        {
+          width,
+          height,
+          borderColor: mainColor,
+          borderWidth: selected ? 2 : 1,
+        },
         selected && {
           shadowColor: mainColor,
           shadowOpacity: 0.65,
@@ -50,17 +55,41 @@ export const BaseCard: React.FC<BaseCardProps> = ({
           },
         ]}
       >
-        <Text style={[styles.headerText, { fontSize: Math.max(7, Math.round(width * 0.085)) }]}>{type}</Text>
-        {topValue && <Text style={[styles.headerText, { fontSize: Math.max(7, Math.round(width * 0.085)) }]}>{topValue}</Text>}
+        <Text
+          style={[
+            styles.headerText,
+            { fontSize: Math.max(7, Math.round(width * 0.085)) },
+          ]}
+        >
+          {type}
+        </Text>
+        {topValue && (
+          <Text
+            style={[
+              styles.headerText,
+              { fontSize: Math.max(7, Math.round(width * 0.085)) },
+            ]}
+          >
+            {topValue}
+          </Text>
+        )}
       </View>
 
       <View
         style={[
           styles.centerBox,
-          { borderColor: category ? categoryColor : "transparent", borderWidth: category ? 1 : 0 },
+          {
+            borderColor: category ? categoryColor : "transparent",
+            borderWidth: category ? 1 : 0,
+          },
         ]}
       >
-        <View style={{ width: Math.round(width * 0.45), height: Math.round(width * 0.45) }}>
+        <View
+          style={{
+            width: Math.round(width * 0.45),
+            height: Math.round(width * 0.45),
+          }}
+        >
           <CenterIcon width="100%" height="100%" />
         </View>
       </View>
@@ -68,7 +97,10 @@ export const BaseCard: React.FC<BaseCardProps> = ({
       <View style={styles.footer}>
         {category && (
           <Text
-            style={[styles.categoryText, { fontSize: Math.max(6, Math.round(width * 0.07)) }]}
+            style={[
+              styles.categoryText,
+              { fontSize: Math.max(6, Math.round(width * 0.07)) },
+            ]}
             numberOfLines={1}
           >
             {category.toUpperCase()}

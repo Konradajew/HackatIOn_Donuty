@@ -1,19 +1,19 @@
-import { useState } from 'react';
-import { Modal, View, Text, Pressable, StyleSheet } from 'react-native';
-import { arc } from '@/lib/arcade-theme';
-import { TypedCard } from '@/components/cards/typed-card';
-import type { CardType } from '@/lib/match-api';
+import { TypedCard } from "@/components/cards/typed-card";
+import { arc } from "@/lib/arcade-theme";
+import type { CardType } from "@/lib/match-api";
+import { useState } from "react";
+import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 
 const HINT: Record<CardType, string> = {
-  DMG:         'Answer to damage your opponent',
-  HEAL:        'Answer to heal yourself',
-  POISON:      'Answer to poison your opponent',
-  DMG_BLOCK:   'Answer to blackout one opponent answer',
-  HEAL_REMOVE: 'Answer for a 50/50 buff next turn',
-  TIME_BUFF:   'Answer for extra time next turn',
+  DMG: "Answer to damage your opponent",
+  HEAL: "Answer to heal yourself",
+  POISON: "Answer to poison your opponent",
+  DMG_BLOCK: "Answer to blackout one opponent answer",
+  HEAL_REMOVE: "Answer for a 50/50 buff next turn",
+  TIME_BUFF: "Answer for extra time next turn",
 };
 
-const LABELS = ['A', 'B', 'C', 'D'];
+const LABELS = ["A", "B", "C", "D"];
 
 interface QuestionSheetProps {
   visible: boolean;
@@ -60,7 +60,12 @@ export function QuestionSheet({
   };
 
   return (
-    <Modal transparent animationType="slide" visible={visible} onRequestClose={handleClose}>
+    <Modal
+      transparent
+      animationType="slide"
+      visible={visible}
+      onRequestClose={handleClose}
+    >
       <View style={s.root}>
         <Pressable style={s.backdrop} onPress={handleClose} />
         <View style={s.sheet}>
@@ -68,23 +73,38 @@ export function QuestionSheet({
 
           {/* Card meta + timer */}
           <View style={s.metaRow}>
-            <TypedCard type={card.type} cat={card.cat} width={56} selected />
+            <TypedCard type={card.type} cat={card.cat} width={75} selected />
             <View style={s.metaText}>
               <View style={s.chipRow}>
-                <View style={[s.chip, { backgroundColor: arc.primaryContainer + '22' }]}>
-                  <Text style={[s.chipText, { color: arc.primaryContainer }]}>{card.cat}</Text>
+                <View
+                  style={[
+                    s.chip,
+                    { backgroundColor: arc.primaryContainer + "22" },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      s.chipText,
+                      { color: arc.primaryContainer },
+                      { fontSize: 15 },
+                    ]}
+                  >
+                    {card.cat}
+                  </Text>
                 </View>
-                <Text style={s.stars}>
-                  {'★'.repeat(difficulty)}
-                  {'☆'.repeat(5 - difficulty)}
+                <Text style={[s.stars, { fontSize: 18 }]}>
+                  {"★".repeat(difficulty)}
+                  {"☆".repeat(5 - difficulty)}
                 </Text>
               </View>
-              <Text style={s.hintText} numberOfLines={2}>
+              <Text style={[s.hintText, { fontSize: 13 }]} numberOfLines={2}>
                 {HINT[card.type]}
               </Text>
             </View>
-            <View style={s.timerBox}>
-              <Text style={s.timerNum}>{String(timerSec).padStart(2, '0')}</Text>
+            <View style={[s.timerBox, { width: 70, height: 70 }]}>
+              <Text style={s.timerNum}>
+                {String(timerSec).padStart(2, "0")}
+              </Text>
               <Text style={s.timerLabel}>SEC</Text>
             </View>
           </View>
@@ -112,10 +132,14 @@ export function QuestionSheet({
           <View style={s.answers}>
             {answers.map((ans, i) => {
               const isSel = selected === i;
-              const isCorrectResult = result != null && i === result.correct_idx;
-              const isWrongPick = result != null && i === result.picked_idx && i !== result.correct_idx;
+              const isCorrectResult =
+                result != null && i === result.correct_idx;
+              const isWrongPick =
+                result != null &&
+                i === result.picked_idx &&
+                i !== result.correct_idx;
               const isBlackedOut = result == null && blackoutIdx === i;
-              const isDisabled = result == null && !!(disabledIdxs?.includes(i));
+              const isDisabled = result == null && !!disabledIdxs?.includes(i);
 
               return (
                 <Pressable
@@ -123,28 +147,32 @@ export function QuestionSheet({
                   style={[
                     s.answerRow,
                     isDisabled && s.answerRowDisabled,
-                    isSel && !result && !isDisabled && {
-                      backgroundColor: arc.secondaryContainer + '18',
-                      borderColor: arc.secondaryContainer,
-                      borderWidth: 1.5,
-                      shadowColor: arc.secondaryContainer,
-                      shadowOpacity: 0.35,
-                      shadowRadius: 8,
-                      shadowOffset: { width: 0, height: 0 },
-                      elevation: 4,
-                    },
+                    isSel &&
+                      !result &&
+                      !isDisabled && {
+                        backgroundColor: arc.secondaryContainer + "18",
+                        borderColor: arc.secondaryContainer,
+                        borderWidth: 1.5,
+                        shadowColor: arc.secondaryContainer,
+                        shadowOpacity: 0.35,
+                        shadowRadius: 8,
+                        shadowOffset: { width: 0, height: 0 },
+                        elevation: 4,
+                      },
                     isCorrectResult && {
-                      backgroundColor: arc.tertiary + '22',
+                      backgroundColor: arc.tertiary + "22",
                       borderColor: arc.tertiary,
                       borderWidth: 1.5,
                     },
                     isWrongPick && {
-                      backgroundColor: arc.primaryContainer + '22',
+                      backgroundColor: arc.primaryContainer + "22",
                       borderColor: arc.primaryContainer,
                       borderWidth: 1.5,
                     },
                   ]}
-                  onPress={() => result == null && !isDisabled && setSelected(i)}
+                  onPress={() =>
+                    result == null && !isDisabled && setSelected(i)
+                  }
                   disabled={result != null || isDisabled}
                 >
                   <View
@@ -156,10 +184,26 @@ export function QuestionSheet({
                           ? { backgroundColor: arc.primaryContainer }
                           : isSel && !isDisabled
                             ? { backgroundColor: arc.secondaryContainer }
-                            : { backgroundColor: arc.surfaceHigh, borderWidth: 1, borderColor: arc.surfaceHigh },
+                            : {
+                                backgroundColor: arc.surfaceHigh,
+                                borderWidth: 1,
+                                borderColor: arc.surfaceHigh,
+                              },
                     ]}
                   >
-                    <Text style={[s.answerLabelText, { color: (isCorrectResult || isWrongPick || (isSel && !isDisabled)) ? arc.bg : arc.outline }]}>
+                    <Text
+                      style={[
+                        s.answerLabelText,
+                        {
+                          color:
+                            isCorrectResult ||
+                            isWrongPick ||
+                            (isSel && !isDisabled)
+                              ? arc.bg
+                              : arc.outline,
+                        },
+                      ]}
+                    >
                       {LABELS[i]}
                     </Text>
                   </View>
@@ -167,19 +211,35 @@ export function QuestionSheet({
                   {isBlackedOut ? (
                     <View style={s.blackoutBar} />
                   ) : (
-                    <Text style={[s.answerText, isDisabled && { color: arc.outline }]} numberOfLines={2}>
+                    <Text
+                      style={[
+                        s.answerText,
+                        isDisabled && { color: arc.outline },
+                      ]}
+                      numberOfLines={2}
+                    >
                       {ans}
                     </Text>
                   )}
 
                   {isCorrectResult && (
-                    <Text style={[s.checkMark, { color: arc.tertiary }]}>✓</Text>
+                    <Text style={[s.checkMark, { color: arc.tertiary }]}>
+                      ✓
+                    </Text>
                   )}
                   {isWrongPick && (
-                    <Text style={[s.checkMark, { color: arc.primaryContainer }]}>✗</Text>
+                    <Text
+                      style={[s.checkMark, { color: arc.primaryContainer }]}
+                    >
+                      ✗
+                    </Text>
                   )}
                   {!result && isSel && !isDisabled && (
-                    <Text style={[s.checkMark, { color: arc.secondaryContainer }]}>✓</Text>
+                    <Text
+                      style={[s.checkMark, { color: arc.secondaryContainer }]}
+                    >
+                      ✓
+                    </Text>
                   )}
                 </Pressable>
               );
@@ -205,11 +265,23 @@ export function QuestionSheet({
               onPress={handleSubmit}
               disabled={selected === null || result != null}
             >
-              <Text style={[s.submitText, { color: selected !== null && result == null ? arc.bg : arc.outline }]}>
+              <Text
+                style={[
+                  s.submitText,
+                  {
+                    color:
+                      selected !== null && result == null
+                        ? arc.bg
+                        : arc.outline,
+                  },
+                ]}
+              >
                 Lock in answer →
               </Text>
             </Pressable>
-            <Text style={s.submitHint}>ANSWER LOCKS IN {durationSec}s · WRONG = LOSE CARD</Text>
+            <Text style={s.submitHint}>
+              ANSWER LOCKS IN {durationSec}s · WRONG = LOSE CARD
+            </Text>
           </View>
         </View>
       </View>
@@ -220,11 +292,11 @@ export function QuestionSheet({
 const s = StyleSheet.create({
   root: {
     flex: 1,
-    justifyContent: 'flex-end',
+    justifyContent: "flex-end",
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(13,12,28,0.72)',
+    backgroundColor: "rgba(13,12,28,0.72)",
   },
   sheet: {
     backgroundColor: arc.surface,
@@ -240,12 +312,12 @@ const s = StyleSheet.create({
     width: 40,
     height: 4,
     backgroundColor: arc.surfaceHigh,
-    alignSelf: 'center',
+    alignSelf: "center",
     marginBottom: 16,
   },
   metaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 12,
     marginBottom: 14,
   },
@@ -254,8 +326,8 @@ const s = StyleSheet.create({
     gap: 4,
   },
   chipRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 8,
   },
   chip: {
@@ -263,17 +335,17 @@ const s = StyleSheet.create({
     paddingVertical: 2,
   },
   chipText: {
-    fontFamily: 'JetBrainsMono_500Medium',
+    fontFamily: "JetBrainsMono_500Medium",
     fontSize: 9,
     letterSpacing: 1,
   },
   stars: {
-    fontFamily: 'SpaceGrotesk_400Regular',
+    fontFamily: "SpaceGrotesk_400Regular",
     fontSize: 11,
     color: arc.outline,
   },
   hintText: {
-    fontFamily: 'SpaceGrotesk_700Bold',
+    fontFamily: "SpaceGrotesk_700Bold",
     fontSize: 13,
     color: arc.ink,
     lineHeight: 17,
@@ -284,8 +356,8 @@ const s = StyleSheet.create({
     backgroundColor: arc.surfaceHigh,
     borderWidth: 2,
     borderColor: arc.secondaryContainer,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     shadowColor: arc.secondaryContainer,
     shadowOpacity: 0.4,
     shadowRadius: 8,
@@ -293,13 +365,13 @@ const s = StyleSheet.create({
     elevation: 4,
   },
   timerNum: {
-    fontFamily: 'JetBrainsMono_500Medium',
+    fontFamily: "JetBrainsMono_500Medium",
     fontSize: 18,
     color: arc.secondaryContainer,
     lineHeight: 20,
   },
   timerLabel: {
-    fontFamily: 'JetBrainsMono_500Medium',
+    fontFamily: "JetBrainsMono_500Medium",
     fontSize: 8,
     color: arc.outline,
     letterSpacing: 1,
@@ -310,11 +382,11 @@ const s = StyleSheet.create({
     marginBottom: 20,
   },
   progressFill: {
-    height: '100%',
+    height: "100%",
     backgroundColor: arc.secondaryContainer,
   },
   questionText: {
-    fontFamily: 'SpaceGrotesk_700Bold',
+    fontFamily: "SpaceGrotesk_700Bold",
     fontSize: 24,
     color: arc.ink,
     letterSpacing: -0.5,
@@ -331,8 +403,8 @@ const s = StyleSheet.create({
     backgroundColor: arc.surfaceHigh,
     borderWidth: 1,
     borderColor: arc.surfaceHigh,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 14,
   },
   answerRowDisabled: {
@@ -341,16 +413,16 @@ const s = StyleSheet.create({
   answerLabel: {
     width: 36,
     height: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     flexShrink: 0,
   },
   answerLabelText: {
-    fontFamily: 'JetBrainsMono_500Medium',
+    fontFamily: "JetBrainsMono_500Medium",
     fontSize: 14,
   },
   answerText: {
-    fontFamily: 'SpaceGrotesk_400Regular',
+    fontFamily: "SpaceGrotesk_400Regular",
     fontSize: 18,
     color: arc.ink,
     flex: 1,
@@ -358,11 +430,11 @@ const s = StyleSheet.create({
   blackoutBar: {
     flex: 1,
     height: 22,
-    backgroundColor: '#000000',
+    backgroundColor: "#000000",
     borderRadius: 2,
   },
   checkMark: {
-    fontFamily: 'SpaceGrotesk_400Regular',
+    fontFamily: "SpaceGrotesk_400Regular",
     fontSize: 18,
   },
   submitArea: {
@@ -372,19 +444,19 @@ const s = StyleSheet.create({
   },
   submitBtn: {
     height: 60,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   submitText: {
-    fontFamily: 'SpaceGrotesk_700Bold',
+    fontFamily: "SpaceGrotesk_700Bold",
     fontSize: 18,
     letterSpacing: 0.5,
   },
   submitHint: {
-    fontFamily: 'JetBrainsMono_500Medium',
+    fontFamily: "JetBrainsMono_500Medium",
     fontSize: 11,
     color: arc.outline,
-    textAlign: 'center',
+    textAlign: "center",
     letterSpacing: 1,
   },
 });
