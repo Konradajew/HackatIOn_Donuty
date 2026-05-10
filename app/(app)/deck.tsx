@@ -154,8 +154,8 @@ export default function DeckScreen() {
             {/* ── Header ── */}
             <View style={s.header}>
                 <View style={s.headerRight}>
-                    <TouchableOpacity style={s.backBtn} activeOpacity={0.8} onPress={() => router.push("/")}>
-                        <Text style={s.backBtnText}>BACK</Text>
+                    <TouchableOpacity style={s.backBtn} activeOpacity={0.8} onPress={() => router.back()}>
+                        <Text style={s.backBtnText}>←</Text>
                     </TouchableOpacity>
                 </View>
                 <View>
@@ -389,16 +389,19 @@ const s = StyleSheet.create({
 
 
     backBtn: {
-        backgroundColor: "#FF0000",
-        paddingHorizontal: 18,
-        paddingVertical: 8,
-        shadowColor: "#FF0000",
-        shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 0.55,
-        shadowRadius: 10,
-        elevation: 8,
+        width: 32,
+        height: 32,
+        backgroundColor: C.surface,
+        borderWidth: 1,
+        borderColor: C.outlineVariant,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
-    backBtnText: {color: '#000', fontFamily: 'JetBrainsMono_500Medium', fontSize: 12, fontWeight: '700', letterSpacing: 2},
+    backBtnText: {
+        color: C.onSurface,
+        fontFamily: 'SpaceGrotesk_700Bold',
+        fontSize: 18,
+    },
 
     tabsWrap: { borderBottomWidth: 1, borderBottomColor: C.outlineVariant, backgroundColor: C.surfaceContainerLow, maxHeight: 60 },
     tabsRow:  { paddingHorizontal: PAD, paddingVertical: 8, gap: 6, flexDirection: 'row' },

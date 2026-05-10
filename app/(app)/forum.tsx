@@ -4,7 +4,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { ArcadeColors as C, ArcadeFonts as F, ArcadeSpacing as S } from "@/constants/theme";
+import { ArcadeColors as C } from "@/constants/theme";
+import { RefreshControl } from 'react-native';
 import { useQuestions, avgDifficulty, type Question } from '@/lib/forum-store';
 
 const CHIPS: { l: string; cat: string | null }[] = [
@@ -62,7 +63,7 @@ function QuestionCard({ q, onPress }: { q: Question; onPress: () => void }) {
           </View>
         </View>
         <Text style={s.qText}>{q.t}</Text>
-        <Text style={s.userText}>@{q.user} · 2h</Text>
+        <Text style={s.userText}>@{q.user}</Text>
       </View>
     </Pressable>
   );
@@ -89,6 +90,13 @@ export default function ForumScreen() {
     ? [...filtered].sort((a, b) => b.up - a.up)
     : filtered;
 
+  const [refreshing, setRefreshing] = useState(false);
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try { await refresh(); } finally { setRefreshing(false);
+    }
+  };
+
   return (
     <View style={s.root}>
       <StatusBar style="light" />
@@ -109,6 +117,9 @@ export default function ForumScreen() {
 
       <SafeAreaView style={s.safe}>
         <View style={s.header}>
+          <Pressable style={s.backBtn} onPress={() => router.back()} hitSlop={8}>
+            <Text style={s.backArrow}>←</Text>
+          </Pressable>
           <Text style={s.title}>FORUM<Text style={{ color: C.primaryBright }}>.</Text></Text>
         </View>
 
@@ -154,10 +165,17 @@ export default function ForumScreen() {
         </ScrollView>
 
         <ScrollView
-          style={s.questionList}
-          contentContainerStyle={{ gap: 10, paddingBottom: 20 }}
-          showsVerticalScrollIndicator={false}
-          onScrollEndDrag={() => refresh()}
+            style={s.questionList}
+            contentContainerStyle={{ gap: 10, paddingBottom: 20 }}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={handleRefresh}
+                  tintColor={C.secondaryBright}
+                  colors={[C.secondaryBright]}
+              />
+            }
         >
           {loading ? (
             <Text style={s.emptyText}>LOADING...</Text>
@@ -206,8 +224,25 @@ const s = StyleSheet.create({
     paddingHorizontal: 16,
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
     marginTop: 8,
     marginBottom: 12,
+  },
+  backBtn: {
+    width: 32,
+    height: 32,
+    backgroundColor: C.surface,
+    borderWidth: 1,
+    borderColor: C.surfaceContainerHigh,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  backArrow: {
+    fontFamily: 'SpaceGrotesk_700Bold',
+    fontSize: 18,
+    color: C.onSurface,
   },
   title: {
     fontFamily: 'SpaceGrotesk_700Bold',
@@ -301,9 +336,9 @@ const s = StyleSheet.create({
   catBadge: {
     paddingVertical: 2,
     paddingHorizontal: 5,
-    backgroundColor: 'rgba(25,240,220,0.13)',
+    backgroundColor: C.secondaryBright + '22',
     borderWidth: 1,
-    borderColor: 'rgba(25,240,220,0.33)',
+    borderColor: C.secondaryBright + '55',
   },
   catText: {
     fontFamily: 'JetBrainsMono_500Medium',
