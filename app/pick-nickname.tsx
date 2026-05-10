@@ -144,7 +144,7 @@ export default function PickNickname() {
                 onPress={handleBack}
                 disabled={backPending}
             >
-              <Text style={[F.labelMd, { color: C.onSurface }]}>←</Text>
+              <Text style={styles.backArrow}>←</Text>
             </Pressable>
             <View style={{ flex: 1, marginLeft: S.sm }}>
               <Text style={[F.headlineMd, { color: C.onSurface, letterSpacing: 2, textTransform: 'uppercase' }]}>
@@ -246,6 +246,11 @@ const styles = StyleSheet.create({
     borderColor: C.surfaceContainerHigh,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  backArrow: {
+    fontFamily: 'SpaceGrotesk_700Bold',
+    fontSize: 18,
+    color: C.onSurface,
   },
   retryPill: {
     backgroundColor: C.errorContainer,
