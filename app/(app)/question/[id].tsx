@@ -247,7 +247,7 @@ const s = StyleSheet.create({
   backArrow: {
     fontFamily: 'SpaceGrotesk_700Bold',
     fontSize: 18,
-    color: C.surfaceContainerHigh,
+    color: C.onSurface,
   },
   catBadge: {
     paddingVertical: 4,

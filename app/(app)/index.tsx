@@ -83,13 +83,8 @@ function LogOutButton({ onPress }: { onPress: () => void }) {
   return (
     <TouchableOpacity style={s.logOutBtn} onPress={onPress} activeOpacity={0.8}>
       <View style={s.btnLabelGroupCentered}>
-        <Ionicons
-          name="log-out-outline"
-          size={16}
-          color={C.outlineVariant}
-          style={s.btnIcon}
-        />
-        <Text style={s.logOutBtnText}>LOG OUT</Text>
+        <Ionicons name="power-outline" size={16} color={C.error} style={s.btnIcon} />
+        <Text style={s.exitBtnText}>LOG OUT</Text>
       </View>
     </TouchableOpacity>
   );
